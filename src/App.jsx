@@ -1,100 +1,172 @@
 import { useEffect, useState } from "react";
-import words from "./data/words.json";
+import rawWords from "./data/words.json";
 
-/* =========================
-   UTILITAIRES
-   ========================= */
+/* =====================
+   Utils
+===================== */
 
-// Mélange un tableau
-function shuffle(array) {
-  return [...array].sort(() => 0.5 - Math.random());
-}
+const shuffle = arr => [...arr].sort(() => 0.5 - Math.random());
 
-// Génère les propositions QCM
-function getChoices(allWords, correctWord, count = 4) {
-  const others = allWords
-    .filter(w => w.he !== correctWord.he)
-    .sort(() => 0.5 - Math.random())
-    .slice(0, count - 1);
+const saveProgress = words =>
+  localStorage.setItem("hebrew-progress", JSON.stringify(words));
 
-  return shuffle([...others, correctWord]);
-}
-
-// Vérifie doublons hébreu uniquement
-function checkHebrewDuplicates(words) {
-  const seen = new Set();
-  words.forEach((w, i) => {
-    if (seen.has(w.he)) {
-      console.warn(
-        `⚠️ Doublon hébreu détecté : "${w.he}" (ligne ${i + 1})`
-      );
-    }
-    seen.add(w.he);
-  });
-}
-
-/* =========================
-   APP
-   ========================= */
+/* =====================
+   App
+===================== */
 
 export default function App() {
+  const [words, setWords] = useState([]);
   const [queue, setQueue] = useState([]);
-  const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState(null);
+  const [current, setCurrent] = useState(null);
+  const [status, setStatus] = useState("idle"); // idle | wrong | correct
+  const [mode, setMode] = useState("learn"); // learn | review
 
-  // Initialisation
+  /* INIT */
   useEffect(() => {
-    checkHebrewDuplicates(words);
-    setQueue(shuffle(words));
+    const saved = localStorage.getItem("hebrew-progress");
+    setWords(saved ? JSON.parse(saved) : rawWords);
   }, []);
 
-  if (queue.length === 0) return null;
+  /* BUILD QUEUE */
+  useEffect(() => {
+    if (!words.length) return;
 
-  const current = queue[index];
-  const choices = getChoices(words, current);
+    const minCount = Math.min(...words.map(w => w.count));
 
-  function next() {
-    setSelected(null);
+    const base =
+      mode === "review"
+        ? words.filter(w => w.wrong > 0)
+        : words.filter(w => w.count === minCount);
 
-    if (index + 1 >= queue.length) {
-      setQueue(shuffle(words));
-      setIndex(0);
-    } else {
-      setIndex(index + 1);
-    }
-  }
+    const shuffled = shuffle(base);
 
- return (
-  <div className="app">
-    <div className="word-he">{current.he}</div>
+    setQueue(shuffled);
+    setCurrent(shuffled[0] || null);
+    setStatus("idle");
+  }, [words, mode]);
 
-    {choices.map((choice, i) => {
-      const isCorrect = choice.fr === current.fr;
-      const isSelected = selected === choice.fr;
+  if (!current) return <div className="app">Aucun mot à afficher</div>;
 
-      let className = "choice";
-      if (selected) {
-        if (isCorrect) className += " correct";
-        else if (isSelected) className += " wrong";
-      }
+  const minCount = Math.min(...words.map(w => w.count));
+  const total = words.length;
+  const done = words.filter(w => w.count > minCount).length;
+  const hasReview = words.some(w => w.wrong > 0);
 
-      return (
-        <button
-          key={i}
-          className={className}
-          onClick={() => !selected && setSelected(choice.fr)}
-        >
-          {choice.fr}
-        </button>
+  const choices = shuffle([
+    current,
+    ...shuffle(
+      words.filter(w => w.he !== current.he)
+    ).slice(0, 3)
+  ]);
+
+  const handleClick = choice => {
+    if (choice.fr === current.fr) {
+      setStatus("correct");
+
+      const updated = words.map(w =>
+        w.he === current.he ? { ...w, count: w.count + 1 } : w
       );
-    })}
 
-    {selected && (
-      <button className="next-btn" onClick={next}>
-        Suivant
+      setWords(updated);
+      saveProgress(updated);
+
+      setTimeout(() => next(updated), 2000);
+    } else {
+      setStatus("wrong");
+
+      const updated = words.map(w =>
+        w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
+      );
+
+      setWords(updated);
+      saveProgress(updated);
+    }
+  };
+
+  const next = updatedWords => {
+    const rest = queue.slice(1);
+
+    if (!rest.length) {
+      const nextBatch =
+        mode === "review"
+          ? updatedWords.filter(w => w.wrong > 0)
+          : updatedWords.filter(w => w.count === minCount + 1);
+
+      const shuffled = shuffle(nextBatch);
+      setQueue(shuffled);
+      setCurrent(shuffled[0] || null);
+    } else {
+      setQueue(rest);
+      setCurrent(rest[0]);
+    }
+
+    setStatus("idle");
+  };
+
+  const reset = () => {
+    const resetWords = rawWords.map(w => ({
+      ...w,
+      count: 0,
+      wrong: 0
+    }));
+
+    localStorage.removeItem("hebrew-progress");
+    setWords(resetWords);
+  };
+
+  return (
+    <div className="app">
+      {/* MODES */}
+      <div className="modes">
+        <button
+          className={mode === "learn" ? "active" : ""}
+          onClick={() => setMode("learn")}
+        >
+          Apprentissage
+        </button>
+        <button
+          disabled={!hasReview}
+          className={mode === "review" ? "active review" : ""}
+          onClick={() => setMode("review")}
+        >
+          Révision
+        </button>
+      </div>
+
+      {/* HEADER */}
+      <div className="header">
+        <div>Mot {done + 1} / {total}</div>
+        <div>Niveau {minCount}</div>
+      </div>
+
+      {/* CONTENT */}
+      {status === "correct" ? (
+        <div className="success">
+          <div className="word-he big">{current.he}</div>
+          <div className="word-fr">{current.fr}</div>
+        </div>
+      ) : (
+        <>
+          <div className="word-he">{current.he}</div>
+
+          {choices.map((c, i) => (
+            <button
+              key={i}
+              className={`choice ${
+                status === "wrong" && c.fr !== current.fr ? "wrong" : ""
+              }`}
+              onClick={() => handleClick(c)}
+            >
+              {c.fr}
+            </button>
+          ))}
+        </>
+      )}
+
+      {/* RESET */}
+      <button className="reset" onClick={reset}>
+        Réinitialiser les compteurs
       </button>
-    )}
-  </div>
-);
-
+    </div>
+  );
 }

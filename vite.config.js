@@ -1,7 +1,22 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-})
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      manifest: {
+        name: "💆‍♀️✨ Hebrew2French",
+        short_name: "💆‍♀️ Hebrew",
+        description: "Apprentissage Hébreu → Français",
+        display: "standalone",
+        theme_color: "#4f6df5",
+        background_color: "#ffffff",
+        start_url: "/"
+        // PAS D’ICÔNES → emoji utilisé
+      }
+    })
+  ]
+});
