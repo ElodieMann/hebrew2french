@@ -1,42 +1,288 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* ===== RESET ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+html, body, #root {
+  height: 100%;
+  width: 100%;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ===== APP ===== */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  gap: 10px;
+  background: white;
 }
 
-.card {
-  padding: 2em;
+.app.correct {
+  background: #bbf7d0;
 }
 
-.read-the-docs {
-  color: #888;
+.app.wrong {
+  background: #fecaca;
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 16px;
+  color: #6b7280;
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-btn.active {
+  background: #4f46e5;
+  color: white;
+}
+
+.mode-btn.review.active {
+  background: #ec4899;
+}
+
+.mode-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mode-icon {
+  font-size: 36px;
+}
+
+.mode-text {
+  display: inline;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 28px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  gap: 10px;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #f3f4f6;
+  border-radius: 16px;
+}
+
+.stat-value {
+  font-size: 48px;
+  font-weight: 900;
+  color: #4f46e5;
+}
+
+.stat-total {
+  font-size: 32px;
+  color: #9ca3af;
+}
+
+.stat-label {
+  font-size: 20px;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 14px;
+  background: #e5e7eb;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4f46e5;
+  border-radius: 100px;
+  transition: width 0.4s ease;
+}
+
+/* ===== WORD CARD ===== */
+.card-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.word-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  border-radius: 24px;
+}
+
+.hebrew {
+  font-size: 110px;
+  font-weight: 800;
+  color: #1a1a1a;
+  direction: rtl;
+  line-height: 1;
+}
+
+/* ===== CHOICES ===== */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1.8;
+  min-height: 0;
+}
+
+.choice-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: white;
+  border: 4px solid #1a1a1a;
+  border-radius: 18px;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 38px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #1a1a1a;
+  transition: all 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.choice-btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #1a1a1a;
+}
+
+.choice-btn:disabled {
+  cursor: default;
+}
+
+.choice-btn.correct {
+  background: #22c55e;
+  color: white;
+  border-color: #16a34a;
+  box-shadow: 0 6px 0 #16a34a;
+}
+
+.app.wrong .choice-btn {
+  animation: shake 0.35s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+/* ===== PETIT ÉCRAN (hauteur < 750px) ===== */
+@media (max-height: 750px) {
+  .app { padding: 10px; gap: 8px; }
+  .mode-btn { padding: 14px 10px; font-size: 26px; }
+  .mode-icon { font-size: 30px; }
+  .badge { font-size: 22px; }
+  .stat { padding: 10px 6px; }
+  .stat-value { font-size: 38px; }
+  .stat-total { font-size: 26px; }
+  .stat-label { font-size: 16px; }
+  .progress-bar { height: 12px; }
+  .hebrew { font-size: 90px; }
+  .choice-btn { font-size: 32px; border-width: 3px; box-shadow: 0 5px 0 #1a1a1a; }
+}
+
+/* ===== TRÈS PETIT ÉCRAN (hauteur < 650px) ===== */
+@media (max-height: 650px) {
+  .app { padding: 8px; gap: 6px; }
+  .mode-btn { padding: 12px 8px; font-size: 22px; }
+  .mode-icon { font-size: 26px; }
+  .badge { font-size: 18px; }
+  .stat { padding: 8px 4px; }
+  .stat-value { font-size: 30px; }
+  .stat-total { font-size: 22px; }
+  .stat-label { font-size: 14px; }
+  .hebrew { font-size: 70px; }
+  .choice-btn { font-size: 26px; border-radius: 14px; }
+}
+
+/* ===== MINUSCULE ÉCRAN (hauteur < 550px) ===== */
+@media (max-height: 550px) {
+  .mode-btn { padding: 10px 6px; font-size: 18px; }
+  .mode-text { display: none; }
+  .mode-icon { font-size: 28px; }
+  .stat-value { font-size: 24px; }
+  .stat-total { font-size: 18px; }
+  .stat-label { font-size: 12px; }
+  .hebrew { font-size: 56px; }
+  .choice-btn { font-size: 22px; box-shadow: 0 4px 0 #1a1a1a; }
+}
+
+/* ===== GRAND ÉCRAN (hauteur > 900px) ===== */
+@media (min-height: 900px) {
+  .app { padding: 20px; gap: 16px; }
+  .mode-btn { padding: 24px 16px; font-size: 38px; border-radius: 20px; }
+  .mode-icon { font-size: 42px; }
+  .badge { font-size: 32px; }
+  .stat { padding: 16px 12px; }
+  .stat-value { font-size: 56px; }
+  .stat-total { font-size: 38px; }
+  .stat-label { font-size: 22px; }
+  .progress-bar { height: 18px; }
+  .hebrew { font-size: 140px; }
+  .choice-btn { font-size: 46px; border-radius: 24px; box-shadow: 0 8px 0 #1a1a1a; }
 }

@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import rawWords from "./data/words.json";
+import "./App.css";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 const saveProgress = (words) =>
@@ -9,13 +10,20 @@ export default function App() {
   const [words, setWords] = useState([]);
   const [queue, setQueue] = useState([]);
   const [current, setCurrent] = useState(null);
+  const [choices, setChoices] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | wrong | correct
   const [mode, setMode] = useState("learn");
+
+  // Ref pour accéder aux words sans déclencher de re-render des choices
+  const wordsRef = useRef([]);
+  wordsRef.current = words;
 
   /* INIT */
   useEffect(() => {
     const saved = localStorage.getItem("hebrew-progress");
-    setWords(saved ? JSON.parse(saved) : rawWords);
+    const loadedWords = saved ? JSON.parse(saved) : rawWords;
+    setWords(loadedWords);
+    wordsRef.current = loadedWords;
   }, []);
 
   /* BUILD QUEUE */
@@ -34,11 +42,16 @@ export default function App() {
     }
   }, [words, mode, queue.length]);
 
-  const choices = useMemo(() => {
-    if (!current || !words.length) return [];
-    const others = words.filter((w) => w.he !== current.he);
-    return shuffle([current, ...shuffle(others).slice(0, 3)]);
-  }, [current, words]);
+  /* GENERATE CHOICES - seulement quand current change */
+  useEffect(() => {
+    if (!current || !wordsRef.current.length) {
+      setChoices([]);
+      return;
+    }
+    const others = wordsRef.current.filter((w) => w.he !== current.he);
+    const newChoices = shuffle([current, ...shuffle(others).slice(0, 3)]);
+    setChoices(newChoices);
+  }, [current]);
 
   /* CLICK */
   const handleClick = (choice) => {
@@ -47,10 +60,8 @@ export default function App() {
     if (choice.fr === current.fr) {
       setStatus("correct");
 
-      const updated = words.map((w) =>
-        w.he === current.he
-          ? { ...w, count: w.count + 1, wrong: 0 }
-          : w
+      const updated = wordsRef.current.map((w) =>
+        w.he === current.he ? { ...w, count: w.count + 1, wrong: 0 } : w
       );
 
       setWords(updated);
@@ -65,7 +76,7 @@ export default function App() {
     } else {
       setStatus("wrong");
 
-      const updated = words.map((w) =>
+      const updated = wordsRef.current.map((w) =>
         w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
       );
 
@@ -81,53 +92,72 @@ export default function App() {
   const minCount = Math.min(...words.map((w) => w.count));
   const doneCount = words.filter((w) => w.count > minCount).length;
   const reviewCount = words.filter((w) => w.wrong > 0).length;
+  const progress = (doneCount / words.length) * 100;
 
   return (
-    <div className={`app-canvas ${status}`}>
+    <div className={`app ${status}`}>
       {/* HEADER */}
-      <header className="app-header">
-        <div className="nav-large">
+      <header className="header">
+        <div className="mode-toggle">
           <button
-            className={`btn-mode ${mode === "learn" ? "active" : ""}`}
+            className={`mode-btn ${mode === "learn" ? "active" : ""}`}
             onClick={() => {
               setMode("learn");
               setQueue([]);
             }}
           >
-            📘 APPRENDRE
+            <span className="mode-icon">📚</span>
+            <span className="mode-text">Apprendre</span>
           </button>
 
           <button
-            className={`btn-mode rev ${mode === "review" ? "active" : ""}`}
+            className={`mode-btn review ${mode === "review" ? "active" : ""}`}
             onClick={() => {
               setMode("review");
               setQueue([]);
             }}
             disabled={reviewCount === 0}
           >
-            🔁 RÉVISER ({reviewCount})
+            <span className="mode-icon">🔄</span>
+            <span className="mode-text">Réviser</span>
+            {reviewCount > 0 && <span className="badge">{reviewCount}</span>}
           </button>
         </div>
 
-        <div className="stats-xl">
-          <div className="stat-pill">NIVEAU<br /><b>{minCount}</b></div>
-          <div className="stat-pill">
-            MOTS<br /><b>{doneCount}/{words.length}</b>
+        <div className="stats">
+          <div className="stat">
+            <span className="stat-value">{minCount}</span>
+            <span className="stat-label">Niveau</span>
           </div>
+          <div className="stat">
+            <span className="stat-value">
+              {doneCount}
+              <span className="stat-total">/{words.length}</span>
+            </span>
+            <span className="stat-label">Mots maîtrisés</span>
+          </div>
+        </div>
+
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
       </header>
 
-      {/* MOT */}
-      <main className="word-section">
-        <h1 className="hebrew-display">{current.he}</h1>
+      {/* WORD CARD */}
+      <main className="card-area">
+        <div className="word-card">
+          <span className="hebrew">{current.he}</span>
+        </div>
       </main>
 
       {/* CHOICES */}
-      <footer className="choices-section">
+      <footer className="choices">
         {choices.map((c, i) => (
           <button
-            key={`${current.he}-${i}`}
-            className="huge-btn"
+            key={`${current.he}-${c.fr}-${i}`}
+            className={`choice-btn ${
+              status === "correct" && c.fr === current.fr ? "correct" : ""
+            }`}
             onClick={() => handleClick(c)}
             disabled={status === "correct"}
           >
@@ -135,131 +165,6 @@ export default function App() {
           </button>
         ))}
       </footer>
-
-      {/* STYLES */}
-      <style jsx>{`
-        :global(html, body) {
-          margin: 0;
-          padding: 0;
-          height: 100%;
-          width: 100%;
-          background: #fff;
-          font-family: -apple-system, system-ui, sans-serif;
-        }
-
-        .app-canvas {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          padding: 16px;
-          box-sizing: border-box;
-          transition: background 0.15s;
-        }
-
-        .app-canvas.correct { background: #c9f7d8; }
-        .app-canvas.wrong { background: #ffd2d2; }
-
-        /* HEADER */
-        .app-header {
-          height: 26%;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .nav-large {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .btn-mode {
-          height: 72px;
-          font-size: 1.8rem;
-          font-weight: 900;
-          border: none;
-          border-radius: 16px;
-          background: #ececec;
-          color: #555;
-          box-shadow: 0 6px #ccc;
-        }
-
-        .btn-mode.active {
-          background: #007bff;
-          color: white;
-          box-shadow: 0 6px #0056b3;
-        }
-
-        .btn-mode.rev.active {
-          background: #e91e63;
-          box-shadow: 0 6px #b0174b;
-        }
-
-        .stats-xl {
-          display: flex;
-          gap: 12px;
-        }
-
-        .stat-pill {
-          flex: 1;
-          background: #f8f9fa;
-          border-radius: 14px;
-          text-align: center;
-          font-size: 1.3rem;
-          padding: 10px;
-          border: 2px solid #ddd;
-        }
-
-        .stat-pill b {
-          font-size: 2rem;
-          color: #007bff;
-        }
-
-        /* WORD */
-        .word-section {
-          height: 26%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .hebrew-display {
-          font-size: 6.5rem;
-          font-weight: 900;
-          direction: rtl;
-          margin: 0;
-        }
-
-        /* CHOICES */
-        .choices-section {
-          height: 48%;
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-          padding-bottom: 20px;
-        }
-
-        .huge-btn {
-          flex: 1;
-          font-size: 2.4rem;
-          font-weight: 900;
-          border-radius: 24px;
-          border: 5px solid #000;
-          background: #fff;
-          box-shadow: 0 8px 0 #000;
-        }
-
-        .huge-btn:active {
-          transform: translateY(6px);
-          box-shadow: 0 2px 0 #000;
-        }
-
-        @media (max-height: 750px) {
-          .hebrew-display { font-size: 5rem; }
-          .huge-btn { font-size: 2rem; }
-          .btn-mode { height: 60px; font-size: 1.5rem; }
-        }
-      `}</style>
     </div>
   );
 }
