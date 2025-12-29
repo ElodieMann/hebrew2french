@@ -45,13 +45,12 @@ export default function App() {
       setWords(updated);
       saveProgress(updated);
       
-      // ON NE PASSE AU SUIVANT QUE SI C'EST JUSTE
       setTimeout(() => {
         const nextQueue = queue.slice(1);
         setQueue(nextQueue);
         setCurrent(nextQueue[0] || null);
         setStatus("idle");
-      }, 800);
+      }, 600);
     } else {
       setStatus("wrong");
       const updated = words.map((w) => 
@@ -60,8 +59,8 @@ export default function App() {
       setWords(updated);
       saveProgress(updated);
       
-      // RESTE SUR LE MÊME MOT SI C'EST FAUX
-      setTimeout(() => setStatus("idle"), 1000);
+      // On ne change pas de mot, on reset juste l'état pour retenter
+      setTimeout(() => setStatus("idle"), 800);
     }
   };
 
@@ -73,29 +72,29 @@ export default function App() {
 
   return (
     <div className={`app-canvas ${status}`}>
-      {/* HEADER AVEC GROS BOUTONS */}
+      {/* HEADER : BOUTONS ET STATS XL */}
       <header className="app-header">
-        <div className="nav-tabs-large">
-          <button className={mode === 'learn' ? 'tab active' : 'tab'} onClick={() => {setMode('learn'); setQueue([]);}}>
-            🚀 APPRENDRE
+        <div className="nav-large">
+          <button className={mode === 'learn' ? 'btn-mode active' : 'btn-mode'} onClick={() => {setMode('learn'); setQueue([]);}}>
+            APPRENDRE
           </button>
-          <button className={mode === 'review' ? 'tab active rev' : 'tab'} onClick={() => {setMode('review'); setQueue([]);}} disabled={reviewCount === 0}>
-            🎯 RÉVISER ({reviewCount})
+          <button className={mode === 'review' ? 'btn-mode active rev' : 'btn-mode'} onClick={() => {setMode('review'); setQueue([]);}} disabled={reviewCount === 0}>
+            RÉVISER ({reviewCount})
           </button>
         </div>
         
-        <div className="stats-row-mini">
-          <div className="mini-box">NV <b>{minCount}</b></div>
-          <div className="mini-box">SCORE <b>{doneCount}/{words.length}</b></div>
+        <div className="stats-xl">
+          <div className="stat-pill">NV <b>{minCount}</b></div>
+          <div className="stat-pill">SCORE <b>{doneCount}/{words.length}</b></div>
         </div>
       </header>
 
-      {/* MOT GEANT */}
+      {/* MOT HÉBREU XXL */}
       <main className="word-section">
-        <h1 className="hebrew-text">{current.he}</h1>
+        <h1 className="hebrew-display">{current.he}</h1>
       </main>
 
-      {/* BOUTONS ACTIONS */}
+      {/* RÉPONSES XXL */}
       <footer className="choices-section">
         {choices.map((c, i) => (
           <button
@@ -113,54 +112,58 @@ export default function App() {
         :global(html, body) { 
           margin: 0; padding: 0; height: 100%; width: 100%;
           overflow: hidden; background: #ffffff;
-          font-family: -apple-system, system-ui, sans-serif;
+          font-family: -apple-system, sans-serif;
         }
 
         .app-canvas {
           display: flex; flex-direction: column;
           height: 100vh; width: 100vw;
           padding: 15px; box-sizing: border-box;
-          transition: background 0.2s;
+          transition: background 0.1s;
         }
 
-        .app-canvas.correct { background: #dcfce7; }
-        .app-canvas.wrong { background: #fee2e2; }
+        .app-canvas.correct { background: #bdf8d0; }
+        .app-canvas.wrong { background: #ffcfcf; }
 
-        /* HEADER AVEC BOUTONS LARGES */
-        .app-header { height: 20%; display: flex; flex-direction: column; gap: 15px; padding-top: 10px; }
+        /* HEADER */
+        .app-header { height: 22%; display: flex; flex-direction: column; gap: 15px; justify-content: center; }
         
-        .nav-tabs-large { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .tab { 
-          border: none; height: 60px; border-radius: 15px; 
-          font-weight: 900; font-size: 14px; background: #f0f0f0; 
-          color: #888; box-shadow: 0 4px #ddd; transition: 0.1s;
+        .nav-large { display: flex; flex-direction: column; gap: 8px; }
+        .btn-mode { 
+          height: 55px; border: none; border-radius: 12px; 
+          font-weight: 900; font-size: 1.1rem; background: #eee; 
+          color: #666; box-shadow: 0 4px #ccc;
         }
-        .tab.active { background: #007bff; color: white; box-shadow: 0 4px #0056b3; }
-        .tab.rev.active { background: #e91e63; box-shadow: 0 4px #c2185b; }
-        .tab:active { transform: translateY(2px); box-shadow: 0 2px #ccc; }
+        .btn-mode.active { background: #007bff; color: white; box-shadow: 0 4px #0056b3; }
+        .btn-mode.rev.active { background: #e91e63; box-shadow: 0 4px #b0174b; }
 
-        .stats-row-mini { display: flex; justify-content: space-around; font-size: 13px; color: #666; }
-        .mini-box b { color: #333; font-size: 16px; margin-left: 5px; }
+        .stats-xl { display: flex; justify-content: space-between; gap: 10px; }
+        .stat-pill { 
+            flex: 1; background: #f8f9fa; padding: 8px; border-radius: 10px; 
+            text-align: center; font-size: 1.1rem; border: 1px solid #ddd;
+        }
+        .stat-pill b { color: #007bff; font-size: 1.3rem; }
 
-        /* ZONE MOT */
-        .word-section { height: 25%; display: flex; align-items: center; justify-content: center; }
-        .hebrew-text { font-size: 4.5rem; margin: 0; direction: rtl; color: #000; font-weight: bold; }
+        /* MOT */
+        .word-section { height: 28%; display: flex; align-items: center; justify-content: center; }
+        .hebrew-display { font-size: 5.5rem; margin: 0; direction: rtl; color: #000; font-weight: 900; }
 
-        /* ZONE BOUTONS REPONSES */
+        /* BOUTONS RÉPONSES */
         .choices-section { 
-          flex-grow: 1; display: flex; flex-direction: column; 
-          gap: 12px; padding-bottom: 25px;
+          height: 50%; display: flex; flex-direction: column; 
+          gap: 12px; padding-bottom: 20px;
         }
         .huge-btn { 
-          flex: 1; background: white; border: 3px solid #e2e8f0; border-radius: 20px;
-          font-size: 1.4rem; font-weight: bold; color: #1a202c;
-          box-shadow: 0 5px 0 #cbd5e0; cursor: pointer; transition: 0.1s;
+          flex: 1; background: white; border: 4px solid #333; border-radius: 20px;
+          font-size: 1.8rem; font-weight: 900; color: #000;
+          box-shadow: 0 6px 0 #000; cursor: pointer;
         }
-        .huge-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #cbd5e0; }
+        .huge-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
 
-        @media (max-height: 700px) {
-          .hebrew-text { font-size: 3.5rem; }
-          .tab { height: 50px; }
+        @media (max-height: 750px) {
+          .hebrew-display { font-size: 4rem; }
+          .huge-btn { font-size: 1.5rem; }
+          .btn-mode { height: 45px; }
         }
       `}</style>
     </div>
