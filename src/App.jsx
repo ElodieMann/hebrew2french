@@ -1,28 +1,19 @@
 import { useEffect, useState, useMemo } from "react";
 import rawWords from "./data/words.json";
 
-/* =====================
-   Utils
-===================== */
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
+const saveProgress = (words) => localStorage.setItem("hebrew-progress", JSON.stringify(words));
 
-const saveProgress = (words) =>
-  localStorage.setItem("hebrew-progress", JSON.stringify(words));
-
-/* =====================
-   App
-===================== */
 export default function App() {
   const [words, setWords] = useState([]);
   const [queue, setQueue] = useState([]);
   const [current, setCurrent] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | wrong | correct
-  const [mode, setMode] = useState("learn"); // learn | review
+  const [status, setStatus] = useState("idle"); 
+  const [mode, setMode] = useState("learn");
 
   useEffect(() => {
     const saved = localStorage.getItem("hebrew-progress");
-    const data = saved ? JSON.parse(saved) : rawWords;
-    setWords(data);
+    setWords(saved ? JSON.parse(saved) : rawWords);
   }, []);
 
   useEffect(() => {
@@ -31,7 +22,6 @@ export default function App() {
       const base = mode === "review"
           ? words.filter((w) => w.wrong > 0)
           : words.filter((w) => w.count === minCount);
-
       const shuffled = shuffle(base.length > 0 ? base : words);
       setQueue(shuffled);
       setCurrent(shuffled[0] || null);
@@ -49,7 +39,7 @@ export default function App() {
 
     if (choice.fr === current.fr) {
       setStatus("correct");
-      const updated = words.map((w) =>
+      const updated = words.map((w) => 
         w.he === current.he ? { ...w, count: w.count + 1, wrong: 0 } : w
       );
       setWords(updated);
@@ -59,124 +49,126 @@ export default function App() {
         setQueue(nextQueue);
         setCurrent(nextQueue[0] || null);
         setStatus("idle");
-      }, 1200);
+      }, 800);
     } else {
       setStatus("wrong");
-      const updated = words.map((w) =>
+      const updated = words.map((w) => 
         w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
       );
       setWords(updated);
       saveProgress(updated);
-      setTimeout(() => setStatus("idle"), 1500);
+      // On reset juste le statut pour permettre de re-cliquer, 
+      // sans jamais montrer quelle était la bonne réponse.
+      setTimeout(() => setStatus("idle"), 1000);
     }
   };
 
-  const reset = () => {
-    if (window.confirm("Effacer toute ta progression ?")) {
-      localStorage.removeItem("hebrew-progress");
-      window.location.reload();
-    }
-  };
-
-  if (!current) return <div className="loader">Chargement...</div>;
+  if (!current) return null;
 
   const minCount = Math.min(...words.map((w) => w.count));
-  const done = words.filter((w) => w.count > minCount).length;
-  const progressPercent = (done / words.length) * 100;
+  const doneCount = words.filter((w) => w.count > minCount).length;
+  const reviewCount = words.filter(w => w.wrong > 0).length;
 
   return (
-    <div className={`app-container ${status}`}>
-      {/* BARRE DE PROGRESSION */}
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
-      </div>
+    <div className={`app-canvas ${status}`}>
+      {/* HEADER NUMÉRIQUE COMPACT */}
+      <header className="app-header">
+        <div className="stats-row">
+          <div className="stat-box">
+            <span className="stat-label">NV</span>
+            <span className="stat-value">{minCount}</span>
+          </div>
+          <div className="stat-box main-stat">
+            <span className="stat-value">{doneCount} / {words.length}</span>
+          </div>
+          <div className="stat-box">
+            <span className="stat-label">ERR</span>
+            <span className="stat-value">{reviewCount}</span>
+          </div>
+        </div>
+        
+        <div className="nav-tabs">
+          <button className={mode === 'learn' ? 'tab active' : 'tab'} onClick={() => {setMode('learn'); setQueue([]);}}>Apprendre</button>
+          <button className={mode === 'review' ? 'tab active rev' : 'tab'} onClick={() => {setMode('review'); setQueue([]);}} disabled={reviewCount === 0}>Réviser</button>
+        </div>
+      </header>
 
-      <div className="content">
-        {/* MODES */}
-        <div className="modes-nav">
-          <button className={mode === "learn" ? "active" : ""} onClick={() => { setMode("learn"); setQueue([]); }}>
-            🚀 Apprendre
+      {/* ZONE MOT HÉBREU */}
+      <main className="word-section">
+        <div className="word-card-full">
+          <h1 className="hebrew-text">{current.he}</h1>
+        </div>
+      </main>
+
+      {/* ZONE BOUTONS (Remplissage vertical total) */}
+      <footer className="choices-section">
+        {choices.map((c, i) => (
+          <button
+            key={`${current.he}-${i}`}
+            className="huge-btn"
+            onClick={() => handleClick(c)}
+            disabled={status === "correct"} // Désactivé seulement si on a trouvé la bonne réponse
+          >
+            {c.fr}
           </button>
-          <button className={mode === "review" ? "active review" : ""} onClick={() => { setMode("review"); setQueue([]); }} disabled={!words.some(w => w.wrong > 0)}>
-            🎯 Réviser ({words.filter(w => w.wrong > 0).length})
-          </button>
-        </div>
-
-        {/* MOT HEBREU */}
-        <div className={`card ${status === "correct" ? "bounce" : status === "wrong" ? "shake" : ""}`}>
-          <h1 className="hebrew-word">{current.he}</h1>
-          {status === "correct" && <p className="success-hint">C'est ça !</p>}
-        </div>
-
-        {/* CHOIX */}
-        <div className="choices-grid">
-          {choices.map((c, i) => (
-            <button
-              key={`${current.he}-${i}`}
-              className={`choice-btn ${status === "wrong" && c.fr === current.fr ? "blink-guide" : ""}`}
-              onClick={() => handleClick(c)}
-              disabled={status !== "idle"}
-            >
-              {c.fr}
-            </button>
-          ))}
-        </div>
-
-        <button className="btn-reset" onClick={reset}>Réinitialiser</button>
-      </div>
+        ))}
+      </footer>
 
       <style jsx>{`
-        :global(body) { margin: 0; background: #f0f4f8; font-family: 'Segoe UI', Roboto, sans-serif; }
-        
-        .app-container { min-height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
-        .app-container.correct { background: #d4edda; }
-        .app-container.wrong { background: #f8d7da; }
-
-        .progress-bar { width: 100%; height: 12px; background: #e0e0e0; position: fixed; top: 0; }
-        .progress-fill { height: 100%; background: #4cc9f0; transition: width 0.5s ease; border-radius: 0 5px 5px 0; }
-
-        .content { flex: 1; padding: 20px; max-width: 600px; margin: 40px auto; width: 90%; display: flex; flex-direction: column; gap: 20px; }
-
-        .modes-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .modes-nav button { border: none; padding: 12px; border-radius: 15px; font-weight: bold; cursor: pointer; background: white; box-shadow: 0 4px #ddd; transition: 0.1s; font-size: 0.9rem; }
-        .modes-nav button:active { transform: translateY(2px); box-shadow: 0 2px #ddd; }
-        .modes-nav button.active { background: #4cc9f0; color: white; box-shadow: 0 4px #3a9dbb; }
-        .modes-nav button.review.active { background: #f72585; box-shadow: 0 4px #b5179e; }
-
-        .card { background: white; padding: 40px 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; margin: 20px 0; border: 2px solid #eee; }
-        .hebrew-word { font-size: 3.5rem; margin: 0; color: #333; direction: rtl; }
-        .success-hint { color: #28a745; font-weight: bold; margin-top: 10px; font-size: 1.2rem; }
-
-        .choices-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        .choice-btn { background: white; border: 2px solid #e5e5e5; border-radius: 18px; padding: 18px; font-size: 1.1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 5px #e5e5e5; font-weight: 500; color: #444; }
-        .choice-btn:active { transform: translateY(3px); box-shadow: 0 2px #e5e5e5; }
-        
-        .correct .choice-btn:disabled { opacity: 0.5; }
-        .wrong .choice-btn { border-color: #ff8fa3; color: #ff8fa3; }
-        
-        /* Aide visuelle en cas d'erreur */
-        .blink-guide { background: #d4edda !important; border-color: #28a745 !important; color: #155724 !important; animation: blink 0.5s infinite; }
-
-        .btn-reset { margin-top: auto; background: none; border: none; color: #aaa; text-decoration: underline; cursor: pointer; padding: 20px; }
-
-        /* ANIMATIONS */
-        @keyframes blink { 50% { opacity: 0.7; } }
-        .shake { animation: shake 0.4s; }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-10px); }
-          75% { transform: translateX(10px); }
-        }
-        .bounce { animation: bounce 0.5s; }
-        @keyframes bounce {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
+        :global(html, body) { 
+          margin: 0; padding: 0; height: 100%; width: 100%;
+          overflow: hidden; background: #ffffff;
+          font-family: -apple-system, system-ui, sans-serif;
         }
 
-        /* RESPONSIVE MOBILE */
-        @media (max-width: 480px) {
-          .hebrew-word { font-size: 2.8rem; }
-          .choice-btn { padding: 15px; font-size: 1rem; }
+        .app-canvas {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          padding: 10px;
+          box-sizing: border-box;
+          transition: background 0.2s;
+        }
+
+        .app-canvas.correct { background: #dcfce7; }
+        .app-canvas.wrong { background: #fee2e2; }
+
+        .app-header { height: 15%; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+        .stats-row { display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .stat-label { font-size: 10px; font-weight: bold; color: #888; }
+        .stat-value { font-size: 1.2rem; font-weight: 800; color: #333; }
+        .main-stat .stat-value { font-size: 1.6rem; color: #007bff; }
+
+        .nav-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .tab { border: none; padding: 10px; border-radius: 10px; font-weight: bold; font-size: 14px; background: #f0f0f0; color: #666; }
+        .tab.active { background: #007bff; color: white; }
+        .tab.rev.active { background: #e91e63; }
+
+        .word-section { height: 30%; display: flex; align-items: center; justify-content: center; }
+        .hebrew-text { font-size: 5rem; margin: 0; direction: rtl; color: #000; font-weight: bold; }
+
+        .choices-section { 
+          flex-grow: 1; 
+          display: flex; 
+          flex-direction: column; 
+          gap: 12px; 
+          padding-bottom: 20px;
+        }
+        .huge-btn { 
+          flex: 1; 
+          background: white; border: 3px solid #e2e8f0; border-radius: 20px;
+          font-size: 1.5rem; font-weight: bold; color: #1a202c;
+          box-shadow: 0 4px 0 #cbd5e0; cursor: pointer; transition: 0.1s;
+        }
+        .huge-btn:active { transform: translateY(4px); box-shadow: 0 0px 0 #cbd5e0; }
+        
+        /* Supprimé : toute classe d'indice visuel "correct-hint" ou "is-hint" */
+
+        @media (max-height: 650px) {
+          .hebrew-text { font-size: 3.5rem; }
+          .huge-btn { font-size: 1.2rem; }
         }
       `}</style>
     </div>
