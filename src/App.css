@@ -134,7 +134,14 @@ body {
 }
 
 /* Progress Bar */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .progress-bar {
+  flex: 1;
   height: 14px;
   background: #e5e7eb;
   border-radius: 100px;
@@ -146,6 +153,27 @@ body {
   background: #4f46e5;
   border-radius: 100px;
   transition: width 0.4s ease;
+}
+
+.reset-small-btn {
+  width: 50px;
+  height: 50px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 12px;
+  font-size: 32px;
+  font-weight: 800;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.reset-small-btn:active {
+  transform: scale(0.9);
+  background: #e5e7eb;
 }
 
 /* ===== WORD CARD ===== */
@@ -165,6 +193,46 @@ body {
   justify-content: center;
   background: #f9fafb;
   border-radius: 24px;
+  position: relative;
+}
+
+.card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 14px;
+  font-size: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.review-action {
+  background: #fef3c7;
+}
+
+.review-action:active {
+  transform: scale(0.9);
+  background: #fde68a;
+}
+
+.delete-action {
+  background: #fee2e2;
+}
+
+.delete-action:active {
+  transform: scale(0.9);
+  background: #fecaca;
 }
 
 .hebrew {
@@ -229,6 +297,38 @@ body {
   40% { transform: translateX(10px); }
   60% { transform: translateX(-6px); }
   80% { transform: translateX(6px); }
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.empty-icon {
+  font-size: 100px;
+}
+
+.empty-text {
+  font-size: 36px;
+  font-weight: 800;
+  color: #6b7280;
+}
+
+.reset-btn {
+  margin-top: 20px;
+  padding: 20px 40px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 28px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 /* ===== PETIT ÉCRAN (hauteur < 750px) ===== */

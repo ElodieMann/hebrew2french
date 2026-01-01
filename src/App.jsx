@@ -5,6 +5,10 @@ import "./App.css";
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 const saveProgress = (words) =>
   localStorage.setItem("hebrew-progress", JSON.stringify(words));
+const getDeletedWords = () => 
+  JSON.parse(localStorage.getItem("hebrew-deleted") || "[]");
+const saveDeletedWords = (deleted) =>
+  localStorage.setItem("hebrew-deleted", JSON.stringify(deleted));
 
 export default function App() {
   const [words, setWords] = useState([]);
@@ -13,15 +17,18 @@ export default function App() {
   const [choices, setChoices] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | wrong | correct
   const [mode, setMode] = useState("learn");
-
-  // Ref pour accéder aux words sans déclencher de re-render des choices
+  
   const wordsRef = useRef([]);
   wordsRef.current = words;
 
   /* INIT */
   useEffect(() => {
     const saved = localStorage.getItem("hebrew-progress");
-    const loadedWords = saved ? JSON.parse(saved) : rawWords;
+    const deleted = getDeletedWords();
+    
+    let loadedWords = saved ? JSON.parse(saved) : rawWords;
+    loadedWords = loadedWords.filter((w) => !deleted.includes(w.he));
+    
     setWords(loadedWords);
     wordsRef.current = loadedWords;
   }, []);
@@ -42,7 +49,7 @@ export default function App() {
     }
   }, [words, mode, queue.length]);
 
-  /* GENERATE CHOICES - seulement quand current change */
+  /* GENERATE CHOICES */
   useEffect(() => {
     if (!current || !wordsRef.current.length) {
       setChoices([]);
@@ -87,7 +94,77 @@ export default function App() {
     }
   };
 
-  if (!current) return null;
+  /* DELETE WORD */
+  const handleDelete = () => {
+    if (!current) return;
+    
+    const deleted = getDeletedWords();
+    deleted.push(current.he);
+    saveDeletedWords(deleted);
+    
+    const updated = wordsRef.current.filter((w) => w.he !== current.he);
+    setWords(updated);
+    saveProgress(updated);
+    
+    const nextQueue = queue.slice(1);
+    setQueue(nextQueue);
+    setCurrent(nextQueue[0] || null);
+    setStatus("idle");
+  };
+
+  /* MARK FOR REVIEW */
+  const handleMarkReview = () => {
+    if (!current) return;
+    
+    const updated = wordsRef.current.map((w) =>
+      w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
+    );
+    
+    setWords(updated);
+    saveProgress(updated);
+    
+    // Passer au mot suivant
+    const nextQueue = queue.slice(1);
+    setQueue(nextQueue);
+    setCurrent(nextQueue[0] || null);
+    setStatus("idle");
+  };
+
+  /* RESET ALL */
+  const handleReset = () => {
+    if (!window.confirm("Tout effacer ? Progression et mots supprimés seront réinitialisés.")) {
+      return;
+    }
+    
+    localStorage.removeItem("hebrew-progress");
+    localStorage.removeItem("hebrew-deleted");
+    
+    setWords(rawWords);
+    wordsRef.current = rawWords;
+    setQueue([]);
+    setMode("learn");
+    setStatus("idle");
+  };
+
+  if (!current) {
+    return (
+      <div className="app">
+        <div className="empty-state">
+          <span className="empty-icon">🎉</span>
+          <span className="empty-text">Plus de mots !</span>
+          <button 
+            className="reset-btn"
+            onClick={() => {
+              setMode("learn");
+              setQueue([]);
+            }}
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const minCount = Math.min(...words.map((w) => w.count));
   const doneCount = words.filter((w) => w.count > minCount).length;
@@ -134,18 +211,31 @@ export default function App() {
               {doneCount}
               <span className="stat-total">/{words.length}</span>
             </span>
-            <span className="stat-label">Mots maîtrisés</span>
+            <span className="stat-label">Mots</span>
           </div>
         </div>
 
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        <div className="progress-row">
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <button className="reset-small-btn" onClick={handleReset} title="Tout réinitialiser">
+            ↺
+          </button>
         </div>
       </header>
 
       {/* WORD CARD */}
       <main className="card-area">
         <div className="word-card">
+          <div className="card-actions">
+            <button className="action-btn review-action" onClick={handleMarkReview} title="À réviser">
+              📌
+            </button>
+            <button className="action-btn delete-action" onClick={handleDelete} title="Supprimer">
+              🗑️
+            </button>
+          </div>
           <span className="hebrew">{current.he}</span>
         </div>
       </main>
