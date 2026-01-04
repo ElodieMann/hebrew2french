@@ -16,9 +16,10 @@ export default function App() {
   const [current, setCurrent] = useState(null);
   const [choices, setChoices] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | wrong | correct
-  const [mode, setMode] = useState("learn"); // learn | review | trash
+  const [mode, setMode] = useState("learn"); // learn | review | review-list | trash
   const [deletedList, setDeletedList] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [reviewView, setReviewView] = useState("list"); // list | quiz
 
   const wordsRef = useRef([]);
   wordsRef.current = words;
@@ -52,7 +53,11 @@ export default function App() {
 
   /* BUILD QUEUE */
   useEffect(() => {
-    if (words.length > 0 && queue.length === 0 && mode !== "trash") {
+    // Ne pas construire de queue pour trash ou review en mode liste
+    if (mode === "trash") return;
+    if (mode === "review" && reviewView === "list") return;
+    
+    if (words.length > 0 && queue.length === 0) {
       const minCount = Math.min(...words.map((w) => w.count));
       const base =
         mode === "review"
@@ -64,7 +69,7 @@ export default function App() {
       setCurrent(shuffled[0] || null);
       setStatus("idle");
     }
-  }, [words, mode, queue.length]);
+  }, [words, mode, queue.length, reviewView]);
 
   /* GENERATE CHOICES */
   useEffect(() => {
@@ -84,8 +89,9 @@ export default function App() {
     if (choice.fr === current.fr) {
       setStatus("correct");
 
+      // Bonne réponse : on incrémente count, on garde wrong tel quel (sera géré après)
       const updated = wordsRef.current.map((w) =>
-        w.he === current.he ? { ...w, count: w.count + 1, wrong: 0 } : w
+        w.he === current.he ? { ...w, count: w.count + 1 } : w
       );
 
       setWords(updated);
@@ -93,8 +99,9 @@ export default function App() {
     } else {
       setStatus("wrong");
 
+      // Mauvaise réponse : on met wrong à 1 (pas +1, juste marqué)
       const updated = wordsRef.current.map((w) =>
-        w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
+        w.he === current.he ? { ...w, wrong: 1 } : w
       );
 
       setWords(updated);
@@ -180,30 +187,54 @@ export default function App() {
   const handleMarkAndContinue = () => {
     if (!current) return;
     
-    if (!markedReview) {
-      const updated = wordsRef.current.map((w) =>
-        w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
-      );
-      setWords(updated);
-      saveProgress(updated);
-    }
+    // Marquer à réviser (wrong = 1) puis passer au suivant
+    const updated = wordsRef.current.map((w) =>
+      w.he === current.he ? { ...w, wrong: 1 } : w
+    );
+    setWords(updated);
+    saveProgress(updated);
     
     goToNext();
   };
 
-  /* MARK FOR REVIEW */
+  /* CONTINUE WITHOUT MARKING (clear wrong if was correct) */
+  const handleContinueClean = () => {
+    if (!current) return;
+    
+    // Bonne réponse et on continue : on efface le wrong
+    const updated = wordsRef.current.map((w) =>
+      w.he === current.he ? { ...w, wrong: 0 } : w
+    );
+    setWords(updated);
+    saveProgress(updated);
+    
+    goToNext();
+  };
+
+  /* MARK FOR REVIEW (bouton sur la carte) */
   const [markedReview, setMarkedReview] = useState(false);
   
   const handleMarkReview = () => {
     if (!current || markedReview) return;
     
+    // Marquer à réviser = wrong à 1
     const updated = wordsRef.current.map((w) =>
-      w.he === current.he ? { ...w, wrong: w.wrong + 1 } : w
+      w.he === current.he ? { ...w, wrong: 1 } : w
     );
     
     setWords(updated);
     saveProgress(updated);
     setMarkedReview(true);
+  };
+
+  /* REMOVE FROM REVIEW LIST */
+  const handleRemoveFromReview = (hebrewWord) => {
+    const updated = wordsRef.current.map((w) =>
+      w.he === hebrewWord ? { ...w, wrong: 0 } : w
+    );
+    setWords(updated);
+    saveProgress(updated);
+    wordsRef.current = updated;
   };
 
   /* RESET ALL */
@@ -224,6 +255,71 @@ export default function App() {
   };
 
   const reviewCount = words.filter((w) => w.wrong > 0).length;
+
+  const reviewWords = words.filter((w) => w.wrong > 0);
+
+  /* REVIEW LIST VIEW */
+  if (mode === "review" && reviewView === "list") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div className="mode-toggle">
+            <button
+              className="mode-btn"
+              onClick={() => {
+                setMode("learn");
+                setQueue([]);
+              }}
+            >
+              <span className="mode-icon">←</span>
+              <span className="mode-text">Retour</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="review-list-view">
+          <h2 className="review-list-title">📌 À réviser ({reviewWords.length})</h2>
+          
+          {reviewWords.length > 0 ? (
+            <>
+              <button 
+                className="start-quiz-btn"
+                onClick={() => {
+                  setReviewView("quiz");
+                  setQueue([]);
+                }}
+              >
+                ▶️ Lancer le quiz
+              </button>
+              
+              <div className="review-list">
+                {reviewWords.map((w) => (
+                  <div key={w.he} className="review-item">
+                    <div className="review-word">
+                      <span className="review-he">{w.he}</span>
+                      <span className="review-fr">{w.fr}</span>
+                    </div>
+                    <button 
+                      className="remove-review-btn"
+                      onClick={() => handleRemoveFromReview(w.he)}
+                      title="Retirer de la liste"
+                    >
+                      ✓
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="review-empty">
+              <span className="review-empty-icon">🎉</span>
+              <span className="review-empty-text">Aucun mot à réviser !</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   /* TRASH VIEW */
   if (mode === "trash") {
@@ -306,11 +402,11 @@ export default function App() {
             <button 
               className="reset-btn"
               onClick={() => {
-                setMode("learn");
+                setReviewView("list");
                 setQueue([]);
               }}
             >
-              📚 Continuer à apprendre
+              📋 Retour à la liste
             </button>
           ) : (
             <button 
@@ -326,6 +422,7 @@ export default function App() {
               className="reset-btn review-reset-btn"
               onClick={() => {
                 setMode("review");
+                setReviewView("list");
                 setQueue([]);
               }}
             >
@@ -370,6 +467,7 @@ export default function App() {
             className={`mode-btn review ${mode === "review" ? "active" : ""}`}
             onClick={() => {
               setMode("review");
+              setReviewView("list");
               setQueue([]);
             }}
             disabled={reviewCount === 0}
@@ -436,7 +534,7 @@ export default function App() {
       <footer className="choices">
         {status === "correct" ? (
           <>
-            <button className="correct-answer" onClick={goToNext}>
+            <button className="correct-answer" onClick={handleContinueClean}>
               <span className="correct-icon">✓</span>
               <span className="correct-text">{current.fr}</span>
               <span className="tap-hint">Tap pour continuer</span>

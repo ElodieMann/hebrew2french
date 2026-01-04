@@ -433,6 +433,121 @@ body {
   box-shadow: 0 6px 0 #4b5563;
 }
 
+/* ===== REVIEW LIST VIEW ===== */
+.review-list-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.review-list-title {
+  font-size: 36px;
+  font-weight: 800;
+  text-align: center;
+  margin: 0;
+  color: #ec4899;
+}
+
+.start-quiz-btn {
+  width: 100%;
+  padding: 22px 24px;
+  background: #ec4899;
+  color: white;
+  border: 4px solid #be185d;
+  border-radius: 18px;
+  font-size: 28px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #be185d;
+  transition: all 0.1s;
+}
+
+.start-quiz-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #be185d;
+}
+
+.review-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.review-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #fdf2f8;
+  border: 2px solid #f9a8d4;
+  border-radius: 16px;
+}
+
+.review-word {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.review-he {
+  font-size: 32px;
+  font-weight: 800;
+  direction: rtl;
+  color: #1a1a1a;
+}
+
+.review-fr {
+  font-size: 22px;
+  color: #6b7280;
+}
+
+.remove-review-btn {
+  width: 60px;
+  height: 60px;
+  background: #22c55e;
+  border: 3px solid #16a34a;
+  border-radius: 14px;
+  font-size: 28px;
+  font-weight: 900;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 0 #16a34a;
+  transition: all 0.1s;
+}
+
+.remove-review-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #16a34a;
+}
+
+.review-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.review-empty-icon {
+  font-size: 80px;
+}
+
+.review-empty-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
 /* ===== TRASH VIEW ===== */
 .trash-view {
   flex: 1;
