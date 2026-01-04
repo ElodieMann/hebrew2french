@@ -782,16 +782,6 @@ body {
   color: #6b7280;
 }
 
-.search-cat {
-  font-size: 12px;
-  color: #4f46e5;
-  background: #e0e7ff;
-  padding: 2px 8px;
-  border-radius: 8px;
-  width: fit-content;
-  margin-top: 4px;
-}
-
 .search-item-actions {
   display: flex;
   gap: 6px;
@@ -942,38 +932,6 @@ body {
 .streak-label {
   font-size: 18px;
   color: #92400e;
-}
-
-/* Categories */
-.categories-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.category-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-}
-
-.category-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.category-count {
-  font-size: 18px;
-  font-weight: 800;
-  color: #4f46e5;
-  background: #e0e7ff;
-  padding: 4px 12px;
-  border-radius: 10px;
 }
 
 /* Stats Grid */

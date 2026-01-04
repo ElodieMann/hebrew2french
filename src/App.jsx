@@ -337,8 +337,6 @@ export default function App() {
       )
     : [];
 
-  // Liste des catégories disponibles
-  const categories = [...new Set(words.map(w => w.cat || "Sans catégorie"))].sort();
 
   /* SEARCH VIEW */
   if (mode === "search") {
@@ -382,7 +380,6 @@ export default function App() {
                 <div className="search-word">
                   <span className="search-he">{w.he}</span>
                   <span className="search-fr">{w.fr}</span>
-                  {w.cat && <span className="search-cat">{w.cat}</span>}
                 </div>
                 <div className="search-item-actions">
                   <button 
@@ -483,22 +480,6 @@ export default function App() {
               <span className="streak-icon">🔥</span>
               <span className="streak-value">{streak}</span>
               <span className="streak-label">jours de suite</span>
-            </div>
-          </div>
-          
-          {/* Catégories */}
-          <div className="settings-section">
-            <h3 className="settings-subtitle">📁 Catégories ({categories.length})</h3>
-            <div className="categories-list">
-              {categories.map(cat => {
-                const count = words.filter(w => (w.cat || "Sans catégorie") === cat).length;
-                return (
-                  <div key={cat} className="category-item">
-                    <span className="category-name">{cat}</span>
-                    <span className="category-count">{count}</span>
-                  </div>
-                );
-              })}
             </div>
           </div>
           
