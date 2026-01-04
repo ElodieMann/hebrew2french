@@ -237,6 +237,19 @@ export default function App() {
     wordsRef.current = updated;
   };
 
+  /* DELETE FROM LIST (any list view) */
+  const handleDeleteFromList = (hebrewWord) => {
+    const deleted = getDeletedWords();
+    deleted.push(hebrewWord);
+    saveDeletedWords(deleted);
+    setDeletedList(deleted);
+    
+    const updated = wordsRef.current.filter((w) => w.he !== hebrewWord);
+    setWords(updated);
+    saveProgress(updated);
+    wordsRef.current = updated;
+  };
+
   /* RESET ALL */
   const handleReset = () => {
     if (!window.confirm("Tout effacer ? Progression et mots supprimés seront réinitialisés.")) {
@@ -299,13 +312,22 @@ export default function App() {
                       <span className="review-he">{w.he}</span>
                       <span className="review-fr">{w.fr}</span>
                     </div>
-                    <button 
-                      className="remove-review-btn"
-                      onClick={() => handleRemoveFromReview(w.he)}
-                      title="Retirer de la liste"
-                    >
-                      ✓
-                    </button>
+                    <div className="review-item-actions">
+                      <button 
+                        className="remove-review-btn"
+                        onClick={() => handleRemoveFromReview(w.he)}
+                        title="Retirer de la liste"
+                      >
+                        ✓
+                      </button>
+                      <button 
+                        className="delete-review-btn"
+                        onClick={() => handleDeleteFromList(w.he)}
+                        title="Supprimer définitivement"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

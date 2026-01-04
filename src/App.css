@@ -508,26 +508,46 @@ body {
   color: #6b7280;
 }
 
-.remove-review-btn {
-  width: 60px;
-  height: 60px;
-  background: #22c55e;
-  border: 3px solid #16a34a;
-  border-radius: 14px;
-  font-size: 28px;
-  font-weight: 900;
-  color: white;
+.review-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.remove-review-btn,
+.delete-review-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  font-size: 24px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 0 #16a34a;
   transition: all 0.1s;
+}
+
+.remove-review-btn {
+  background: #22c55e;
+  border: 3px solid #16a34a;
+  font-weight: 900;
+  color: white;
+  box-shadow: 0 4px 0 #16a34a;
 }
 
 .remove-review-btn:active {
   transform: translateY(3px);
   box-shadow: 0 1px 0 #16a34a;
+}
+
+.delete-review-btn {
+  background: #fee2e2;
+  border: 3px solid #ef4444;
+  box-shadow: 0 4px 0 #ef4444;
+}
+
+.delete-review-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #ef4444;
 }
 
 .review-empty {
