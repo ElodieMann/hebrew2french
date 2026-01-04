@@ -482,8 +482,8 @@ body {
 .review-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px;
   background: #fdf2f8;
   border: 2px solid #f9a8d4;
   border-radius: 16px;
@@ -491,39 +491,46 @@ body {
 
 .review-word {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .review-he {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
   direction: rtl;
   color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .review-fr {
-  font-size: 22px;
+  font-size: 18px;
   color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .review-item-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .remove-review-btn,
 .delete-review-btn {
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   border-radius: 12px;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.1s;
+  flex-shrink: 0;
 }
 
 .remove-review-btn {

@@ -9,6 +9,8 @@ const getDeletedWords = () =>
   JSON.parse(localStorage.getItem("hebrew-deleted") || "[]");
 const saveDeletedWords = (deleted) =>
   localStorage.setItem("hebrew-deleted", JSON.stringify(deleted));
+const saveDailyStats = (stats) =>
+  localStorage.setItem("hebrew-daily-stats", JSON.stringify(stats));
 
 export default function App() {
   const [words, setWords] = useState([]);
@@ -16,10 +18,17 @@ export default function App() {
   const [current, setCurrent] = useState(null);
   const [choices, setChoices] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | wrong | correct
-  const [mode, setMode] = useState("learn"); // learn | review | review-list | trash
+  const [mode, setMode] = useState("learn"); // learn | review | trash | search | settings
   const [deletedList, setDeletedList] = useState([]);
   const [copied, setCopied] = useState(false);
   const [reviewView, setReviewView] = useState("list"); // list | quiz
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Objectif quotidien
+  const [dailyGoal, setDailyGoal] = useState(10);
+  const [todayCount, setTodayCount] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [lastDate, setLastDate] = useState("");
 
   const wordsRef = useRef([]);
   wordsRef.current = words;
@@ -49,6 +58,32 @@ export default function App() {
     
     setWords(loadedWords);
     wordsRef.current = loadedWords;
+    
+    // Charger les stats quotidiennes
+    const statsRaw = localStorage.getItem("hebrew-daily-stats");
+    if (statsRaw) {
+      const stats = JSON.parse(statsRaw);
+      setDailyGoal(stats.goal || 10);
+      setStreak(stats.streak || 0);
+      setLastDate(stats.lastDate || "");
+      
+      const today = new Date().toDateString();
+      if (stats.lastDate === today) {
+        setTodayCount(stats.todayCount || 0);
+      } else {
+        // Nouveau jour
+        setTodayCount(0);
+        // Vérifier le streak
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (stats.lastDate === yesterday.toDateString()) {
+          // On continue le streak
+        } else if (stats.lastDate !== today) {
+          // Streak perdu
+          setStreak(0);
+        }
+      }
+    }
   }, []);
 
   /* BUILD QUEUE */
