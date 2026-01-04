@@ -327,6 +327,7 @@ export default function App() {
 
         <div className="review-list-view">
           <h2 className="review-list-title">📌 À réviser ({reviewWords.length})</h2>
+          <p style={{fontSize: '10px', color: '#999', textAlign: 'center'}}>v2.1</p>
           
           {reviewWords.length > 0 ? (
             <>
