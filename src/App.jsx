@@ -131,6 +131,29 @@ export default function App() {
 
       setWords(updated);
       saveProgress(updated);
+
+      // Incrémenter le compteur quotidien
+      const today = new Date().toDateString();
+      const newTodayCount = todayCount + 1;
+      let newStreak = streak;
+      let newLastDate = lastDate;
+      
+      if (lastDate !== today) {
+        // Premier mot du jour
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (lastDate === yesterday.toDateString()) {
+          newStreak = streak + 1;
+        } else {
+          newStreak = 1;
+        }
+        newLastDate = today;
+      }
+      
+      setTodayCount(newTodayCount);
+      setStreak(newStreak);
+      setLastDate(newLastDate);
+      saveDailyStats({ goal: dailyGoal, todayCount: newTodayCount, streak: newStreak, lastDate: newLastDate });
     } else {
       setStatus("wrong");
 
@@ -305,6 +328,202 @@ export default function App() {
   const reviewCount = words.filter((w) => w.wrong > 0).length;
 
   const reviewWords = words.filter((w) => w.wrong > 0);
+  
+  // Filtrer les mots pour la recherche
+  const searchResults = searchQuery.trim() 
+    ? words.filter(w => 
+        w.he.includes(searchQuery) || 
+        w.fr.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
+  // Liste des catégories disponibles
+  const categories = [...new Set(words.map(w => w.cat || "Sans catégorie"))].sort();
+
+  /* SEARCH VIEW */
+  if (mode === "search") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div className="mode-toggle">
+            <button
+              className="mode-btn"
+              onClick={() => {
+                setMode("learn");
+                setSearchQuery("");
+                setQueue([]);
+              }}
+            >
+              <span className="mode-icon">←</span>
+              <span className="mode-text">Retour</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="search-view">
+          <h2 className="search-title">🔍 Recherche</h2>
+          
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Chercher un mot..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+          
+          {searchQuery.trim() && (
+            <p className="search-count">{searchResults.length} résultat(s)</p>
+          )}
+          
+          <div className="search-list">
+            {searchResults.map((w) => (
+              <div key={w.he} className="search-item">
+                <div className="search-word">
+                  <span className="search-he">{w.he}</span>
+                  <span className="search-fr">{w.fr}</span>
+                  {w.cat && <span className="search-cat">{w.cat}</span>}
+                </div>
+                <div className="search-item-actions">
+                  <button 
+                    className={`search-action-btn ${w.wrong > 0 ? "marked" : ""}`}
+                    onClick={() => {
+                      if (w.wrong > 0) {
+                        handleRemoveFromReview(w.he);
+                      } else {
+                        const updated = wordsRef.current.map((word) =>
+                          word.he === w.he ? { ...word, wrong: 1 } : word
+                        );
+                        setWords(updated);
+                        saveProgress(updated);
+                        wordsRef.current = updated;
+                      }
+                    }}
+                    title={w.wrong > 0 ? "Retirer de révision" : "Marquer à réviser"}
+                  >
+                    {w.wrong > 0 ? "✓" : "📌"}
+                  </button>
+                  <button 
+                    className="search-delete-btn"
+                    onClick={() => handleDeleteFromList(w.he)}
+                    title="Supprimer"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* SETTINGS VIEW */
+  if (mode === "settings") {
+    const today = new Date().toDateString();
+    const goalReached = todayCount >= dailyGoal;
+    
+    return (
+      <div className="app">
+        <header className="header">
+          <div className="mode-toggle">
+            <button
+              className="mode-btn"
+              onClick={() => {
+                setMode("learn");
+                setQueue([]);
+              }}
+            >
+              <span className="mode-icon">←</span>
+              <span className="mode-text">Retour</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="settings-view">
+          <h2 className="settings-title">⚙️ Paramètres</h2>
+          
+          {/* Objectif quotidien */}
+          <div className="settings-section">
+            <h3 className="settings-subtitle">🎯 Objectif quotidien</h3>
+            
+            <div className="goal-display">
+              <span className={`goal-today ${goalReached ? "reached" : ""}`}>
+                {todayCount}/{dailyGoal}
+              </span>
+              <span className="goal-label">mots aujourd'hui</span>
+            </div>
+            
+            <div className="goal-setter">
+              <button 
+                className="goal-btn"
+                onClick={() => {
+                  const newGoal = Math.max(1, dailyGoal - 5);
+                  setDailyGoal(newGoal);
+                  saveDailyStats({ goal: newGoal, todayCount, streak, lastDate });
+                }}
+              >
+                -5
+              </button>
+              <span className="goal-value">{dailyGoal}</span>
+              <button 
+                className="goal-btn"
+                onClick={() => {
+                  const newGoal = dailyGoal + 5;
+                  setDailyGoal(newGoal);
+                  saveDailyStats({ goal: newGoal, todayCount, streak, lastDate });
+                }}
+              >
+                +5
+              </button>
+            </div>
+            
+            <div className="streak-display">
+              <span className="streak-icon">🔥</span>
+              <span className="streak-value">{streak}</span>
+              <span className="streak-label">jours de suite</span>
+            </div>
+          </div>
+          
+          {/* Catégories */}
+          <div className="settings-section">
+            <h3 className="settings-subtitle">📁 Catégories ({categories.length})</h3>
+            <div className="categories-list">
+              {categories.map(cat => {
+                const count = words.filter(w => (w.cat || "Sans catégorie") === cat).length;
+                return (
+                  <div key={cat} className="category-item">
+                    <span className="category-name">{cat}</span>
+                    <span className="category-count">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="settings-section">
+            <h3 className="settings-subtitle">📊 Statistiques</h3>
+            <div className="stats-grid">
+              <div className="stats-item">
+                <span className="stats-value">{words.length}</span>
+                <span className="stats-label">Total mots</span>
+              </div>
+              <div className="stats-item">
+                <span className="stats-value">{reviewWords.length}</span>
+                <span className="stats-label">À réviser</span>
+              </div>
+              <div className="stats-item">
+                <span className="stats-value">{deletedList.length}</span>
+                <span className="stats-label">Supprimés</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   /* REVIEW LIST VIEW */
   if (mode === "review" && reviewView === "list") {
@@ -327,7 +546,6 @@ export default function App() {
 
         <div className="review-list-view">
           <h2 className="review-list-title">📌 À réviser ({reviewWords.length})</h2>
-          <p style={{fontSize: '10px', color: '#999', textAlign: 'center'}}>v2.1</p>
           
           {reviewWords.length > 0 ? (
             <>
@@ -562,6 +780,12 @@ export default function App() {
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
+          <button className="reset-small-btn" onClick={() => setMode("search")} title="Rechercher">
+            🔍
+          </button>
+          <button className="reset-small-btn" onClick={() => setMode("settings")} title="Paramètres">
+            ⚙️
+          </button>
           <button className="reset-small-btn" onClick={handleReset} title="Tout réinitialiser">
             ↺
           </button>
