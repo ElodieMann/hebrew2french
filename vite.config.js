@@ -7,6 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true
+      },
       manifest: {
         name: "💆‍♀️✨ Hebrew2French",
         short_name: "💆‍♀️ Hebrew",
@@ -15,7 +19,7 @@ export default defineConfig({
         theme_color: "#4f6df5",
         background_color: "#ffffff",
         start_url: "/"
-        // PAS D’ICÔNES → emoji utilisé
+        // PAS D'ICÔNES → emoji utilisé
       }
     })
   ]
