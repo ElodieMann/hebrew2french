@@ -7,8 +7,8 @@
   --success-light: #d1fae5;
   --danger: #ef4444;
   --danger-light: #fee2e2;
-  --warning: #8b5cf6;
-  --warning-light: #ede9fe;
+  --warning: #ec4899;
+  --warning-light: #fdf2f8;
   --pink: #ec4899;
   --pink-light: #fdf2f8;
   --gray-50: #f9fafb;
@@ -1076,11 +1076,11 @@ body {
 }
 
 .config-chip {
-  padding: 22px 28px;
+  padding: 26px 34px;
   background: var(--gray-100);
   border: 3px solid var(--gray-200);
-  border-radius: 20px;
-  font-size: 32px;
+  border-radius: 22px;
+  font-size: 38px;
   font-weight: 600;
   color: var(--gray-600);
   cursor: pointer;
@@ -1123,11 +1123,11 @@ body {
 }
 
 .config-toggle {
-  padding: 20px 26px;
+  padding: 24px 30px;
   background: var(--gray-100);
   border: 3px solid var(--gray-200);
-  border-radius: 14px;
-  font-size: 30px;
+  border-radius: 16px;
+  font-size: 36px;
   font-weight: 600;
   color: var(--gray-500);
   cursor: pointer;
@@ -1245,7 +1245,7 @@ body {
 }
 
 .quiz-progress-bar {
-  height: 12px;
+  height: 20px;
   background: var(--gray-200);
   border-radius: 100px;
   overflow: hidden;
@@ -1703,11 +1703,12 @@ body {
 @media (max-height: 750px) {
   .test-title { font-size: 36px; }
   .config-title { font-size: 32px; }
-  .config-chip { padding: 18px 22px; font-size: 28px; }
-  .config-label { font-size: 28px; }
-  .config-toggle { padding: 16px 20px; font-size: 26px; }
+  .config-chip { padding: 20px 26px; font-size: 32px; }
+  .config-label { font-size: 30px; }
+  .config-toggle { padding: 20px 24px; font-size: 30px; }
   .config-mode-btn { padding: 20px 16px; font-size: 26px; }
   .quiz-progress-text { font-size: 28px; }
+  .quiz-progress-bar { height: 16px; }
   .quiz-question-text { font-size: 36px; }
   .quiz-option { padding: 22px; }
   .option-key { width: 60px; height: 60px; font-size: 34px; }
