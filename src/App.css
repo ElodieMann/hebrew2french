@@ -1029,7 +1029,7 @@ body {
 
 /* ===== TEST APP ===== */
 .test-app {
-  background: linear-gradient(180deg, #fef3c7 0%, #fff7ed 100%);
+  background: linear-gradient(180deg, #fdf2f8 0%, #fce7f3 100%);
 }
 
 .test-header {
