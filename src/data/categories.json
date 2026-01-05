@@ -1,7 +1,31 @@
 {
-  "_info": "Fichier généré automatiquement - Lance 'node scripts/add-questions.cjs --list' pour le mettre à jour !",
-  "categories": [],
-  "matieres": [],
-  "matieres_par_categorie": {}
+  "_info": "Fichier généré automatiquement - Copie les noms exacts !",
+  "categories": [
+    "אנטומיה",
+    "קוסמטיקה"
+  ],
+  "matieres": [
+    "אבחון עור וכרטסת לקוחה",
+    "התא",
+    "התא והרקמות",
+    "מבוא לקוסמטיקה",
+    "מבנה העור",
+    "מערכת השלד",
+    "מערכת השרירים",
+    "ניקוי ראשוני"
+  ],
+  "matieres_par_categorie": {
+    "אנטומיה": [
+      "התא והרקמות",
+      "מערכת השלד",
+      "מערכת השרירים"
+    ],
+    "קוסמטיקה": [
+      "אבחון עור וכרטסת לקוחה",
+      "התא",
+      "מבוא לקוסמטיקה",
+      "מבנה העור",
+      "ניקוי ראשוני"
+    ]
+  }
 }
-

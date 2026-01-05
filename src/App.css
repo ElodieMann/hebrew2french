@@ -1239,6 +1239,48 @@ body {
   margin-bottom: 18px;
 }
 
+.config-wrong-count {
+  color: var(--pink);
+  margin-left: 8px;
+}
+
+/* Reset Section */
+.config-reset-section {
+  border-top: 2px dashed var(--gray-200);
+  padding-top: 20px;
+  margin-top: 10px;
+}
+
+.config-reset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.config-reset-btn {
+  padding: 16px 24px;
+  background: var(--gray-100);
+  border: 3px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.config-reset-btn:active {
+  transform: scale(0.95);
+}
+
+.config-reset-btn.reset-all {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 /* Quiz */
 .quiz-header {
   display: flex;

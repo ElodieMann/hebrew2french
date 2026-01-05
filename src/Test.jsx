@@ -169,12 +169,35 @@ export default function Test({ onBack }) {
     questionsRef.current = updated;
   };
 
-  // Reset toutes les révisions
-  const handleResetAllWrong = async () => {
-    if (!confirm("Remettre toutes les questions à zéro ?")) return;
+  // Reset les révisions (par catégorie, matière ou tout)
+  const handleResetWrong = async (scope = "all") => {
+    let toReset = [];
+    let message = "";
 
-    const toReset = questionsRef.current.filter((q) => q.wrong);
-    if (toReset.length === 0) return;
+    if (scope === "all") {
+      toReset = questionsRef.current.filter((q) => q.wrong);
+      message = "Remettre TOUTES les questions à zéro ?";
+    } else if (scope === "category" && selectedCategories.length > 0) {
+      toReset = questionsRef.current.filter(
+        (q) => q.wrong && matchesFilter(q.grande_categorie, selectedCategories)
+      );
+      message = `Remettre à zéro les questions de "${selectedCategories[0]}" ?`;
+    } else if (scope === "matiere" && selectedMatieres.length > 0) {
+      toReset = questionsRef.current.filter(
+        (q) => q.wrong && matchesFilter(q.matiere, selectedMatieres)
+      );
+      message = `Remettre à zéro les questions de "${selectedMatieres[0]}" ?`;
+    } else if (scope === "filtered") {
+      toReset = filteredQuestions.filter((q) => q.wrong);
+      message = `Remettre à zéro les ${toReset.length} questions filtrées ?`;
+    }
+
+    if (toReset.length === 0) {
+      alert("Aucune question à remettre à zéro !");
+      return;
+    }
+
+    if (!confirm(message)) return;
 
     const batch = writeBatch(db);
     toReset.forEach((q) => {
@@ -182,10 +205,16 @@ export default function Test({ onBack }) {
     });
     await batch.commit();
 
-    const updated = questionsRef.current.map((q) => ({ ...q, wrong: false }));
+    const resetIds = new Set(toReset.map((q) => q.id));
+    const updated = questionsRef.current.map((q) =>
+      resetIds.has(q.id) ? { ...q, wrong: false } : q
+    );
     setQuestions(updated);
     questionsRef.current = updated;
   };
+
+  // Ancien alias pour compatibilité
+  const handleResetAllWrong = () => handleResetWrong("all");
 
   // Changer catégorie (select)
   const handleCategoryChange = (e) => {
@@ -590,6 +619,11 @@ export default function Test({ onBack }) {
         <div className="config-start">
           <p className="config-count">
             {filteredQuestions.length} question(s) disponible(s)
+            {filteredQuestions.filter(q => q.wrong).length > 0 && (
+              <span className="config-wrong-count">
+                ({filteredQuestions.filter(q => q.wrong).length} à réviser)
+              </span>
+            )}
           </p>
           <button
             className="start-quiz-btn"
@@ -598,6 +632,37 @@ export default function Test({ onBack }) {
           >
             ▶️ Commencer le quiz
           </button>
+        </div>
+
+        {/* Reset */}
+        <div className="config-section config-reset-section">
+          <h3 className="config-title">🔄 Remettre à zéro</h3>
+          <div className="config-reset-buttons">
+            {selectedMatieres.length > 0 && filteredQuestions.filter(q => q.wrong).length > 0 && (
+              <button
+                className="config-reset-btn"
+                onClick={() => handleResetWrong("matiere")}
+              >
+                📚 {selectedMatieres[0]}
+              </button>
+            )}
+            {selectedCategories.length > 0 && filteredQuestions.filter(q => q.wrong).length > 0 && (
+              <button
+                className="config-reset-btn"
+                onClick={() => handleResetWrong("category")}
+              >
+                📁 {selectedCategories[0]}
+              </button>
+            )}
+            {wrongQuestions.length > 0 && (
+              <button
+                className="config-reset-btn reset-all"
+                onClick={() => handleResetWrong("all")}
+              >
+                🗑️ Tout ({wrongQuestions.length})
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
