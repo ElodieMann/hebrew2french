@@ -21,7 +21,9 @@ export default function App() {
             >
               <span className="home-choice-icon">📚</span>
               <span className="home-choice-title">Oulpan</span>
-              <span className="home-choice-desc">Vocabulaire Hébreu → Français</span>
+              <span className="home-choice-desc">
+                Vocabulaire Hébreu → Français
+              </span>
             </button>
 
             <button

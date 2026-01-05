@@ -1,78 +1,754 @@
 [
-  {
-    "grande_categorie": "אנטומיה",
-    "matiere": "מערכת השרירים",
-    "is_misrad_haavoda": false,
-    "is_prof": true,
-    "question": "מהו התפקיד של שרירי קיר הבטן (paroi abdominale)?",
-    "options": {
-      "A": "ייצור הורמונים",
-      "B": "הגנה על איברים פנימיים כמו המעיים",
-      "C": "ויסות טמפרטורת המוח",
-      "D": "ספיגת חומרים מזינים"
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו אחוז משקל הגוף ששרירי השלד מהווים?",
+      "options": {
+        "A": "כ-20%",
+        "B": "כ-30%",
+        "C": "כ-40%",
+        "D": "כ-50%"
+      },
+      "reponse_correcte": "C",
+      "explication": "שרירי השלד מהווים כ-40% ממשקל הגוף."
     },
-    "reponse_correcte": "B",
-    "explication": "שרירי קיר הבטן משמשים להגנה על האיברים הפנימיים הנמצאים בחלל הבטן."
-  },
-  {
-    "grande_categorie": "אנטומיה",
-    "matiere": "מערכת השרירים",
-    "is_misrad_haavoda": true,
-    "is_prof": true,
-    "question": "איזה סוג שריר נקרא גם 'שריר רצוני' (muscle volontaire)?",
-    "options": {
-      "A": "שריר חלק",
-      "B": "שריר הלב",
-      "C": "שריר השלד (משורטט)",
-      "D": "שריר המעיים"
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "איזה סוג שריר נקרא 'שריר רצוני'?",
+      "options": {
+        "A": "שריר הלב",
+        "B": "שריר חלק",
+        "C": "שריר השלד (משורטט)",
+        "D": "שריר קרביים"
+      },
+      "reponse_correcte": "C",
+      "explication": "שריר השלד נקרא שריר רצוני כיוון שתנועותיו בשליטת האדם."
     },
-    "reponse_correcte": "C",
-    "explication": "שריר השלד נקרא רצוני כיוון שתנועותיו נמצאות בשליטת האדם."
-  },
-  {
-    "grande_categorie": "אנטומיה",
-    "matiere": "מערכת השרירים",
-    "is_misrad_haavoda": true,
-    "is_prof": false,
-    "question": "מהי היחידה התפקודית (unité fonctionnelle) הקטנה ביותר במנגנון ההתכווצות של השריר?",
-    "options": {
-      "A": "מיופיבריל",
-      "B": "סרקומר (Sarcomère)",
-      "C": "אקטין",
-      "D": "מיוזין"
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהי היחידה התפקודית הקטנה ביותר במנגנון ההתכווצות של השריר?",
+      "options": {
+        "A": "מיופיבריל",
+        "B": "סרקומר",
+        "C": "אקטין",
+        "D": "מיוזין"
+      },
+      "reponse_correcte": "B",
+      "explication": "הסרקומר הוא היחידה התפקודית הקטנה ביותר במנגנון ההתכווצות."
     },
-    "reponse_correcte": "B",
-    "explication": "הסרקומר הוא היחידה התפקודית הקטנה ביותר המכילה את חלבוני הכיווץ."
-  },
-  {
-    "grande_categorie": "אנטומיה",
-    "matiere": "מערכת השרירים",
-    "is_misrad_haavoda": false,
-    "is_prof": true,
-    "question": "מהו המוליך העצבי (neurotransmetteur) המשתחרר בסינפסה בין העצב לשריר ומביא להפעלתו?",
-    "options": {
-      "A": "דופמין",
-      "B": "אדרנלין",
-      "C": "אצטילכולין (Acétylcholine)",
-      "D": "סרוטונין"
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהם שני חלבוני הכיווץ העיקריים בסרקומר?",
+      "options": {
+        "A": "קולגן ואלסטין",
+        "B": "אקטין ומיוזין",
+        "C": "קראטין וקולגן",
+        "D": "מיוגלובין והמוגלובין"
+      },
+      "reponse_correcte": "B",
+      "explication": "הסרקומרים בנויים מחלבוני הכיווץ אקטין ומיוזין."
     },
-    "reponse_correcte": "C",
-    "explication": "האצטילכולין נקשר לקולטנים בשריר ויוצר אות חשמלי המביא להתכווצותו."
-  },
-  {
-    "grande_categorie": "אנטומיה",
-    "matiere": "מערכת השרירים",
-    "is_misrad_haavoda": false,
-    "is_prof": true,
-    "question": "מה נכון לגבי שריר חלק (muscle lisse)?",
-    "options": {
-      "A": "הוא מחובר לעצמות השלד",
-      "B": "פעולתו רצונית בלבד",
-      "C": "הוא מצוי באיברים חלולים כמו כלי דם ומעיים",
-      "D": "הוא זקוק לכמות גדולה מאוד של אנרגיה ביחס לשריר שלד"
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "התכווצות השריר דורשת פירוק של איזו מולקולה?",
+      "options": {
+        "A": "DNA",
+        "B": "RNA",
+        "C": "ATP",
+        "D": "ADP"
+      },
+      "reponse_correcte": "C",
+      "explication": "התכווצות השריר דורשת פירוק של מולקולת ATP."
     },
-    "reponse_correcte": "C",
-    "explication": "שרירים חלקים נמצאים באיברים פנימיים ופעולתם היא בלתי רצונית."
-  }
-]
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "איזה אברון מייצר את ה-ATP בתאי השריר?",
+      "options": {
+        "A": "גרעין התא",
+        "B": "ריבוזום",
+        "C": "מיטוכונדריה",
+        "D": "רשת אנדופלזמטית"
+      },
+      "reponse_correcte": "C",
+      "explication": "ה-ATP נוצר על ידי המיטוכונדריה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהי הפעולה שאינה צורכת אנרגיה בשריר?",
+      "options": {
+        "A": "התכווצות",
+        "B": "הרפייה",
+        "C": "כיווץ חלקי",
+        "D": "מתיחה"
+      },
+      "reponse_correcte": "B",
+      "explication": "הרפיית השריר היא פעולה שאינה צורכת אנרגיה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו שמו של האברון יצרן הכוח שנמצא בשריר?",
+      "options": {
+        "A": "סרקומר",
+        "B": "מיופיבריל",
+        "C": "אקטין",
+        "D": "גיד"
+      },
+      "reponse_correcte": "B",
+      "explication": "המיופיבריל הוא אברון יצרן כוח שנמצא בשריר."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "כיצד מחובר השריר לעצם?",
+      "options": {
+        "A": "על ידי רצועה",
+        "B": "על ידי גיד",
+        "C": "על ידי סחוס",
+        "D": "על ידי עצב"
+      },
+      "reponse_correcte": "B",
+      "explication": "השריר מחובר לעצם על ידי גיד, שהוא רקמת חיבור."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד הגידים?",
+      "options": {
+        "A": "לייצר אנרגיה",
+        "B": "להעביר את המתח שנוצר בשרירים לעצמות",
+        "C": "לייצר חום",
+        "D": "להעביר דם לשריר"
+      },
+      "reponse_correcte": "B",
+      "explication": "תפקיד הגידים להעביר את המתח שנוצר בשרירים לעצמות."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "איזו מערכת שולטת על השרירים החלקים?",
+      "options": {
+        "A": "מערכת העצבים המרכזית",
+        "B": "מערכת העצבים הסומטית",
+        "C": "מערכת העצבים האוטונומית",
+        "D": "מערכת העצבים הפריפרית"
+      },
+      "reponse_correcte": "C",
+      "explication": "השרירים החלקים מנוהלים על ידי מערכת העצבים האוטונומית."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "היכן נמצאים שרירים חלקים?",
+      "options": {
+        "A": "בשלד בלבד",
+        "B": "בלב בלבד",
+        "C": "באיברים חלולים כגון הקיבה, המעי וכלי הדם",
+        "D": "בעור בלבד"
+      },
+      "reponse_correcte": "C",
+      "explication": "שרירים חלקים נמצאים באיברים חלולים, כגון הקיבה, המעי, כלי הדם ושלפוחית השתן."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהי פריסטלטיקה?",
+      "options": {
+        "A": "התכווצות שריר הלב",
+        "B": "התנועה הגלית של התכווצויות והרפיות שרירים לאורך צינורות בגוף",
+        "C": "מתח שרירי במנוחה",
+        "D": "כיווץ שרירי השלד"
+      },
+      "reponse_correcte": "B",
+      "explication": "פריסטלטיקה היא התנועה הגלית של התכווצויות והרפיות שרירים לאורך צינורות בגוף."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "כמה גרעינים יש לתאי שרירים חלקים?",
+      "options": {
+        "A": "אין גרעינים",
+        "B": "גרעין יחיד",
+        "C": "שני גרעינים",
+        "D": "מספר גרעינים"
+      },
+      "reponse_correcte": "B",
+      "explication": "לתאי שרירים חלקים גרעין יחיד, כמו לרוב תאי הגוף."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו התפקיד המרכזי של השרירים החלקים בכלי הדם?",
+      "options": {
+        "A": "לייצר תאי דם",
+        "B": "לווסת את לחץ הדם ואת חלוקת הדם לאיברים",
+        "C": "לסנן רעלים מהדם",
+        "D": "לייצר נוגדנים"
+      },
+      "reponse_correcte": "B",
+      "explication": "תפקידם המרכזי הוא לווסת את לחץ הדם ואת חלוקת הדם לאיברים השונים בהתאם לצרכים של הגוף."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "היכן נמצאת רקמת שריר הלב (קרדיו-מיוציט)?",
+      "options": {
+        "A": "בכל הגוף",
+        "B": "בלב בלבד",
+        "C": "בכלי הדם",
+        "D": "במעיים"
+      },
+      "reponse_correcte": "B",
+      "explication": "רקמת שריר הלב (קרדיו-מיוציט) היא סוג של רקמת שריר מיוחדת שנמצאת בלב בלבד."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו המוליך הכימי (נוירוטרנסמיטר) המשוחרר בסינפסה שבין העצב והשריר?",
+      "options": {
+        "A": "דופמין",
+        "B": "סרוטונין",
+        "C": "אצטילכולין",
+        "D": "אדרנלין"
+      },
+      "reponse_correcte": "C",
+      "explication": "המוליך הכימי (אצטילכולין) נקשר לקולטנים המצויים בשריר ובכך יוצר אות חשמלי בשריר ומביא להפעלתו."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו טונוס שריר?",
+      "options": {
+        "A": "התכווצות מלאה של השריר",
+        "B": "הכיווץ החלקי של שרירי הגוף המתרחש כל הזמן",
+        "C": "הרפיית השריר",
+        "D": "כאב שרירים"
+      },
+      "reponse_correcte": "B",
+      "explication": "טונוס שריר הוא הכיווץ החלקי של שרירי הגוף המתרחש כל הזמן."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מה קורה לטונוס השרירים בזמן השינה?",
+      "options": {
+        "A": "עולה באופן משמעותי",
+        "B": "נשאר קבוע",
+        "C": "פוחת באופן משמעותי",
+        "D": "נעלם לחלוטין"
+      },
+      "reponse_correcte": "C",
+      "explication": "בזמן השינה טונוס השרירים פוחת באופן משמעותי."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהי היפוטוניה?",
+      "options": {
+        "A": "מתח שרירים גבוה מהרגיל",
+        "B": "מתח שרירים נמוך מהתקין",
+        "C": "מתח שרירים תקין",
+        "D": "היעדר מוחלט של מתח שרירים"
+      },
+      "reponse_correcte": "B",
+      "explication": "היפוטוניה היא מתח שרירים נמוך מהתקין, המתבטא ברפיון שרירים ובגמישות יתר."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהי היפרטוניה?",
+      "options": {
+        "A": "מתח שרירים נמוך מהתקין",
+        "B": "מתח שרירים גבוה מהרגיל",
+        "C": "מתח שרירים תקין",
+        "D": "רפיון שרירים"
+      },
+      "reponse_correcte": "B",
+      "explication": "היפרטוניה היא מתח שרירים גבוה מהרגיל, המתבטא בנוקשות, בעוויתות ובקיפאון של השרירים."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "כמה שרירים יש בפנים בערך?",
+      "options": {
+        "A": "כ-20",
+        "B": "כ-30",
+        "C": "כ-43",
+        "D": "כ-60"
+      },
+      "reponse_correcte": "C",
+      "explication": "בפנים יש כ-43 שרירים."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "במה שונים שרירי הפנים משרירי השלד?",
+      "options": {
+        "A": "שרירי הפנים קטנים יותר",
+        "B": "שרירי הפנים מתחברים מצד אחד לעצמות הגולגולת ומצדם השני לעור",
+        "C": "שרירי הפנים אינם מתכווצים",
+        "D": "שרירי הפנים אינם רצוניים"
+      },
+      "reponse_correcte": "B",
+      "explication": "בניגוד לשרירי השלד (המחוברים לעצמות בשני הקצוות), שרירי הפנים מתחברים מצד אחד לעצמות הגולגולת ומצדם השני לעור."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "איזה עצב מעצבב את שרירי ההבעה?",
+      "options": {
+        "A": "עצב מס' 5 (טריג'מינל)",
+        "B": "עצב מס' 7 (פאציאלי)",
+        "C": "עצב מס' 10 (וואגוס)",
+        "D": "עצב מס' 12"
+      },
+      "reponse_correcte": "B",
+      "explication": "שרירי ההבעה מעוצבבים על ידי עצב קרניאילי מס' 7: עצב הפנים – פאציאלי/FACIAL."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "איזה עצב מעצבב את שרירי הלעיסה?",
+      "options": {
+        "A": "עצב מס' 5 (טריג'מינל)",
+        "B": "עצב מס' 7 (פאציאלי)",
+        "C": "עצב מס' 10 (וואגוס)",
+        "D": "עצב מס' 3"
+      },
+      "reponse_correcte": "A",
+      "explication": "שרירי הלעיסה מעוצבבים על ידי עצב הלסת התחתונה של עצב מס' 5: העצב המשולש - טריג'מינל/TRIGEMINAL."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מכמה שרירים משורטטים מורכבים שרירי הלעיסה בעיקר?",
+      "options": {
+        "A": "2",
+        "B": "3",
+        "C": "4",
+        "D": "5"
+      },
+      "reponse_correcte": "C",
+      "explication": "שרירי הלעיסה מורכבים בעיקר מארבעה שרירים משורטטים שמתחברים אל הלסת התחתונה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו השריר החזק ביותר בגוף האדם?",
+      "options": {
+        "A": "שריר הרקה (טמפורליס)",
+        "B": "שריר המלעס (מסטר)",
+        "C": "שריר הכתף (דלטואיד)",
+        "D": "שריר הטרפז"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר המלעס (MASSETER MUSCLE) הוא השריר החזק ביותר בגוף האדם."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הרקה (טמפורליס)?",
+      "options": {
+        "A": "מוריד את הלסת התחתונה",
+        "B": "מרים את הלסת התחתונה וסוגר את הפה",
+        "C": "מזיז את הלסת לצדדים",
+        "D": "פותח את הפה"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הרקה (MUSCLE TEMPORALIS) מרים את הלסת התחתונה וסוגר את הפה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הפרונטליס (FRONTALIS)?",
+      "options": {
+        "A": "סוגר את העיניים",
+        "B": "מרים את הגבות ויוצר קפלים במצח",
+        "C": "מקרב את הגבות",
+        "D": "מוריד את השפה התחתונה"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הפרונטליס מרים את הגבות, מושך קדימה את הקרקפת ויוצר קפלים במצח."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "איזה שריר נקרא 'שריר 11' ומקרב את הגבות?",
+      "options": {
+        "A": "פרונטליס",
+        "B": "קורוגטור",
+        "C": "פרוסרוס",
+        "D": "אורביקולריס אוקולי"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר קורוגטור (CORRUGATOR) נקרא גם שריר 11, והוא מקרב את הגבות ומושך אותן למטה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר האורביקולריס אוקולי (ORBICULARIS OCULI)?",
+      "options": {
+        "A": "להרים את העפעף",
+        "B": "לכווץ ולעצום את העין",
+        "C": "להזיז את גלגל העין",
+        "D": "להרחיב את האישון"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר האורביקולריס אוקולי הוא שריר טבעתי שתפקידו לכווץ ולעצום את העין."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר עפעף מרים (LEVATOR PALPEBRAE SUPERIORIS)?",
+      "options": {
+        "A": "לסגור את העין",
+        "B": "להרים את העפעף העליון ולשמרו במצב פתוח",
+        "C": "לכווץ את העין",
+        "D": "להזיז את הדמעות"
+      },
+      "reponse_correcte": "B",
+      "explication": "תפקידו של שריר עפעף מרים להרים את העפעף העליון ולשמרו במצב פתוח."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר האורביקולריס אוריס (ORBICULARIS ORIS)?",
+      "options": {
+        "A": "לפתוח את הפה",
+        "B": "לסגור את השפתיים",
+        "C": "ללעוס מזון",
+        "D": "להזיז את הלסת"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר האורביקולריס אוריס הוא שריר טבעתי שתפקידו סגירת השפתיים."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הזיגומטיקוס מייג'ור (ZYGOMATICUS MAJOR)?",
+      "options": {
+        "A": "מוריד את זוויות הפה",
+        "B": "מעלה את זוויות הפה כלפי מעלה והחוצה ויוצר חיוך רחב",
+        "C": "סוגר את העיניים",
+        "D": "מרים את הגבות"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הזיגומטיקוס מייג'ור אחראי להעלאת זוויות הפה כלפי מעלה והחוצה, מה שיוצר חיוך רחב."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מה נוצר כאשר שריר הזיגומטיקוס מייג'ור מתפצל לשני חלקים בחיבורו ללחי?",
+      "options": {
+        "A": "קמט",
+        "B": "גומה בעור",
+        "C": "צלקת",
+        "D": "שקע"
+      },
+      "reponse_correcte": "B",
+      "explication": "כאשר שריר הזיגומטיקוס מייג'ור מתפצל לשני חלקים בחיבורו ללחי, בזמן החיוך נוצרת גומה בעור."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הריסוריוס (RISORIUS)?",
+      "options": {
+        "A": "מרים את הגבות",
+        "B": "מושך לצדדים את זווית הפה כדי ליצור חיוך קל",
+        "C": "סוגר את העיניים",
+        "D": "מוריד את השפה התחתונה"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הריסוריוס (שריר הצחוק) מושך לצדדים את זווית הפה כדי ליצור חיוך קל או מאולץ."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הבוצינטור (BUCCINATOR)?",
+      "options": {
+        "A": "להרים את הגבות",
+        "B": "לסייע בפתיחת וסגירת הפה ובלעיסה",
+        "C": "להזיז את האוזניים",
+        "D": "לסגור את העיניים"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הבוצינטור מסייע בפתיחת וסגירת הפה ובלעיסה, ושומר על הלחיים מפני התקפלות בעת לעיסה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "בילודים, במה עוזר שריר הבוצינטור?",
+      "options": {
+        "A": "בבליעה",
+        "B": "ביניקה ובנשיפה",
+        "C": "בצחוק",
+        "D": "במצמוץ"
+      },
+      "reponse_correcte": "B",
+      "explication": "בילודים שריר הבוצינטור עוזר ביניקה ובנשיפה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הפלטיזמה (PLATYSMA)?",
+      "options": {
+        "A": "מרים את הלסת",
+        "B": "מונע לחץ על הוורידים השטחיים ומוריד את זוויות הפה להבעת עצב",
+        "C": "מסובב את הראש",
+        "D": "מרים את הכתפיים"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הפלטיזמה מונע לחץ על הוורידים השטחיים ומוריד את זוויות הפה להבעת עצב."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו השריר הגדול ביותר בצוואר?",
+      "options": {
+        "A": "פלטיזמה",
+        "B": "סטרנוקלידומסטואיד (SCM)",
+        "C": "טרפז",
+        "D": "דלטואיד"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הסטרנוקלידומסטואיד (STERNOCLEIDOMASTOID SCM) הוא השריר הגדול ביותר בצוואר."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הסטרנוקלידומסטואיד?",
+      "options": {
+        "A": "להרים את הכתפיים",
+        "B": "לסובב את הראש ולכופפו, ולהגן על כלי הדם בצוואר",
+        "C": "לפתוח את הפה",
+        "D": "להזיז את העיניים"
+      },
+      "reponse_correcte": "B",
+      "explication": "לשריר הסטרנוקלידומסטואיד תפקיד בסיבוב הראש וכיפופו, ותפקיד הגנתי על כלי הדם בצוואר."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מכמה אזורים מורכב שריר הטרפז?",
+      "options": {
+        "A": "שניים",
+        "B": "שלושה",
+        "C": "ארבעה",
+        "D": "חמישה"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הטרפז מורכב משלושה אזורים: טרפזיוס עליון, טרפזיוס אמצעי וטרפזיוס תחתון."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הטרפז?",
+      "options": {
+        "A": "לכופף את המרפק",
+        "B": "לאפשר הנעת עצם השכם בכמה תנועות",
+        "C": "לסובב את הירך",
+        "D": "להרים את הלסת"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הטרפז מחבר את הכתף לגולגולת ולעמוד השדרה ומאפשר הנעת עצם השכם בכמה תנועות."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "היכן ממוקמים השרירים המעוינים (RHOMBOID)?",
+      "options": {
+        "A": "בחזה",
+        "B": "תחת שריר הטרפז",
+        "C": "בבטן",
+        "D": "בצוואר"
+      },
+      "reponse_correcte": "B",
+      "explication": "השרירים המעוינים ממוקמים תחת שריר הטרפז."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מכמה ראשים מורכב שריר הזרוע התלת-ראשי (TRICEPS)?",
+      "options": {
+        "A": "שניים",
+        "B": "שלושה",
+        "C": "ארבעה",
+        "D": "חמישה"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הזרוע התלת-ראשי מורכב משלושה ראשים: הראש הארוך, הראש הצדי והראש התיכון."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הזרוע התלת-ראשי (TRICEPS)?",
+      "options": {
+        "A": "לכופף את המרפק",
+        "B": "להניע את המרפק לכיוון פשיטה",
+        "C": "לסובב את הכתף",
+        "D": "להרים את היד"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הזרוע התלת-ראשי הוא המניע העיקרי של המרפק לכיוון פשיטה (extension)."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מהו תפקיד שריר הזרוע והחישור (BRACHIORADIALIS)?",
+      "options": {
+        "A": "לפשוט את המרפק",
+        "B": "לכופף את המרפק",
+        "C": "לסובב את כף היד",
+        "D": "להרים את הכתף"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הזרוע והחישור משמש כמכופף של המרפק ומספק תנועה חזקה ומהירה."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מכמה חלקים מחולק שריר הכתף (DELTOID)?",
+      "options": {
+        "A": "שניים",
+        "B": "שלושה",
+        "C": "ארבעה",
+        "D": "חמישה"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר הכתף מחולק לשלושה חלקים: שריר הכתף הקדמית, שריר הכתף האמצעי ושריר הכתף האחורית."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מה מסייע עיסוי שרירים איכותי לשפר?",
+      "options": {
+        "A": "רק זרימת דם",
+        "B": "טונוס שרירים, זרימת דם והלימפה, חילוף חומרים ויצור קולגן ואלסטין",
+        "C": "רק צבע העור",
+        "D": "רק גודל השרירים"
+      },
+      "reponse_correcte": "B",
+      "explication": "עיסוי שרירים איכותי יכול לסייע להרפות שרירי פנים מתוחים, להגביר זרימת דם והלימפה, לשפר חילוף חומרים וטונוס שרירים, ולגרות יצור קולגן ואלסטין."
+    },
+    {
+      "grande_categorie": "אנטומיה",
+      "matiere": "מערכת השרירים",
+      "is_misrad_haavoda": false,
+      "is_prof": false,
+      "question": "מדוע נקרא שריר משורטט (strié) בשם זה?",
+      "options": {
+        "A": "בגלל צורתו המאורכת",
+        "B": "בגלל תבנית אופיינית של פסים רוחביים הנראית במיקרוסקופ",
+        "C": "בגלל צבעו האדום",
+        "D": "בגלל מיקומו בגוף"
+      },
+      "reponse_correcte": "B",
+      "explication": "שריר משורטט נקרא כך משום שבמבט תחת מיקרוסקופ, ניתן לראות שיש לו תבנית אופיינית של פסים רוחביים לסירוגין."
+    }
+  ]
 
+  
