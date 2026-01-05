@@ -7,6 +7,7 @@ import {
   deleteDoc,
   updateDoc,
   addDoc,
+  writeBatch,
 } from "firebase/firestore";
 import "./App.css";
 
@@ -183,6 +184,25 @@ export default function App() {
     );
     setWords(updated);
     wordsRef.current = updated;
+  };
+
+  /* RESET ALL - Remettre tous les mots à 0 */
+  const handleResetAll = async () => {
+    if (!confirm("Remettre toute la progression à zéro ?")) return;
+
+    const wordsToReset = wordsRef.current.filter((w) => w.wrong);
+    if (wordsToReset.length === 0) return;
+
+    const batch = writeBatch(db);
+    wordsToReset.forEach((w) => {
+      batch.update(doc(db, "words", w.id), { wrong: false });
+    });
+    await batch.commit();
+
+    const updated = wordsRef.current.map((w) => ({ ...w, wrong: false }));
+    setWords(updated);
+    wordsRef.current = updated;
+    setQueue([]);
   };
 
   /* ADD NEW WORD */
@@ -544,6 +564,13 @@ export default function App() {
           >
             🔍
           </button>
+          <button
+            className="reset-small-btn reset-all-btn"
+            onClick={handleResetAll}
+            title="Tout remettre à zéro"
+          >
+            🔄
+          </button>
         </div>
       </header>
 
@@ -596,15 +623,15 @@ export default function App() {
           </>
         ) : (
           <div className="choices-grid">
-            {choices.map((c, i) => (
-              <button
+        {choices.map((c, i) => (
+          <button
                 key={`${current.id}-${c.fr}-${i}`}
                 className="choice-btn"
-                onClick={() => handleClick(c)}
-              >
-                {c.fr}
-              </button>
-            ))}
+            onClick={() => handleClick(c)}
+          >
+            {c.fr}
+          </button>
+        ))}
           </div>
         )}
       </footer>

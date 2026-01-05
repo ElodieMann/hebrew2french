@@ -237,6 +237,16 @@ body {
   color: white;
 }
 
+.reset-all-btn {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.reset-all-btn:active {
+  background: var(--warning);
+  color: white;
+}
+
 /* ===== WORD CARD ===== */
 .card-area {
   flex: 1;
