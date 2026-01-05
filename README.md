@@ -35,7 +35,7 @@ node scripts/import-words.cjs
 [
   {
     "question": "מהו התפקיד של...?",
-    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
     "reponse_correcte": "B",
     "explication": "..."
   }
@@ -49,6 +49,7 @@ node scripts/add-questions.cjs "אנטומיה" "מערכת השרירים"
 ```
 
 **Arguments optionnels :**
+
 ```bash
 # Avec is_prof=true et is_misrad=false (défaut)
 node scripts/add-questions.cjs "אנטומיה" "מערכת השרירים"
@@ -72,7 +73,7 @@ Si tes questions ont déjà toutes les métadonnées :
     "is_prof": true,
     "is_misrad_haavoda": false,
     "question": "...",
-    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
     "reponse_correcte": "B",
     "explication": "..."
   }
