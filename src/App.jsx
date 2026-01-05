@@ -596,15 +596,15 @@ export default function App() {
           </>
         ) : (
           <div className="choices-grid">
-        {choices.map((c, i) => (
-          <button
+            {choices.map((c, i) => (
+              <button
                 key={`${current.id}-${c.fr}-${i}`}
                 className="choice-btn"
-            onClick={() => handleClick(c)}
-          >
-            {c.fr}
-          </button>
-        ))}
+                onClick={() => handleClick(c)}
+              >
+                {c.fr}
+              </button>
+            ))}
           </div>
         )}
       </footer>
