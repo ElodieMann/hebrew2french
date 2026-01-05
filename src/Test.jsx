@@ -172,19 +172,17 @@ export default function Test({ onBack }) {
     questionsRef.current = updated;
   };
 
-  // Toggle catégorie
-  const toggleCategory = (cat) => {
-    setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-    );
+  // Changer catégorie (select)
+  const handleCategoryChange = (e) => {
+    const value = e.target.value;
+    setSelectedCategories(value ? [value] : []);
     setSelectedMatieres([]);
   };
 
-  // Toggle matière
-  const toggleMatiere = (mat) => {
-    setSelectedMatieres((prev) =>
-      prev.includes(mat) ? prev.filter((m) => m !== mat) : [...prev, mat]
-    );
+  // Changer matière (select)
+  const handleMatiereChange = (e) => {
+    const value = e.target.value;
+    setSelectedMatieres(value ? [value] : []);
   };
 
   /* LOADING STATE */
@@ -234,19 +232,18 @@ export default function Test({ onBack }) {
         </header>
 
         {/* Filtres rapides */}
-        {categories.length > 1 && (
+        {[...new Set(wrongQuestions.map((q) => q.grande_categorie))].length > 1 && (
           <div className="review-filters">
-            <div className="config-chips">
+            <select 
+              className="config-select"
+              value={selectedCategories[0] || ""}
+              onChange={handleCategoryChange}
+            >
+              <option value="">Toutes les catégories</option>
               {[...new Set(wrongQuestions.map((q) => q.grande_categorie))].sort().map((cat) => (
-                <button
-                  key={cat}
-                  className={`config-chip small ${selectedCategories.includes(cat) ? "active" : ""}`}
-                  onClick={() => toggleCategory(cat)}
-                >
-                  {cat}
-                </button>
+                <option key={cat} value={cat}>{cat}</option>
               ))}
-            </div>
+            </select>
           </div>
         )}
 
@@ -475,36 +472,34 @@ export default function Test({ onBack }) {
         {/* Catégories */}
         {categories.length > 0 && (
           <div className="config-section">
-            <h3 className="config-title">📁 Catégories</h3>
-            <div className="config-chips">
+            <h3 className="config-title">📁 Catégorie</h3>
+            <select 
+              className="config-select"
+              value={selectedCategories[0] || ""}
+              onChange={handleCategoryChange}
+            >
+              <option value="">Toutes les catégories</option>
               {categories.map((cat) => (
-                <button
-                  key={cat}
-                  className={`config-chip ${selectedCategories.includes(cat) ? "active" : ""}`}
-                  onClick={() => toggleCategory(cat)}
-                >
-                  {cat}
-                </button>
+                <option key={cat} value={cat}>{cat}</option>
               ))}
-            </div>
+            </select>
           </div>
         )}
 
         {/* Matières */}
         {matieres.length > 0 && (
           <div className="config-section">
-            <h3 className="config-title">📚 Matières</h3>
-            <div className="config-chips">
+            <h3 className="config-title">📚 Matière</h3>
+            <select 
+              className="config-select"
+              value={selectedMatieres[0] || ""}
+              onChange={handleMatiereChange}
+            >
+              <option value="">Toutes les matières</option>
               {matieres.map((mat) => (
-                <button
-                  key={mat}
-                  className={`config-chip ${selectedMatieres.includes(mat) ? "active" : ""}`}
-                  onClick={() => toggleMatiere(mat)}
-                >
-                  {mat}
-                </button>
+                <option key={mat} value={mat}>{mat}</option>
               ))}
-            </div>
+            </select>
           </div>
         )}
 
