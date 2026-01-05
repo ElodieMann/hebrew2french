@@ -3,29 +3,29 @@
  * SCRIPT D'IMPORT DE NOUVEAUX MOTS
  * =====================================================
  * 
- * Ce script ajoute les nouveaux mots de words.json vers Firebase.
- * Il ne crée PAS de doublons (vérifie si le mot hébreu existe déjà).
+ * COMMANDE À LANCER :
+ * 
+ *   node scripts/import-words.js
  * 
  * -----------------------------------------------------
- * COMMENT L'UTILISER :
+ * COMMENT ÇA MARCHE :
  * -----------------------------------------------------
  * 
  * 1. Ajoute tes nouveaux mots dans : src/data/words.json
- *    Format : {"he": "מילה", "fr": "mot"}
+ *    Format : [{"he": "מילה", "fr": "mot"}, ...]
  * 
- * 2. Ouvre le terminal dans le dossier du projet
+ * 2. Lance : node scripts/import-words.js
  * 
- * 3. Lance la commande :
- *    node scripts/import-words.js
+ * 3. Les mots sont ajoutés à Firebase
  * 
- * 4. C'est tout ! Les nouveaux mots sont ajoutés à Firebase.
+ * 4. Le fichier words.json est vidé automatiquement
  * 
  * -----------------------------------------------------
  */
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCirsTIEJXkj6SDL6W-inUV3Gw0uOyH_is",
@@ -40,49 +40,57 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 async function importNewWords() {
-  console.log("📚 Chargement des mots...\n");
-  
   // 1. Lire le fichier JSON local
   const wordsRaw = readFileSync("./src/data/words.json", "utf-8");
-  const localWords = JSON.parse(wordsRaw);
-  console.log(`   Fichier JSON : ${localWords.length} mots`);
-  
-  // 2. Charger les mots existants de Firebase
-  const snapshot = await getDocs(collection(db, "words"));
-  const firebaseWords = snapshot.docs.map(doc => doc.data());
-  console.log(`   Firebase : ${firebaseWords.length} mots\n`);
-  
-  // 3. Créer un Set des mots hébreux existants (pour comparaison rapide)
-  const existingHebrew = new Set(firebaseWords.map(w => w.he));
-  
-  // 4. Trouver les nouveaux mots (pas encore dans Firebase)
-  const newWords = localWords.filter(w => !existingHebrew.has(w.he));
+  const newWords = JSON.parse(wordsRaw);
   
   if (newWords.length === 0) {
-    console.log("✅ Aucun nouveau mot à ajouter. Tout est déjà synchronisé !");
+    console.log("📭 Le fichier words.json est vide. Rien à importer.");
     process.exit(0);
   }
   
-  console.log(`🆕 ${newWords.length} nouveaux mots à ajouter :\n`);
+  console.log(`\n📚 ${newWords.length} mots à ajouter :\n`);
   
-  // Afficher les nouveaux mots
+  // Afficher les mots
   newWords.forEach((w, i) => {
     console.log(`   ${i + 1}. ${w.he} = ${w.fr}`);
   });
   console.log("");
   
-  // 5. Ajouter les nouveaux mots à Firebase
-  let count = 0;
-  for (const word of newWords) {
+  // 2. Vérifier les doublons avec Firebase
+  const snapshot = await getDocs(collection(db, "words"));
+  const existingHebrew = new Set(snapshot.docs.map(doc => doc.data().he));
+  
+  const toAdd = newWords.filter(w => !existingHebrew.has(w.he));
+  const duplicates = newWords.length - toAdd.length;
+  
+  if (duplicates > 0) {
+    console.log(`⚠️  ${duplicates} mot(s) déjà existant(s) - ignoré(s)`);
+  }
+  
+  if (toAdd.length === 0) {
+    console.log("✅ Tous ces mots existent déjà dans Firebase.");
+    // Vider le fichier quand même
+    writeFileSync("./src/data/words.json", "[]");
+    console.log("🧹 Fichier words.json vidé.\n");
+    process.exit(0);
+  }
+  
+  // 3. Ajouter à Firebase
+  for (const word of toAdd) {
     await addDoc(collection(db, "words"), {
       he: word.he,
       fr: word.fr,
       wrong: false
     });
-    count++;
   }
   
-  console.log(`🎉 Terminé ! ${count} nouveaux mots ajoutés à Firebase.\n`);
+  console.log(`🎉 ${toAdd.length} nouveaux mots ajoutés à Firebase !`);
+  
+  // 4. Vider le fichier words.json
+  writeFileSync("./src/data/words.json", "[]");
+  console.log("🧹 Fichier words.json vidé.\n");
+  
   process.exit(0);
 }
 
