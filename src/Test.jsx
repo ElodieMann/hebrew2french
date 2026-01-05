@@ -216,17 +216,41 @@ export default function Test({ onBack }) {
   // Ancien alias pour compatibilité
   const handleResetAllWrong = () => handleResetWrong("all");
 
-  // Changer catégorie (select)
-  const handleCategoryChange = (e) => {
-    const value = e.target.value;
-    setSelectedCategories(value ? [value] : []);
+  // Ajouter une catégorie (depuis select)
+  const addCategory = (cat) => {
+    if (cat && !selectedCategories.includes(cat)) {
+      setSelectedCategories((prev) => [...prev, cat]);
+      setSelectedMatieres([]);
+    }
+  };
+
+  // Retirer une catégorie (clic sur chip)
+  const removeCategory = (cat) => {
+    setSelectedCategories((prev) => prev.filter((c) => c !== cat));
     setSelectedMatieres([]);
   };
 
-  // Changer matière (select)
-  const handleMatiereChange = (e) => {
-    const value = e.target.value;
-    setSelectedMatieres(value ? [value] : []);
+  // Ajouter une matière (depuis select)
+  const addMatiere = (mat) => {
+    if (mat && !selectedMatieres.includes(mat)) {
+      setSelectedMatieres((prev) => [...prev, mat]);
+    }
+  };
+
+  // Retirer une matière (clic sur chip)
+  const removeMatiere = (mat) => {
+    setSelectedMatieres((prev) => prev.filter((m) => m !== mat));
+  };
+
+  // Sélectionner toutes les catégories
+  const selectAllCategories = () => {
+    setSelectedCategories([...categories]);
+    setSelectedMatieres([]);
+  };
+
+  // Sélectionner toutes les matières
+  const selectAllMatieres = () => {
+    setSelectedMatieres([...matieres]);
   };
 
   /* LOADING STATE */
@@ -280,14 +304,26 @@ export default function Test({ onBack }) {
           <div className="review-filters">
             <select 
               className="config-select"
-              value={selectedCategories[0] || ""}
-              onChange={handleCategoryChange}
+              value=""
+              onChange={(e) => addCategory(e.target.value)}
             >
-              <option value="">Toutes les catégories</option>
-              {[...new Set(wrongQuestions.flatMap((q) => toArray(q.grande_categorie)))].sort().map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
+              <option value="">+ Filtrer par catégorie</option>
+              {[...new Set(wrongQuestions.flatMap((q) => toArray(q.grande_categorie)))]
+                .filter(c => !selectedCategories.includes(c))
+                .sort()
+                .map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
             </select>
+            {selectedCategories.length > 0 && (
+              <div className="selected-chips">
+                {selectedCategories.map((cat) => (
+                  <span key={cat} className="selected-chip" onClick={() => removeCategory(cat)}>
+                    {cat} ✕
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -516,34 +552,76 @@ export default function Test({ onBack }) {
         {/* Catégories */}
         {categories.length > 0 && (
           <div className="config-section">
-            <h3 className="config-title">📁 Catégorie</h3>
-            <select 
-              className="config-select"
-              value={selectedCategories[0] || ""}
-              onChange={handleCategoryChange}
-            >
-              <option value="">Toutes les catégories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <h3 className="config-title">📁 Catégories</h3>
+            <div className="select-with-all">
+              <select 
+                className="config-select"
+                value=""
+                onChange={(e) => addCategory(e.target.value)}
+              >
+                <option value="">+ Ajouter une catégorie</option>
+                {categories.filter(c => !selectedCategories.includes(c)).map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <button 
+                className="select-all-btn"
+                onClick={selectAllCategories}
+                disabled={selectedCategories.length === categories.length}
+              >
+                Tout
+              </button>
+            </div>
+            {selectedCategories.length > 0 && (
+              <div className="selected-chips">
+                {selectedCategories.map((cat) => (
+                  <span key={cat} className="selected-chip" onClick={() => removeCategory(cat)}>
+                    {cat} ✕
+                  </span>
+                ))}
+              </div>
+            )}
+            {selectedCategories.length === 0 && (
+              <p className="select-hint">Toutes les catégories</p>
+            )}
           </div>
         )}
 
         {/* Matières */}
         {matieres.length > 0 && (
           <div className="config-section">
-            <h3 className="config-title">📚 Matière</h3>
-            <select 
-              className="config-select"
-              value={selectedMatieres[0] || ""}
-              onChange={handleMatiereChange}
-            >
-              <option value="">Toutes les matières</option>
-              {matieres.map((mat) => (
-                <option key={mat} value={mat}>{mat}</option>
-              ))}
-            </select>
+            <h3 className="config-title">📚 Matières</h3>
+            <div className="select-with-all">
+              <select 
+                className="config-select"
+                value=""
+                onChange={(e) => addMatiere(e.target.value)}
+              >
+                <option value="">+ Ajouter une matière</option>
+                {matieres.filter(m => !selectedMatieres.includes(m)).map((mat) => (
+                  <option key={mat} value={mat}>{mat}</option>
+                ))}
+              </select>
+              <button 
+                className="select-all-btn"
+                onClick={selectAllMatieres}
+                disabled={selectedMatieres.length === matieres.length}
+              >
+                Tout
+              </button>
+            </div>
+            {selectedMatieres.length > 0 && (
+              <div className="selected-chips">
+                {selectedMatieres.map((mat) => (
+                  <span key={mat} className="selected-chip" onClick={() => removeMatiere(mat)}>
+                    {mat} ✕
+                  </span>
+                ))}
+              </div>
+            )}
+            {selectedMatieres.length === 0 && (
+              <p className="select-hint">Toutes les matières</p>
+            )}
           </div>
         )}
 
