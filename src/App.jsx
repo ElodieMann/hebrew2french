@@ -534,7 +534,9 @@ export default function App() {
               }}
             />
           </div>
-          <span className="progress-count">{words.length - reviewCount}/{words.length}</span>
+          <span className="progress-count">
+            {words.length - reviewCount}/{words.length}
+          </span>
           <button
             className="reset-small-btn"
             onClick={() => setMode("search")}
