@@ -904,3 +904,125 @@ body {
   .search-he, .review-he { font-size: 32px; }
   .search-fr, .review-fr { font-size: 26px; }
 }
+
+/* ===== HOME SCREEN ===== */
+.home-screen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  justify-content: center;
+  align-items: center;
+}
+
+.home-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  padding: 30px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.home-title {
+  font-size: 48px;
+  font-weight: 900;
+  color: white;
+  text-align: center;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.home-subtitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  text-align: center;
+}
+
+.home-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.home-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 24px;
+  background: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.home-choice-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.home-choice-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.home-choice-icon {
+  font-size: 60px;
+}
+
+.home-choice-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+
+.home-choice-desc {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.oulpan-btn:hover:not(:disabled) {
+  background: #f0f4ff;
+}
+
+.test-btn:hover:not(:disabled) {
+  background: #fff7ed;
+}
+
+/* Home button styles */
+.home-btn {
+  background: var(--gray-500) !important;
+  box-shadow: 0 4px 0 var(--gray-700) !important;
+}
+
+.home-small-btn {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.home-small-btn:active {
+  background: var(--gray-500);
+  color: white;
+}
+
+/* Responsive home */
+@media (max-height: 700px) {
+  .home-title { font-size: 36px; }
+  .home-subtitle { font-size: 20px; }
+  .home-choice-btn { padding: 24px 20px; }
+  .home-choice-icon { font-size: 48px; }
+  .home-choice-title { font-size: 26px; }
+  .home-choice-desc { font-size: 16px; }
+}
+
+@media (min-height: 900px) {
+  .home-title { font-size: 56px; }
+  .home-subtitle { font-size: 28px; }
+  .home-choice-btn { padding: 40px 30px; }
+  .home-choice-icon { font-size: 72px; }
+  .home-choice-title { font-size: 38px; }
+  .home-choice-desc { font-size: 22px; }
+}
