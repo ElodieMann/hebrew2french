@@ -45,7 +45,11 @@ node scripts/import-words.cjs
 **2. Lance le script avec la catégorie et matière :**
 
 ```bash
+# Une seule catégorie/matière
 node scripts/add-questions.cjs "אנטומיה" "מערכת השרירים"
+
+# PLUSIEURS catégories/matières (séparées par des virgules)
+node scripts/add-questions.cjs "אנטומיה,פיזיולוגיה" "מערכת השרירים,מערכת הדם"
 ```
 
 **Arguments optionnels :**
@@ -80,8 +84,31 @@ Si tes questions ont déjà toutes les métadonnées :
 ]
 ```
 
+**Pour plusieurs catégories/matières par question :**
+
+```json
+[
+  {
+    "grande_categorie": ["אנטומיה", "פיזיולוגיה"],
+    "matiere": ["מערכת השרירים", "מערכת הדם"],
+    "question": "...",
+    "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
+    "reponse_correcte": "B",
+    "explication": "..."
+  }
+]
+```
+
 ```bash
 node scripts/import-questions.cjs
+```
+
+---
+
+## 🔍 VOIR LES CATÉGORIES EXISTANTES
+
+```bash
+node scripts/add-questions.cjs --list
 ```
 
 ---

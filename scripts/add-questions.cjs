@@ -96,16 +96,23 @@ const listCategories = async () => {
   console.log('╚════════════════════════════════════════════════════════════════╝\n');
 };
 
+// Helper: parser les catégories/matières (supporte "cat1,cat2" pour plusieurs)
+const parseMultiple = (value) => {
+  if (!value) return null;
+  const values = value.split(',').map(v => v.trim()).filter(Boolean);
+  return values.length === 1 ? values[0] : values;
+};
+
 // Fonction principale pour ajouter des questions
 const addQuestions = async () => {
-  const categorie = args[0];
-  const matiere = args[1];
+  const categorie = parseMultiple(args[0]);
+  const matiere = parseMultiple(args[1]);
   const isProf = args[2] !== 'false';
   const isMisrad = args[3] === 'true';
 
   console.log('\n📝 Ajout de questions...');
-  console.log(`   📁 Catégorie: ${categorie}`);
-  console.log(`   📚 Matière: ${matiere}`);
+  console.log(`   📁 Catégorie: ${Array.isArray(categorie) ? categorie.join(', ') : categorie}`);
+  console.log(`   📚 Matière: ${Array.isArray(matiere) ? matiere.join(', ') : matiere}`);
   console.log(`   👨‍🏫 Prof: ${isProf}`);
   console.log(`   🏛️ Misrad: ${isMisrad}`);
 

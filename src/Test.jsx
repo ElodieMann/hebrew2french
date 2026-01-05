@@ -4,6 +4,19 @@ import { collection, getDocs, doc, updateDoc, writeBatch } from "firebase/firest
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 
+// Helper: convertir en tableau (supporte string ou array)
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+// Helper: vérifier si une question correspond à une catégorie/matière
+const matchesFilter = (questionValue, selectedValues) => {
+  if (selectedValues.length === 0) return true;
+  const qValues = toArray(questionValue);
+  return selectedValues.some((selected) => qValues.includes(selected));
+};
+
 export default function Test({ onBack }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,26 +63,28 @@ export default function Test({ onBack }) {
     loadQuestions();
   }, []);
 
-  // Catégories et matières uniques
+  // Catégories et matières uniques (supporte string ou array)
   const categories = useMemo(() => {
     const base = filterWrong ? questions.filter((q) => q.wrong) : questions;
-    return [...new Set(base.map((q) => q.grande_categorie))].sort();
+    const allCategories = base.flatMap((q) => toArray(q.grande_categorie));
+    return [...new Set(allCategories)].filter(Boolean).sort();
   }, [questions, filterWrong]);
 
   const matieres = useMemo(() => {
     let base = filterWrong ? questions.filter((q) => q.wrong) : questions;
     if (selectedCategories.length > 0) {
-      base = base.filter((q) => selectedCategories.includes(q.grande_categorie));
+      base = base.filter((q) => matchesFilter(q.grande_categorie, selectedCategories));
     }
-    return [...new Set(base.map((q) => q.matiere))].sort();
+    const allMatieres = base.flatMap((q) => toArray(q.matiere));
+    return [...new Set(allMatieres)].filter(Boolean).sort();
   }, [questions, selectedCategories, filterWrong]);
 
-  // Questions filtrées
+  // Questions filtrées (supporte string ou array)
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
       if (filterWrong && !q.wrong) return false;
-      if (selectedCategories.length > 0 && !selectedCategories.includes(q.grande_categorie)) return false;
-      if (selectedMatieres.length > 0 && !selectedMatieres.includes(q.matiere)) return false;
+      if (!matchesFilter(q.grande_categorie, selectedCategories)) return false;
+      if (!matchesFilter(q.matiere, selectedMatieres)) return false;
       if (filterProf !== null && q.is_prof !== filterProf) return false;
       if (filterMisrad !== null && q.is_misrad_haavoda !== filterMisrad) return false;
       return true;
@@ -216,8 +231,8 @@ export default function Test({ onBack }) {
   if (mode === "review") {
     // Filtrer les questions à réviser selon les filtres actuels
     const reviewFiltered = wrongQuestions.filter((q) => {
-      if (selectedCategories.length > 0 && !selectedCategories.includes(q.grande_categorie)) return false;
-      if (selectedMatieres.length > 0 && !selectedMatieres.includes(q.matiere)) return false;
+      if (!matchesFilter(q.grande_categorie, selectedCategories)) return false;
+      if (!matchesFilter(q.matiere, selectedMatieres)) return false;
       return true;
     });
 
@@ -232,7 +247,7 @@ export default function Test({ onBack }) {
         </header>
 
         {/* Filtres rapides */}
-        {[...new Set(wrongQuestions.map((q) => q.grande_categorie))].length > 1 && (
+        {[...new Set(wrongQuestions.flatMap((q) => toArray(q.grande_categorie)))].length > 1 && (
           <div className="review-filters">
             <select 
               className="config-select"
@@ -240,7 +255,7 @@ export default function Test({ onBack }) {
               onChange={handleCategoryChange}
             >
               <option value="">Toutes les catégories</option>
-              {[...new Set(wrongQuestions.map((q) => q.grande_categorie))].sort().map((cat) => (
+              {[...new Set(wrongQuestions.flatMap((q) => toArray(q.grande_categorie)))].sort().map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
@@ -265,8 +280,8 @@ export default function Test({ onBack }) {
                   <div key={q.id} className="review-question-item">
                     <div className="review-question-content">
                       <div className="review-question-meta">
-                        <span className="quiz-category small">{q.grande_categorie}</span>
-                        <span className="quiz-matiere small">{q.matiere}</span>
+                        <span className="quiz-category small">{toArray(q.grande_categorie).join(", ")}</span>
+                        <span className="quiz-matiere small">{toArray(q.matiere).join(", ")}</span>
                       </div>
                       <p className="review-question-text" dir="rtl">
                         {q.question.length > 80 ? q.question.substring(0, 80) + "..." : q.question}
@@ -381,8 +396,8 @@ export default function Test({ onBack }) {
 
         <div className="quiz-question">
           <div className="quiz-meta">
-            <span className="quiz-category">{current.grande_categorie}</span>
-            <span className="quiz-matiere">{current.matiere}</span>
+            <span className="quiz-category">{toArray(current.grande_categorie).join(", ")}</span>
+            <span className="quiz-matiere">{toArray(current.matiere).join(", ")}</span>
             {current.wrong && <span className="quiz-wrong-badge">📌</span>}
           </div>
           <p className="quiz-question-text" dir="rtl">{current.question}</p>
