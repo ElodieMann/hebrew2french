@@ -89,7 +89,7 @@ body {
   border-radius: var(--radius);
   color: var(--gray-500);
   font-family: inherit;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -120,7 +120,7 @@ body {
 }
 
 .mode-icon {
-  font-size: 28px;
+  font-size: 32px;
 }
 
 .mode-text {
@@ -129,9 +129,9 @@ body {
 
 .badge {
   background: rgba(255, 255, 255, 0.3);
-  padding: 4px 12px;
-  border-radius: 10px;
-  font-size: 18px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 22px;
   font-weight: 800;
 }
 
@@ -166,14 +166,14 @@ body {
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 800;
   color: var(--primary);
   line-height: 1;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--gray-500);
   text-transform: uppercase;
   font-weight: 700;
@@ -209,10 +209,10 @@ body {
 }
 
 .progress-count {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--gray-700);
-  min-width: 70px;
+  min-width: 90px;
   text-align: center;
 }
 
@@ -336,13 +336,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 16px;
+  padding: 22px 18px;
   background: white;
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
   color: var(--gray-700);
   font-family: inherit;
-  font-size: clamp(22px, 6vw, 32px);
+  font-size: clamp(26px, 7vw, 38px);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -397,19 +397,19 @@ body {
 }
 
 .correct-icon {
-  font-size: 44px;
+  font-size: 60px;
   font-weight: 900;
   color: white;
 }
 
 .correct-text {
-  font-size: clamp(28px, 8vw, 42px);
+  font-size: clamp(36px, 10vw, 50px);
   font-weight: 800;
   color: white;
 }
 
 .tap-hint {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
 }
@@ -426,11 +426,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 22px 16px;
+  padding: 24px 18px;
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
   font-family: inherit;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -466,11 +466,11 @@ body {
 }
 
 .empty-icon {
-  font-size: 80px;
+  font-size: 90px;
 }
 
 .empty-text {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--gray-500);
   text-align: center;
@@ -478,12 +478,12 @@ body {
 
 .reset-btn {
   margin-top: 8px;
-  padding: 18px 36px;
+  padding: 22px 40px;
   background: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -510,7 +510,7 @@ body {
 }
 
 .review-list-title {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 800;
   text-align: center;
   margin: 0;
@@ -519,12 +519,12 @@ body {
 
 .start-quiz-btn {
   width: 100%;
-  padding: 18px 24px;
+  padding: 22px 26px;
   background: var(--pink);
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -563,14 +563,14 @@ body {
 }
 
 .review-he {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   direction: rtl;
   color: var(--gray-900);
 }
 
 .review-fr {
-  font-size: 16px;
+  font-size: 20px;
   color: var(--gray-500);
   margin-top: 4px;
 }
@@ -622,11 +622,11 @@ body {
 }
 
 .review-empty-icon {
-  font-size: 72px;
+  font-size: 80px;
 }
 
 .review-empty-text {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
   color: var(--gray-500);
 }
@@ -641,7 +641,7 @@ body {
 }
 
 .add-title {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 800;
   text-align: center;
   margin: 0;
@@ -650,8 +650,8 @@ body {
 
 .add-input {
   width: 100%;
-  padding: 18px 20px;
-  font-size: 20px;
+  padding: 20px 22px;
+  font-size: 24px;
   font-weight: 600;
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
@@ -666,17 +666,17 @@ body {
 }
 
 .add-input[dir="rtl"] {
-  font-size: 26px;
+  font-size: 30px;
 }
 
 .add-btn {
   width: 100%;
-  padding: 20px 24px;
+  padding: 22px 26px;
   background: var(--success);
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -703,7 +703,7 @@ body {
 }
 
 .search-title {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 800;
   text-align: center;
   margin: 0;
@@ -712,8 +712,8 @@ body {
 
 .search-input {
   width: 100%;
-  padding: 16px 20px;
-  font-size: 20px;
+  padding: 20px 22px;
+  font-size: 24px;
   font-weight: 600;
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
@@ -728,7 +728,7 @@ body {
 }
 
 .search-count {
-  font-size: 15px;
+  font-size: 18px;
   color: var(--gray-500);
   text-align: center;
   margin: 0;
@@ -760,16 +760,16 @@ body {
 }
 
 .search-he {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   direction: rtl;
   color: var(--gray-900);
 }
 
 .search-fr {
-  font-size: 15px;
+  font-size: 20px;
   color: var(--gray-500);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .search-item-actions {
@@ -820,17 +820,20 @@ body {
 /* Petit écran */
 @media (max-height: 750px) {
   .app { padding: 12px; padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 8px)); gap: 10px; }
-  .mode-btn { padding: 14px 10px; font-size: 17px; }
-  .mode-icon { font-size: 24px; }
-  .badge { font-size: 15px; padding: 3px 10px; }
+  .mode-btn { padding: 14px 10px; font-size: 20px; }
+  .mode-icon { font-size: 26px; }
+  .badge { font-size: 18px; padding: 3px 10px; }
   .stat { padding: 10px 8px; }
-  .stat-value { font-size: 24px; }
+  .stat-value { font-size: 32px; }
+  .stat-label { font-size: 14px; }
   .progress-row { padding: 10px 12px; }
-  .progress-count { font-size: 15px; min-width: 60px; }
+  .progress-count { font-size: 18px; min-width: 70px; }
   .hebrew { font-size: clamp(44px, 14vw, 80px); }
-  .choice-btn { padding: 16px 12px; font-size: clamp(18px, 5vw, 26px); }
+  .choice-btn { padding: 16px 12px; font-size: clamp(22px, 5.5vw, 30px); }
   .choices-grid { gap: 10px; }
-  .popup-btn { padding: 18px 12px; font-size: 18px; }
+  .popup-btn { padding: 18px 12px; font-size: 22px; }
+  .correct-text { font-size: clamp(30px, 8vw, 40px); }
+  .tap-hint { font-size: 16px; }
 }
 
 /* Très petit écran */
@@ -838,29 +841,34 @@ body {
   .app { padding: 10px; gap: 8px; }
   .stats { display: none; }
   .mode-text { display: none; }
-  .mode-icon { font-size: 26px; }
-  .mode-btn { padding: 14px; }
+  .mode-icon { font-size: 28px; }
+  .mode-btn { padding: 14px; font-size: 18px; }
   .hebrew { font-size: clamp(40px, 12vw, 70px); }
-  .choice-btn { padding: 14px 10px; font-size: clamp(16px, 4.5vw, 22px); }
+  .choice-btn { padding: 14px 10px; font-size: clamp(20px, 5vw, 26px); }
   .choices-grid { gap: 8px; }
-  .popup-btn { padding: 16px 10px; font-size: 16px; }
+  .popup-btn { padding: 16px 10px; font-size: 20px; }
+  .correct-text { font-size: clamp(26px, 7vw, 34px); }
+  .tap-hint { font-size: 14px; }
 }
 
 /* Grand écran / Tablette */
 @media (min-height: 900px) {
   .app { padding: 20px; padding-bottom: 30px; gap: 18px; }
-  .mode-btn { padding: 20px 18px; font-size: 22px; }
-  .mode-icon { font-size: 30px; }
-  .badge { font-size: 20px; }
-  .stat { padding: 18px 14px; }
-  .stat-value { font-size: 38px; }
-  .stat-label { font-size: 14px; }
-  .progress-row { padding: 16px 20px; }
-  .progress-bar { height: 14px; }
-  .progress-count { font-size: 20px; }
+  .mode-btn { padding: 22px 20px; font-size: 28px; }
+  .mode-icon { font-size: 36px; }
+  .badge { font-size: 24px; }
+  .stat { padding: 20px 16px; }
+  .stat-value { font-size: 48px; }
+  .stat-label { font-size: 18px; }
+  .progress-row { padding: 18px 22px; }
+  .progress-bar { height: 16px; }
+  .progress-count { font-size: 26px; }
   .hebrew { font-size: clamp(80px, 18vw, 130px); }
-  .choice-btn { padding: 26px 20px; font-size: clamp(26px, 6vw, 36px); }
-  .choices-grid { gap: 14px; }
-  .popup-btn { padding: 26px 18px; font-size: 26px; }
-  .action-btn { width: 64px; height: 64px; font-size: 30px; }
+  .choice-btn { padding: 28px 22px; font-size: clamp(32px, 7vw, 44px); }
+  .choices-grid { gap: 16px; }
+  .popup-btn { padding: 28px 20px; font-size: 30px; }
+  .action-btn { width: 70px; height: 70px; font-size: 34px; }
+  .correct-icon { font-size: 70px; }
+  .correct-text { font-size: clamp(44px, 11vw, 60px); }
+  .tap-hint { font-size: 24px; }
 }
