@@ -37,6 +37,51 @@ const db = getFirestore(app);
 // Récupérer les arguments
 const args = process.argv.slice(2);
 
+// Helper: convertir en tableau
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+// Fonction pour sauvegarder les catégories dans un fichier JSON
+const saveCategoriesFile = async () => {
+  const snapshot = await getDocs(collection(db, 'questions'));
+  const questions = snapshot.docs.map(doc => doc.data());
+  
+  // Extraire toutes les catégories et matières uniques
+  const allCategories = [...new Set(questions.flatMap(q => toArray(q.grande_categorie)))].filter(Boolean).sort();
+  const allMatieres = [...new Set(questions.flatMap(q => toArray(q.matiere)))].filter(Boolean).sort();
+  
+  // Extraire les matières par catégorie
+  const matieresByCategory = {};
+  questions.forEach(q => {
+    const cats = toArray(q.grande_categorie);
+    const mats = toArray(q.matiere);
+    cats.forEach(cat => {
+      if (!matieresByCategory[cat]) {
+        matieresByCategory[cat] = new Set();
+      }
+      mats.forEach(mat => matieresByCategory[cat].add(mat));
+    });
+  });
+  
+  // Convertir les Sets en Arrays
+  const matieresParCategorie = {};
+  Object.keys(matieresByCategory).sort().forEach(cat => {
+    matieresParCategorie[cat] = [...matieresByCategory[cat]].sort();
+  });
+  
+  const categoriesData = {
+    _info: "Fichier généré automatiquement - Copie les noms exacts !",
+    categories: allCategories,
+    matieres: allMatieres,
+    matieres_par_categorie: matieresParCategorie
+  };
+  
+  fs.writeFileSync('src/data/categories.json', JSON.stringify(categoriesData, null, 2), 'utf8');
+  console.log('📁 Fichier src/data/categories.json mis à jour !');
+};
+
 // Fonction pour lister les catégories et matières
 const listCategories = async () => {
   console.log('\n⏳ Chargement des catégories existantes...\n');
@@ -44,18 +89,20 @@ const listCategories = async () => {
   const snapshot = await getDocs(collection(db, 'questions'));
   const questions = snapshot.docs.map(doc => doc.data());
   
-  // Extraire les catégories uniques
-  const categories = [...new Set(questions.map(q => q.grande_categorie))].filter(Boolean).sort();
+  // Extraire les catégories uniques (supporte arrays)
+  const categories = [...new Set(questions.flatMap(q => toArray(q.grande_categorie)))].filter(Boolean).sort();
   
   // Extraire les matières par catégorie
   const matieresByCategory = {};
   questions.forEach(q => {
-    if (q.grande_categorie && q.matiere) {
-      if (!matieresByCategory[q.grande_categorie]) {
-        matieresByCategory[q.grande_categorie] = new Set();
+    const cats = toArray(q.grande_categorie);
+    const mats = toArray(q.matiere);
+    cats.forEach(cat => {
+      if (!matieresByCategory[cat]) {
+        matieresByCategory[cat] = new Set();
       }
-      matieresByCategory[q.grande_categorie].add(q.matiere);
-    }
+      mats.forEach(mat => matieresByCategory[cat].add(mat));
+    });
   });
 
   console.log('╔════════════════════════════════════════════════════════════════╗');
@@ -188,6 +235,9 @@ const addQuestions = async () => {
   // 5. Vider le fichier JSON
   fs.writeFileSync('src/data/questions.json', '[]', 'utf8');
   console.log('\n🧹 Fichier questions.json vidé.');
+
+  // 6. Mettre à jour le fichier categories.json
+  await saveCategoriesFile();
 };
 
 // Main
@@ -196,6 +246,7 @@ const main = async () => {
     // Si --list, afficher les catégories
     if (args[0] === '--list' || args[0] === '-l' || args.length === 0) {
       await listCategories();
+      await saveCategoriesFile();
       process.exit(0);
     }
 

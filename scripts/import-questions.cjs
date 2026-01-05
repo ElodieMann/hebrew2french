@@ -17,6 +17,51 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Helper: convertir en tableau
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+// Fonction pour sauvegarder les catégories dans un fichier JSON
+const saveCategoriesFile = async () => {
+  const snapshot = await getDocs(collection(db, 'questions'));
+  const questions = snapshot.docs.map(doc => doc.data());
+  
+  // Extraire toutes les catégories et matières uniques
+  const allCategories = [...new Set(questions.flatMap(q => toArray(q.grande_categorie)))].filter(Boolean).sort();
+  const allMatieres = [...new Set(questions.flatMap(q => toArray(q.matiere)))].filter(Boolean).sort();
+  
+  // Extraire les matières par catégorie
+  const matieresByCategory = {};
+  questions.forEach(q => {
+    const cats = toArray(q.grande_categorie);
+    const mats = toArray(q.matiere);
+    cats.forEach(cat => {
+      if (!matieresByCategory[cat]) {
+        matieresByCategory[cat] = new Set();
+      }
+      mats.forEach(mat => matieresByCategory[cat].add(mat));
+    });
+  });
+  
+  // Convertir les Sets en Arrays
+  const matieresParCategorie = {};
+  Object.keys(matieresByCategory).sort().forEach(cat => {
+    matieresParCategorie[cat] = [...matieresByCategory[cat]].sort();
+  });
+  
+  const categoriesData = {
+    _info: "Fichier généré automatiquement - Copie les noms exacts !",
+    categories: allCategories,
+    matieres: allMatieres,
+    matieres_par_categorie: matieresParCategorie
+  };
+  
+  fs.writeFileSync('src/data/categories.json', JSON.stringify(categoriesData, null, 2), 'utf8');
+  console.log('📁 Fichier src/data/categories.json mis à jour !');
+};
+
 const importQuestions = async () => {
   try {
     console.log('📝 Chargement des questions...');
@@ -71,10 +116,12 @@ const importQuestions = async () => {
     fs.writeFileSync('src/data/questions.json', '[]', 'utf8');
     console.log('🧹 Fichier src/data/questions.json vidé.');
 
+    // 6. Mettre à jour le fichier categories.json
+    await saveCategoriesFile();
+
   } catch (error) {
     console.error('❌ Erreur:', error);
   }
 };
 
 importQuestions();
-
