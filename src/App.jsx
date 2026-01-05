@@ -1,28 +1,34 @@
 import { useEffect, useState, useRef } from "react";
-import rawWords from "./data/words.json";
+import { db } from "./firebase";
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  deleteDoc, 
+  updateDoc,
+  addDoc,
+  writeBatch
+} from "firebase/firestore";
 import "./App.css";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
-const saveProgress = (words) =>
-  localStorage.setItem("hebrew-progress", JSON.stringify(words));
-const getDeletedWords = () => 
-  JSON.parse(localStorage.getItem("hebrew-deleted") || "[]");
-const saveDeletedWords = (deleted) =>
-  localStorage.setItem("hebrew-deleted", JSON.stringify(deleted));
 const saveDailyStats = (stats) =>
   localStorage.setItem("hebrew-daily-stats", JSON.stringify(stats));
 
 export default function App() {
   const [words, setWords] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [queue, setQueue] = useState([]);
   const [current, setCurrent] = useState(null);
   const [choices, setChoices] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | wrong | correct
-  const [mode, setMode] = useState("learn"); // learn | review | trash | search | settings
-  const [deletedList, setDeletedList] = useState([]);
-  const [copied, setCopied] = useState(false);
+  const [mode, setMode] = useState("learn"); // learn | review | search | settings | add
   const [reviewView, setReviewView] = useState("list"); // list | quiz
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Pour ajouter un mot
+  const [newHe, setNewHe] = useState("");
+  const [newFr, setNewFr] = useState("");
   
   // Objectif quotidien
   const [dailyGoal, setDailyGoal] = useState(10);
@@ -33,33 +39,27 @@ export default function App() {
   const wordsRef = useRef([]);
   wordsRef.current = words;
 
-  /* INIT - Détecte les nouveaux mots ajoutés au JSON */
+  /* LOAD WORDS FROM FIREBASE */
   useEffect(() => {
-    const saved = localStorage.getItem("hebrew-progress");
-    const deleted = getDeletedWords();
-    setDeletedList(deleted);
-    
-    let loadedWords;
-    
-    if (saved) {
-      const savedWords = JSON.parse(saved);
-      const savedHebrewSet = new Set(savedWords.map(w => w.he));
-      const newWords = rawWords.filter(w => !savedHebrewSet.has(w.he));
-      loadedWords = [...savedWords, ...newWords];
-      
-      if (newWords.length > 0) {
-        saveProgress(loadedWords);
+    const loadWords = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "words"));
+        const loadedWords = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setWords(loadedWords);
+        wordsRef.current = loadedWords;
+      } catch (error) {
+        console.error("Erreur chargement:", error);
+      } finally {
+        setLoading(false);
       }
-    } else {
-      loadedWords = rawWords;
-    }
+    };
     
-    loadedWords = loadedWords.filter((w) => !deleted.includes(w.he));
+    loadWords();
     
-    setWords(loadedWords);
-    wordsRef.current = loadedWords;
-    
-    // Charger les stats quotidiennes
+    // Charger les stats quotidiennes (local)
     const statsRaw = localStorage.getItem("hebrew-daily-stats");
     if (statsRaw) {
       const stats = JSON.parse(statsRaw);
@@ -71,15 +71,10 @@ export default function App() {
       if (stats.lastDate === today) {
         setTodayCount(stats.todayCount || 0);
       } else {
-        // Nouveau jour
         setTodayCount(0);
-        // Vérifier le streak
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        if (stats.lastDate === yesterday.toDateString()) {
-          // On continue le streak
-        } else if (stats.lastDate !== today) {
-          // Streak perdu
+        if (stats.lastDate !== yesterday.toDateString() && stats.lastDate !== today) {
           setStreak(0);
         }
       }
@@ -88,16 +83,13 @@ export default function App() {
 
   /* BUILD QUEUE */
   useEffect(() => {
-    // Ne pas construire de queue pour trash ou review en mode liste
-    if (mode === "trash") return;
     if (mode === "review" && reviewView === "list") return;
+    if (mode === "search" || mode === "settings" || mode === "add") return;
     
     if (words.length > 0 && queue.length === 0) {
-      const minCount = Math.min(...words.map((w) => w.count));
-      const base =
-        mode === "review"
-          ? words.filter((w) => w.wrong > 0)
-          : words.filter((w) => w.count === minCount);
+      const base = mode === "review"
+        ? words.filter((w) => w.wrong)
+        : words;
 
       const shuffled = shuffle(base.length ? base : words);
       setQueue(shuffled);
@@ -112,7 +104,7 @@ export default function App() {
       setChoices([]);
       return;
     }
-    const others = wordsRef.current.filter((w) => w.he !== current.he);
+    const others = wordsRef.current.filter((w) => w.id !== current.id);
     const newChoices = shuffle([current, ...shuffle(others).slice(0, 3)]);
     setChoices(newChoices);
   }, [current]);
@@ -124,14 +116,6 @@ export default function App() {
     if (choice.fr === current.fr) {
       setStatus("correct");
 
-      // Bonne réponse : on incrémente count, on garde wrong tel quel (sera géré après)
-      const updated = wordsRef.current.map((w) =>
-        w.he === current.he ? { ...w, count: w.count + 1 } : w
-      );
-
-      setWords(updated);
-      saveProgress(updated);
-
       // Incrémenter le compteur quotidien
       const today = new Date().toDateString();
       const newTodayCount = todayCount + 1;
@@ -139,7 +123,6 @@ export default function App() {
       let newLastDate = lastDate;
       
       if (lastDate !== today) {
-        // Premier mot du jour
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         if (lastDate === yesterday.toDateString()) {
@@ -156,14 +139,14 @@ export default function App() {
       saveDailyStats({ goal: dailyGoal, todayCount: newTodayCount, streak: newStreak, lastDate: newLastDate });
     } else {
       setStatus("wrong");
-
-      // Mauvaise réponse : on met wrong à 1 (pas +1, juste marqué)
+      
+      // Marquer comme à réviser dans Firebase
+      updateDoc(doc(db, "words", current.id), { wrong: true });
+      
       const updated = wordsRef.current.map((w) =>
-        w.he === current.he ? { ...w, wrong: 1 } : w
+        w.id === current.id ? { ...w, wrong: true } : w
       );
-
       setWords(updated);
-      saveProgress(updated);
 
       setTimeout(() => setStatus("idle"), 900);
     }
@@ -178,93 +161,53 @@ export default function App() {
     setMarkedReview(false);
   };
 
-  /* DELETE WORD */
-  const handleDelete = () => {
+  /* DELETE WORD - vraiment supprimer de Firebase */
+  const handleDelete = async () => {
     if (!current) return;
     
-    const deleted = getDeletedWords();
-    deleted.push(current.he);
-    saveDeletedWords(deleted);
-    setDeletedList(deleted);
+    await deleteDoc(doc(db, "words", current.id));
     
-    const updated = wordsRef.current.filter((w) => w.he !== current.he);
+    const updated = wordsRef.current.filter((w) => w.id !== current.id);
     setWords(updated);
-    saveProgress(updated);
     
     goToNext();
   };
 
-  /* RESTORE WORD FROM TRASH */
-  const handleRestore = (hebrewWord) => {
-    const deleted = getDeletedWords();
-    const newDeleted = deleted.filter(w => w !== hebrewWord);
-    saveDeletedWords(newDeleted);
-    setDeletedList(newDeleted);
+  /* DELETE FROM LIST */
+  const handleDeleteFromList = async (wordId) => {
+    await deleteDoc(doc(db, "words", wordId));
     
-    // Retrouver le mot original dans rawWords
-    const originalWord = rawWords.find(w => w.he === hebrewWord);
-    if (originalWord) {
-      const restoredWord = { ...originalWord, count: 0, wrong: 0 };
-      const updated = [...wordsRef.current, restoredWord];
-      setWords(updated);
-      saveProgress(updated);
-    }
-  };
-
-  /* COPY DELETED LIST */
-  const handleCopyList = () => {
-    const text = deletedList.join("\n");
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  /* RESTORE ALL FROM TRASH */
-  const handleRestoreAll = () => {
-    if (!window.confirm(`Restaurer les ${deletedList.length} mots ?`)) {
-      return;
-    }
-    
-    // Retrouver tous les mots originaux
-    const restoredWords = deletedList
-      .map(he => rawWords.find(w => w.he === he))
-      .filter(Boolean)
-      .map(w => ({ ...w, count: 0, wrong: 0 }));
-    
-    const updated = [...wordsRef.current, ...restoredWords];
+    const updated = wordsRef.current.filter((w) => w.id !== wordId);
     setWords(updated);
-    saveProgress(updated);
-    
-    // Vider la corbeille
-    saveDeletedWords([]);
-    setDeletedList([]);
+    wordsRef.current = updated;
   };
 
   /* MARK FOR REVIEW AND CONTINUE */
-  const handleMarkAndContinue = () => {
+  const handleMarkAndContinue = async () => {
     if (!current) return;
     
-    // Marquer à réviser (wrong = 1) puis passer au suivant
+    await updateDoc(doc(db, "words", current.id), { wrong: true });
+    
     const updated = wordsRef.current.map((w) =>
-      w.he === current.he ? { ...w, wrong: 1 } : w
+      w.id === current.id ? { ...w, wrong: true } : w
     );
     setWords(updated);
-    saveProgress(updated);
     
     goToNext();
   };
 
-  /* CONTINUE WITHOUT MARKING (clear wrong if was correct) */
-  const handleContinueClean = () => {
+  /* CONTINUE WITHOUT MARKING (clear wrong) */
+  const handleContinueClean = async () => {
     if (!current) return;
     
-    // Bonne réponse et on continue : on efface le wrong
-    const updated = wordsRef.current.map((w) =>
-      w.he === current.he ? { ...w, wrong: 0 } : w
-    );
-    setWords(updated);
-    saveProgress(updated);
+    if (current.wrong) {
+      await updateDoc(doc(db, "words", current.id), { wrong: false });
+      
+      const updated = wordsRef.current.map((w) =>
+        w.id === current.id ? { ...w, wrong: false } : w
+      );
+      setWords(updated);
+    }
     
     goToNext();
   };
@@ -272,64 +215,53 @@ export default function App() {
   /* MARK FOR REVIEW (bouton sur la carte) */
   const [markedReview, setMarkedReview] = useState(false);
   
-  const handleMarkReview = () => {
+  const handleMarkReview = async () => {
     if (!current || markedReview) return;
     
-    // Marquer à réviser = wrong à 1
+    await updateDoc(doc(db, "words", current.id), { wrong: true });
+    
     const updated = wordsRef.current.map((w) =>
-      w.he === current.he ? { ...w, wrong: 1 } : w
+      w.id === current.id ? { ...w, wrong: true } : w
     );
     
     setWords(updated);
-    saveProgress(updated);
     setMarkedReview(true);
   };
 
   /* REMOVE FROM REVIEW LIST */
-  const handleRemoveFromReview = (hebrewWord) => {
+  const handleRemoveFromReview = async (wordId) => {
+    await updateDoc(doc(db, "words", wordId), { wrong: false });
+    
     const updated = wordsRef.current.map((w) =>
-      w.he === hebrewWord ? { ...w, wrong: 0 } : w
+      w.id === wordId ? { ...w, wrong: false } : w
     );
     setWords(updated);
-    saveProgress(updated);
     wordsRef.current = updated;
   };
 
-  /* DELETE FROM LIST (any list view) */
-  const handleDeleteFromList = (hebrewWord) => {
-    const deleted = getDeletedWords();
-    deleted.push(hebrewWord);
-    saveDeletedWords(deleted);
-    setDeletedList(deleted);
+  /* ADD NEW WORD */
+  const handleAddWord = async () => {
+    if (!newHe.trim() || !newFr.trim()) return;
     
-    const updated = wordsRef.current.filter((w) => w.he !== hebrewWord);
-    setWords(updated);
-    saveProgress(updated);
-    wordsRef.current = updated;
+    const newWord = {
+      he: newHe.trim(),
+      fr: newFr.trim(),
+      wrong: false
+    };
+    
+    const docRef = await addDoc(collection(db, "words"), newWord);
+    
+    const wordWithId = { ...newWord, id: docRef.id };
+    setWords([...words, wordWithId]);
+    wordsRef.current = [...wordsRef.current, wordWithId];
+    
+    setNewHe("");
+    setNewFr("");
   };
 
-  /* RESET ALL */
-  const handleReset = () => {
-    if (!window.confirm("Tout effacer ? Progression et mots supprimés seront réinitialisés.")) {
-      return;
-    }
-    
-    localStorage.removeItem("hebrew-progress");
-    localStorage.removeItem("hebrew-deleted");
-    
-    setWords(rawWords);
-    wordsRef.current = rawWords;
-    setDeletedList([]);
-    setQueue([]);
-    setMode("learn");
-    setStatus("idle");
-  };
-
-  const reviewCount = words.filter((w) => w.wrong > 0).length;
-
-  const reviewWords = words.filter((w) => w.wrong > 0);
+  const reviewCount = words.filter((w) => w.wrong).length;
+  const reviewWords = words.filter((w) => w.wrong);
   
-  // Filtrer les mots pour la recherche
   const searchResults = searchQuery.trim() 
     ? words.filter(w => 
         w.he.includes(searchQuery) || 
@@ -337,6 +269,65 @@ export default function App() {
       )
     : [];
 
+  /* LOADING STATE */
+  if (loading) {
+    return (
+      <div className="app">
+        <div className="empty-state">
+          <span className="empty-icon">⏳</span>
+          <span className="empty-text">Chargement...</span>
+        </div>
+      </div>
+    );
+  }
+
+  /* ADD WORD VIEW */
+  if (mode === "add") {
+    return (
+      <div className="app">
+        <header className="header">
+          <div className="mode-toggle">
+            <button
+              className="mode-btn"
+              onClick={() => setMode("learn")}
+            >
+              <span className="mode-icon">←</span>
+              <span className="mode-text">Retour</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="add-view">
+          <h2 className="add-title">➕ Ajouter un mot</h2>
+          
+          <input
+            type="text"
+            className="add-input"
+            placeholder="Mot en hébreu"
+            value={newHe}
+            onChange={(e) => setNewHe(e.target.value)}
+            dir="rtl"
+          />
+          
+          <input
+            type="text"
+            className="add-input"
+            placeholder="Traduction en français"
+            value={newFr}
+            onChange={(e) => setNewFr(e.target.value)}
+          />
+          
+          <button 
+            className="add-btn"
+            onClick={handleAddWord}
+            disabled={!newHe.trim() || !newFr.trim()}
+          >
+            ✓ Ajouter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   /* SEARCH VIEW */
   if (mode === "search") {
@@ -376,33 +367,33 @@ export default function App() {
           
           <div className="search-list">
             {searchResults.map((w) => (
-              <div key={w.he} className="search-item">
+              <div key={w.id} className="search-item">
                 <div className="search-word">
                   <span className="search-he">{w.he}</span>
                   <span className="search-fr">{w.fr}</span>
                 </div>
                 <div className="search-item-actions">
                   <button 
-                    className={`search-action-btn ${w.wrong > 0 ? "marked" : ""}`}
-                    onClick={() => {
-                      if (w.wrong > 0) {
-                        handleRemoveFromReview(w.he);
+                    className={`search-action-btn ${w.wrong ? "marked" : ""}`}
+                    onClick={async () => {
+                      if (w.wrong) {
+                        await handleRemoveFromReview(w.id);
                       } else {
+                        await updateDoc(doc(db, "words", w.id), { wrong: true });
                         const updated = wordsRef.current.map((word) =>
-                          word.he === w.he ? { ...word, wrong: 1 } : word
+                          word.id === w.id ? { ...word, wrong: true } : word
                         );
                         setWords(updated);
-                        saveProgress(updated);
                         wordsRef.current = updated;
                       }
                     }}
-                    title={w.wrong > 0 ? "Retirer de révision" : "Marquer à réviser"}
+                    title={w.wrong ? "Retirer de révision" : "Marquer à réviser"}
                   >
-                    {w.wrong > 0 ? "✓" : "📌"}
+                    {w.wrong ? "✓" : "📌"}
                   </button>
                   <button 
                     className="search-delete-btn"
-                    onClick={() => handleDeleteFromList(w.he)}
+                    onClick={() => handleDeleteFromList(w.id)}
                     title="Supprimer"
                   >
                     🗑️
@@ -418,7 +409,6 @@ export default function App() {
 
   /* SETTINGS VIEW */
   if (mode === "settings") {
-    const today = new Date().toDateString();
     const goalReached = todayCount >= dailyGoal;
     
     return (
@@ -441,7 +431,6 @@ export default function App() {
         <div className="settings-view">
           <h2 className="settings-title">⚙️ Paramètres</h2>
           
-          {/* Objectif quotidien */}
           <div className="settings-section">
             <h3 className="settings-subtitle">🎯 Objectif quotidien</h3>
             
@@ -483,7 +472,6 @@ export default function App() {
             </div>
           </div>
           
-          {/* Stats */}
           <div className="settings-section">
             <h3 className="settings-subtitle">📊 Statistiques</h3>
             <div className="stats-grid">
@@ -494,10 +482,6 @@ export default function App() {
               <div className="stats-item">
                 <span className="stats-value">{reviewWords.length}</span>
                 <span className="stats-label">À réviser</span>
-              </div>
-              <div className="stats-item">
-                <span className="stats-value">{deletedList.length}</span>
-                <span className="stats-label">Supprimés</span>
               </div>
             </div>
           </div>
@@ -542,7 +526,7 @@ export default function App() {
               
               <div className="review-list">
                 {reviewWords.map((w) => (
-                  <div key={w.he} className="review-item">
+                  <div key={w.id} className="review-item">
                     <div className="review-word">
                       <span className="review-he">{w.he}</span>
                       <span className="review-fr">{w.fr}</span>
@@ -550,14 +534,14 @@ export default function App() {
                     <div className="review-item-actions">
                       <button 
                         className="remove-review-btn"
-                        onClick={() => handleRemoveFromReview(w.he)}
+                        onClick={() => handleRemoveFromReview(w.id)}
                         title="Retirer de la liste"
                       >
                         ✓
                       </button>
                       <button 
                         className="delete-review-btn"
-                        onClick={() => handleDeleteFromList(w.he)}
+                        onClick={() => handleDeleteFromList(w.id)}
                         title="Supprimer définitivement"
                       >
                         🗑️
@@ -578,73 +562,6 @@ export default function App() {
     );
   }
 
-  /* TRASH VIEW */
-  if (mode === "trash") {
-    return (
-      <div className="app">
-        <header className="header">
-          <div className="mode-toggle">
-            <button
-              className="mode-btn"
-              onClick={() => {
-                setMode("learn");
-                setQueue([]);
-              }}
-            >
-              <span className="mode-icon">←</span>
-              <span className="mode-text">Retour</span>
-            </button>
-          </div>
-        </header>
-
-        <div className="trash-view">
-          <h2 className="trash-title">🗑️ Corbeille ({deletedList.length})</h2>
-          
-          {deletedList.length > 0 ? (
-            <>
-              <div className="trash-actions">
-                <button 
-                  className={`trash-action-btn copy-btn ${copied ? "copied" : ""}`} 
-                  onClick={handleCopyList}
-                >
-                  {copied ? "✓ Copié !" : "📋 Copier"}
-                </button>
-                <button 
-                  className="trash-action-btn restore-all-btn"
-                  onClick={handleRestoreAll}
-                >
-                  ↩️ Tout restaurer
-                </button>
-              </div>
-              
-              <div className="trash-list">
-                {deletedList.map((he) => {
-                  const original = rawWords.find(w => w.he === he);
-                  return (
-                    <div key={he} className="trash-item">
-                      <div className="trash-word">
-                        <span className="trash-he">{he}</span>
-                        <span className="trash-fr">{original?.fr || "?"}</span>
-                      </div>
-                      <button 
-                        className="restore-btn"
-                        onClick={() => handleRestore(he)}
-                      >
-                        ↩️
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <p className="trash-empty">La corbeille est vide</p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   /* EMPTY STATE */
   if (!current) {
     return (
@@ -652,7 +569,7 @@ export default function App() {
         <div className="empty-state">
           <span className="empty-icon">{mode === "review" ? "✅" : "🎉"}</span>
           <span className="empty-text">
-            {mode === "review" ? "Révisions terminées !" : "Niveau terminé !"}
+            {mode === "review" ? "Révisions terminées !" : "Aucun mot !"}
           </span>
           
           {mode === "review" ? (
@@ -668,9 +585,9 @@ export default function App() {
           ) : (
             <button 
               className="reset-btn"
-              onClick={() => setQueue([])}
+              onClick={() => setMode("add")}
             >
-              ▶️ Niveau suivant
+              ➕ Ajouter des mots
             </button>
           )}
           
@@ -686,23 +603,10 @@ export default function App() {
               🔄 Réviser ({reviewCount})
             </button>
           )}
-
-          {deletedList.length > 0 && (
-            <button 
-              className="reset-btn trash-reset-btn"
-              onClick={() => setMode("trash")}
-            >
-              🗑️ Corbeille ({deletedList.length})
-            </button>
-          )}
         </div>
       </div>
     );
   }
-
-  const minCount = Math.min(...words.map((w) => w.count));
-  const doneCount = words.filter((w) => w.count > minCount).length;
-  const progress = (doneCount / words.length) * 100;
 
   return (
     <div className={`app ${status}`}>
@@ -735,40 +639,33 @@ export default function App() {
           </button>
 
           <button
-            className="mode-btn trash-btn"
-            onClick={() => setMode("trash")}
+            className="mode-btn add-mode-btn"
+            onClick={() => setMode("add")}
           >
-            <span className="mode-icon">🗑️</span>
-            {deletedList.length > 0 && <span className="badge">{deletedList.length}</span>}
+            <span className="mode-icon">➕</span>
           </button>
         </div>
 
         <div className="stats">
           <div className="stat">
-            <span className="stat-value">{minCount}</span>
-            <span className="stat-label">Niveau</span>
+            <span className="stat-value">{words.length}</span>
+            <span className="stat-label">Mots</span>
           </div>
           <div className="stat">
-            <span className="stat-value">
-              {doneCount}
-              <span className="stat-total">/{words.length}</span>
-            </span>
-            <span className="stat-label">Mots</span>
+            <span className="stat-value">{todayCount}/{dailyGoal}</span>
+            <span className="stat-label">Aujourd'hui</span>
           </div>
         </div>
 
         <div className="progress-row">
           <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${progress}%` }} />
+            <div className="progress-fill" style={{ width: `${Math.min(100, (todayCount / dailyGoal) * 100)}%` }} />
           </div>
           <button className="reset-small-btn" onClick={() => setMode("search")} title="Rechercher">
             🔍
           </button>
           <button className="reset-small-btn" onClick={() => setMode("settings")} title="Paramètres">
             ⚙️
-          </button>
-          <button className="reset-small-btn" onClick={handleReset} title="Tout réinitialiser">
-            ↺
           </button>
         </div>
       </header>
@@ -814,7 +711,7 @@ export default function App() {
         ) : (
           choices.map((c, i) => (
           <button
-              key={`${current.he}-${c.fr}-${i}`}
+              key={`${current.id}-${c.fr}-${i}`}
               className="choice-btn"
             onClick={() => handleClick(c)}
           >
