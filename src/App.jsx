@@ -1,19 +1,16 @@
 import { useEffect, useState, useRef } from "react";
 import { db } from "./firebase";
-import { 
-  collection, 
-  getDocs, 
-  doc, 
-  deleteDoc, 
+import {
+  collection,
+  getDocs,
+  doc,
+  deleteDoc,
   updateDoc,
   addDoc,
-  writeBatch
 } from "firebase/firestore";
 import "./App.css";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
-const saveDailyStats = (stats) =>
-  localStorage.setItem("hebrew-daily-stats", JSON.stringify(stats));
 
 export default function App() {
   const [words, setWords] = useState([]);
@@ -22,19 +19,13 @@ export default function App() {
   const [current, setCurrent] = useState(null);
   const [choices, setChoices] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | wrong | correct
-  const [mode, setMode] = useState("learn"); // learn | review | search | settings | add
+  const [mode, setMode] = useState("learn"); // learn | review | search | add
   const [reviewView, setReviewView] = useState("list"); // list | quiz
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Pour ajouter un mot
   const [newHe, setNewHe] = useState("");
   const [newFr, setNewFr] = useState("");
-  
-  // Objectif quotidien
-  const [dailyGoal, setDailyGoal] = useState(10);
-  const [todayCount, setTodayCount] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [lastDate, setLastDate] = useState("");
 
   const wordsRef = useRef([]);
   wordsRef.current = words;
@@ -44,9 +35,9 @@ export default function App() {
     const loadWords = async () => {
       try {
         const snapshot = await getDocs(collection(db, "words"));
-        const loadedWords = snapshot.docs.map(doc => ({
+        const loadedWords = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
         setWords(loadedWords);
         wordsRef.current = loadedWords;
@@ -56,40 +47,17 @@ export default function App() {
         setLoading(false);
       }
     };
-    
+
     loadWords();
-    
-    // Charger les stats quotidiennes (local)
-    const statsRaw = localStorage.getItem("hebrew-daily-stats");
-    if (statsRaw) {
-      const stats = JSON.parse(statsRaw);
-      setDailyGoal(stats.goal || 10);
-      setStreak(stats.streak || 0);
-      setLastDate(stats.lastDate || "");
-      
-      const today = new Date().toDateString();
-      if (stats.lastDate === today) {
-        setTodayCount(stats.todayCount || 0);
-      } else {
-        setTodayCount(0);
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (stats.lastDate !== yesterday.toDateString() && stats.lastDate !== today) {
-          setStreak(0);
-        }
-      }
-    }
   }, []);
 
   /* BUILD QUEUE */
   useEffect(() => {
     if (mode === "review" && reviewView === "list") return;
-    if (mode === "search" || mode === "settings" || mode === "add") return;
-    
+    if (mode === "search" || mode === "add") return;
+
     if (words.length > 0 && queue.length === 0) {
-      const base = mode === "review"
-        ? words.filter((w) => w.wrong)
-        : words;
+      const base = mode === "review" ? words.filter((w) => w.wrong) : words;
 
       const shuffled = shuffle(base.length ? base : words);
       setQueue(shuffled);
@@ -115,34 +83,12 @@ export default function App() {
 
     if (choice.fr === current.fr) {
       setStatus("correct");
-
-      // Incrémenter le compteur quotidien
-      const today = new Date().toDateString();
-      const newTodayCount = todayCount + 1;
-      let newStreak = streak;
-      let newLastDate = lastDate;
-      
-      if (lastDate !== today) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (lastDate === yesterday.toDateString()) {
-          newStreak = streak + 1;
-        } else {
-          newStreak = 1;
-        }
-        newLastDate = today;
-      }
-      
-      setTodayCount(newTodayCount);
-      setStreak(newStreak);
-      setLastDate(newLastDate);
-      saveDailyStats({ goal: dailyGoal, todayCount: newTodayCount, streak: newStreak, lastDate: newLastDate });
     } else {
       setStatus("wrong");
-      
+
       // Marquer comme à réviser dans Firebase
       updateDoc(doc(db, "words", current.id), { wrong: true });
-      
+
       const updated = wordsRef.current.map((w) =>
         w.id === current.id ? { ...w, wrong: true } : w
       );
@@ -164,19 +110,19 @@ export default function App() {
   /* DELETE WORD - vraiment supprimer de Firebase */
   const handleDelete = async () => {
     if (!current) return;
-    
+
     await deleteDoc(doc(db, "words", current.id));
-    
+
     const updated = wordsRef.current.filter((w) => w.id !== current.id);
     setWords(updated);
-    
+
     goToNext();
   };
 
   /* DELETE FROM LIST */
   const handleDeleteFromList = async (wordId) => {
     await deleteDoc(doc(db, "words", wordId));
-    
+
     const updated = wordsRef.current.filter((w) => w.id !== wordId);
     setWords(updated);
     wordsRef.current = updated;
@@ -185,45 +131,45 @@ export default function App() {
   /* MARK FOR REVIEW AND CONTINUE */
   const handleMarkAndContinue = async () => {
     if (!current) return;
-    
+
     await updateDoc(doc(db, "words", current.id), { wrong: true });
-    
+
     const updated = wordsRef.current.map((w) =>
       w.id === current.id ? { ...w, wrong: true } : w
     );
     setWords(updated);
-    
+
     goToNext();
   };
 
   /* CONTINUE WITHOUT MARKING (clear wrong) */
   const handleContinueClean = async () => {
     if (!current) return;
-    
+
     if (current.wrong) {
       await updateDoc(doc(db, "words", current.id), { wrong: false });
-      
+
       const updated = wordsRef.current.map((w) =>
         w.id === current.id ? { ...w, wrong: false } : w
       );
       setWords(updated);
     }
-    
+
     goToNext();
   };
 
   /* MARK FOR REVIEW (bouton sur la carte) */
   const [markedReview, setMarkedReview] = useState(false);
-  
+
   const handleMarkReview = async () => {
     if (!current || markedReview) return;
-    
+
     await updateDoc(doc(db, "words", current.id), { wrong: true });
-    
+
     const updated = wordsRef.current.map((w) =>
       w.id === current.id ? { ...w, wrong: true } : w
     );
-    
+
     setWords(updated);
     setMarkedReview(true);
   };
@@ -231,7 +177,7 @@ export default function App() {
   /* REMOVE FROM REVIEW LIST */
   const handleRemoveFromReview = async (wordId) => {
     await updateDoc(doc(db, "words", wordId), { wrong: false });
-    
+
     const updated = wordsRef.current.map((w) =>
       w.id === wordId ? { ...w, wrong: false } : w
     );
@@ -242,30 +188,31 @@ export default function App() {
   /* ADD NEW WORD */
   const handleAddWord = async () => {
     if (!newHe.trim() || !newFr.trim()) return;
-    
+
     const newWord = {
       he: newHe.trim(),
       fr: newFr.trim(),
-      wrong: false
+      wrong: false,
     };
-    
+
     const docRef = await addDoc(collection(db, "words"), newWord);
-    
+
     const wordWithId = { ...newWord, id: docRef.id };
     setWords([...words, wordWithId]);
     wordsRef.current = [...wordsRef.current, wordWithId];
-    
+
     setNewHe("");
     setNewFr("");
   };
 
   const reviewCount = words.filter((w) => w.wrong).length;
   const reviewWords = words.filter((w) => w.wrong);
-  
-  const searchResults = searchQuery.trim() 
-    ? words.filter(w => 
-        w.he.includes(searchQuery) || 
-        w.fr.toLowerCase().includes(searchQuery.toLowerCase())
+
+  const searchResults = searchQuery.trim()
+    ? words.filter(
+        (w) =>
+          w.he.includes(searchQuery) ||
+          w.fr.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
 
@@ -287,10 +234,7 @@ export default function App() {
       <div className="app">
         <header className="header">
           <div className="mode-toggle">
-            <button
-              className="mode-btn"
-              onClick={() => setMode("learn")}
-            >
+            <button className="mode-btn" onClick={() => setMode("learn")}>
               <span className="mode-icon">←</span>
               <span className="mode-text">Retour</span>
             </button>
@@ -299,7 +243,7 @@ export default function App() {
 
         <div className="add-view">
           <h2 className="add-title">➕ Ajouter un mot</h2>
-          
+
           <input
             type="text"
             className="add-input"
@@ -308,7 +252,7 @@ export default function App() {
             onChange={(e) => setNewHe(e.target.value)}
             dir="rtl"
           />
-          
+
           <input
             type="text"
             className="add-input"
@@ -316,8 +260,8 @@ export default function App() {
             value={newFr}
             onChange={(e) => setNewFr(e.target.value)}
           />
-          
-          <button 
+
+          <button
             className="add-btn"
             onClick={handleAddWord}
             disabled={!newHe.trim() || !newFr.trim()}
@@ -351,7 +295,7 @@ export default function App() {
 
         <div className="search-view">
           <h2 className="search-title">🔍 Recherche</h2>
-          
+
           <input
             type="text"
             className="search-input"
@@ -360,11 +304,11 @@ export default function App() {
             onChange={(e) => setSearchQuery(e.target.value)}
             autoFocus
           />
-          
+
           {searchQuery.trim() && (
             <p className="search-count">{searchResults.length} résultat(s)</p>
           )}
-          
+
           <div className="search-list">
             {searchResults.map((w) => (
               <div key={w.id} className="search-item">
@@ -373,13 +317,15 @@ export default function App() {
                   <span className="search-fr">{w.fr}</span>
                 </div>
                 <div className="search-item-actions">
-                  <button 
+                  <button
                     className={`search-action-btn ${w.wrong ? "marked" : ""}`}
                     onClick={async () => {
                       if (w.wrong) {
                         await handleRemoveFromReview(w.id);
                       } else {
-                        await updateDoc(doc(db, "words", w.id), { wrong: true });
+                        await updateDoc(doc(db, "words", w.id), {
+                          wrong: true,
+                        });
                         const updated = wordsRef.current.map((word) =>
                           word.id === w.id ? { ...word, wrong: true } : word
                         );
@@ -387,11 +333,13 @@ export default function App() {
                         wordsRef.current = updated;
                       }
                     }}
-                    title={w.wrong ? "Retirer de révision" : "Marquer à réviser"}
+                    title={
+                      w.wrong ? "Retirer de révision" : "Marquer à réviser"
+                    }
                   >
                     {w.wrong ? "✓" : "📌"}
                   </button>
-                  <button 
+                  <button
                     className="search-delete-btn"
                     onClick={() => handleDeleteFromList(w.id)}
                     title="Supprimer"
@@ -401,89 +349,6 @@ export default function App() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* SETTINGS VIEW */
-  if (mode === "settings") {
-    const goalReached = todayCount >= dailyGoal;
-    
-    return (
-      <div className="app">
-        <header className="header">
-          <div className="mode-toggle">
-            <button
-              className="mode-btn"
-              onClick={() => {
-                setMode("learn");
-                setQueue([]);
-              }}
-            >
-              <span className="mode-icon">←</span>
-              <span className="mode-text">Retour</span>
-            </button>
-          </div>
-        </header>
-
-        <div className="settings-view">
-          <h2 className="settings-title">⚙️ Paramètres</h2>
-          
-          <div className="settings-section">
-            <h3 className="settings-subtitle">🎯 Objectif quotidien</h3>
-            
-            <div className="goal-display">
-              <span className={`goal-today ${goalReached ? "reached" : ""}`}>
-                {todayCount}/{dailyGoal}
-              </span>
-              <span className="goal-label">mots aujourd'hui</span>
-            </div>
-            
-            <div className="goal-setter">
-              <button 
-                className="goal-btn"
-                onClick={() => {
-                  const newGoal = Math.max(1, dailyGoal - 5);
-                  setDailyGoal(newGoal);
-                  saveDailyStats({ goal: newGoal, todayCount, streak, lastDate });
-                }}
-              >
-                -5
-              </button>
-              <span className="goal-value">{dailyGoal}</span>
-              <button 
-                className="goal-btn"
-                onClick={() => {
-                  const newGoal = dailyGoal + 5;
-                  setDailyGoal(newGoal);
-                  saveDailyStats({ goal: newGoal, todayCount, streak, lastDate });
-                }}
-              >
-                +5
-              </button>
-            </div>
-            
-            <div className="streak-display">
-              <span className="streak-icon">🔥</span>
-              <span className="streak-value">{streak}</span>
-              <span className="streak-label">jours de suite</span>
-            </div>
-          </div>
-          
-          <div className="settings-section">
-            <h3 className="settings-subtitle">📊 Statistiques</h3>
-            <div className="stats-grid">
-              <div className="stats-item">
-                <span className="stats-value">{words.length}</span>
-                <span className="stats-label">Total mots</span>
-              </div>
-              <div className="stats-item">
-                <span className="stats-value">{reviewWords.length}</span>
-                <span className="stats-label">À réviser</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -510,11 +375,13 @@ export default function App() {
         </header>
 
         <div className="review-list-view">
-          <h2 className="review-list-title">📌 À réviser ({reviewWords.length})</h2>
-          
+          <h2 className="review-list-title">
+            📌 À réviser ({reviewWords.length})
+          </h2>
+
           {reviewWords.length > 0 ? (
             <>
-              <button 
+              <button
                 className="start-quiz-btn"
                 onClick={() => {
                   setReviewView("quiz");
@@ -523,7 +390,7 @@ export default function App() {
               >
                 ▶️ Lancer le quiz
               </button>
-              
+
               <div className="review-list">
                 {reviewWords.map((w) => (
                   <div key={w.id} className="review-item">
@@ -532,14 +399,14 @@ export default function App() {
                       <span className="review-fr">{w.fr}</span>
                     </div>
                     <div className="review-item-actions">
-                      <button 
+                      <button
                         className="remove-review-btn"
                         onClick={() => handleRemoveFromReview(w.id)}
                         title="Retirer de la liste"
                       >
                         ✓
                       </button>
-                      <button 
+                      <button
                         className="delete-review-btn"
                         onClick={() => handleDeleteFromList(w.id)}
                         title="Supprimer définitivement"
@@ -571,9 +438,9 @@ export default function App() {
           <span className="empty-text">
             {mode === "review" ? "Révisions terminées !" : "Aucun mot !"}
           </span>
-          
+
           {mode === "review" ? (
-            <button 
+            <button
               className="reset-btn"
               onClick={() => {
                 setReviewView("list");
@@ -583,16 +450,13 @@ export default function App() {
               📋 Retour à la liste
             </button>
           ) : (
-            <button 
-              className="reset-btn"
-              onClick={() => setMode("add")}
-            >
+            <button className="reset-btn" onClick={() => setMode("add")}>
               ➕ Ajouter des mots
             </button>
           )}
-          
+
           {reviewCount > 0 && mode !== "review" && (
-            <button 
+            <button
               className="reset-btn review-reset-btn"
               onClick={() => {
                 setMode("review");
@@ -652,20 +516,26 @@ export default function App() {
             <span className="stat-label">Mots</span>
           </div>
           <div className="stat">
-            <span className="stat-value">{todayCount}/{dailyGoal}</span>
-            <span className="stat-label">Aujourd'hui</span>
+            <span className="stat-value">{reviewCount}</span>
+            <span className="stat-label">À réviser</span>
           </div>
         </div>
 
         <div className="progress-row">
           <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${Math.min(100, (todayCount / dailyGoal) * 100)}%` }} />
+            <div
+              className="progress-fill"
+              style={{
+                width: `${words.length > 0 ? ((words.length - reviewCount) / words.length) * 100 : 0}%`,
+              }}
+            />
           </div>
-          <button className="reset-small-btn" onClick={() => setMode("search")} title="Rechercher">
+          <button
+            className="reset-small-btn"
+            onClick={() => setMode("search")}
+            title="Rechercher"
+          >
             🔍
-          </button>
-          <button className="reset-small-btn" onClick={() => setMode("settings")} title="Paramètres">
-            ⚙️
           </button>
         </div>
       </header>
@@ -674,15 +544,21 @@ export default function App() {
       <main className="card-area">
         <div className="word-card">
           <div className="card-actions">
-            <button 
-              className={`action-btn review-action ${markedReview ? "marked" : ""}`} 
-              onClick={handleMarkReview} 
+            <button
+              className={`action-btn review-action ${
+                markedReview ? "marked" : ""
+              }`}
+              onClick={handleMarkReview}
               title="À réviser"
               disabled={markedReview}
             >
               {markedReview ? "✓" : "📌"}
             </button>
-            <button className="action-btn delete-action" onClick={handleDelete} title="Supprimer">
+            <button
+              className="action-btn delete-action"
+              onClick={handleDelete}
+              title="Supprimer"
+            >
               🗑️
             </button>
           </div>
@@ -700,7 +576,10 @@ export default function App() {
               <span className="tap-hint">Tap pour continuer</span>
             </button>
             <div className="popup-actions">
-              <button className="popup-btn review-btn" onClick={handleMarkAndContinue}>
+              <button
+                className="popup-btn review-btn"
+                onClick={handleMarkAndContinue}
+              >
                 📌 À réviser
               </button>
               <button className="popup-btn delete-btn" onClick={handleDelete}>
@@ -710,13 +589,13 @@ export default function App() {
           </>
         ) : (
           choices.map((c, i) => (
-          <button
+            <button
               key={`${current.id}-${c.fr}-${i}`}
               className="choice-btn"
-            onClick={() => handleClick(c)}
-          >
-            {c.fr}
-          </button>
+              onClick={() => handleClick(c)}
+            >
+              {c.fr}
+            </button>
           ))
         )}
       </footer>

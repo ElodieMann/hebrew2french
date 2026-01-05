@@ -7,9 +7,8 @@ const firebaseConfig = {
   projectId: "hebrew2french",
   storageBucket: "hebrew2french.firebasestorage.app",
   messagingSenderId: "890776485340",
-  appId: "1:890776485340:web:f73146abecf71d3b092319"
+  appId: "1:890776485340:web:f73146abecf71d3b092319",
 };
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-
