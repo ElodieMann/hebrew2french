@@ -217,12 +217,12 @@ body {
 }
 
 .reset-small-btn {
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 70px;
   background: var(--primary-light);
   border: none;
-  border-radius: 14px;
-  font-size: 28px;
+  border-radius: 16px;
+  font-size: 36px;
   color: var(--primary);
   cursor: pointer;
   display: flex;
@@ -593,10 +593,10 @@ body {
 
 .remove-review-btn,
 .delete-review-btn {
-  width: 60px;
-  height: 60px;
-  border-radius: 14px;
-  font-size: 28px;
+  width: 76px;
+  height: 76px;
+  border-radius: 16px;
+  font-size: 36px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -798,10 +798,10 @@ body {
 
 .search-action-btn,
 .search-delete-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  font-size: 26px;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  font-size: 34px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -847,15 +847,15 @@ body {
   .stat-label { font-size: 14px; }
   .progress-row { padding: 10px 12px; }
   .progress-count { font-size: 18px; min-width: 70px; }
-  .reset-small-btn { width: 50px; height: 50px; font-size: 24px; }
+  .reset-small-btn { width: 60px; height: 60px; font-size: 30px; }
   .hebrew { font-size: clamp(44px, 14vw, 80px); }
   .choice-btn { padding: 16px 12px; font-size: clamp(22px, 5.5vw, 30px); }
   .choices-grid { gap: 10px; }
   .popup-btn { padding: 18px 12px; font-size: 22px; }
   .correct-text { font-size: clamp(30px, 8vw, 40px); }
   .tap-hint { font-size: 16px; }
-  .remove-review-btn, .delete-review-btn { width: 54px; height: 54px; font-size: 24px; }
-  .search-action-btn, .search-delete-btn { width: 50px; height: 50px; font-size: 22px; }
+  .remove-review-btn, .delete-review-btn { width: 66px; height: 66px; font-size: 30px; }
+  .search-action-btn, .search-delete-btn { width: 62px; height: 62px; font-size: 28px; }
 }
 
 /* Très petit écran */
@@ -865,15 +865,15 @@ body {
   .mode-text { display: none; }
   .mode-icon { font-size: 28px; }
   .mode-btn { padding: 14px; font-size: 18px; }
-  .reset-small-btn { width: 46px; height: 46px; font-size: 22px; }
+  .reset-small-btn { width: 54px; height: 54px; font-size: 26px; }
   .hebrew { font-size: clamp(40px, 12vw, 70px); }
   .choice-btn { padding: 14px 10px; font-size: clamp(20px, 5vw, 26px); }
   .choices-grid { gap: 8px; }
   .popup-btn { padding: 16px 10px; font-size: 20px; }
   .correct-text { font-size: clamp(26px, 7vw, 34px); }
   .tap-hint { font-size: 14px; }
-  .remove-review-btn, .delete-review-btn { width: 48px; height: 48px; font-size: 22px; }
-  .search-action-btn, .search-delete-btn { width: 46px; height: 46px; font-size: 20px; }
+  .remove-review-btn, .delete-review-btn { width: 58px; height: 58px; font-size: 26px; }
+  .search-action-btn, .search-delete-btn { width: 54px; height: 54px; font-size: 24px; }
   .search-he, .review-he { font-size: 22px; }
   .search-fr, .review-fr { font-size: 16px; }
 }
@@ -890,7 +890,7 @@ body {
   .progress-row { padding: 18px 22px; }
   .progress-bar { height: 16px; }
   .progress-count { font-size: 26px; }
-  .reset-small-btn { width: 64px; height: 64px; font-size: 32px; }
+  .reset-small-btn { width: 80px; height: 80px; font-size: 40px; }
   .hebrew { font-size: clamp(80px, 18vw, 130px); }
   .choice-btn { padding: 28px 22px; font-size: clamp(32px, 7vw, 44px); }
   .choices-grid { gap: 16px; }
@@ -899,8 +899,8 @@ body {
   .correct-icon { font-size: 70px; }
   .correct-text { font-size: clamp(44px, 11vw, 60px); }
   .tap-hint { font-size: 24px; }
-  .remove-review-btn, .delete-review-btn { width: 70px; height: 70px; font-size: 32px; }
-  .search-action-btn, .search-delete-btn { width: 66px; height: 66px; font-size: 30px; }
-  .search-he, .review-he { font-size: 30px; }
-  .search-fr, .review-fr { font-size: 24px; }
+  .remove-review-btn, .delete-review-btn { width: 86px; height: 86px; font-size: 40px; }
+  .search-action-btn, .search-delete-btn { width: 82px; height: 82px; font-size: 38px; }
+  .search-he, .review-he { font-size: 32px; }
+  .search-fr, .review-fr { font-size: 26px; }
 }
