@@ -1063,24 +1063,24 @@ body {
 }
 
 .config-title {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--gray-700);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .config-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .config-chip {
-  padding: 10px 16px;
+  padding: 14px 20px;
   background: var(--gray-100);
-  border: 2px solid var(--gray-200);
+  border: 3px solid var(--gray-200);
   border-radius: 20px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--gray-600);
   cursor: pointer;
@@ -1112,22 +1112,22 @@ body {
 }
 
 .config-label {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--gray-700);
 }
 
 .config-toggle-group {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .config-toggle {
-  padding: 8px 14px;
+  padding: 12px 18px;
   background: var(--gray-100);
-  border: 2px solid var(--gray-200);
-  border-radius: 10px;
-  font-size: 14px;
+  border: 3px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--gray-500);
   cursor: pointer;
@@ -1142,11 +1142,11 @@ body {
 }
 
 .config-toggle-single {
-  padding: 10px 20px;
+  padding: 14px 24px;
   background: var(--gray-100);
-  border: 2px solid var(--gray-200);
-  border-radius: 10px;
-  font-size: 16px;
+  border: 3px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--gray-500);
   cursor: pointer;
@@ -1202,10 +1202,10 @@ body {
 
 .config-count {
   text-align: center;
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--gray-500);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 /* Quiz */
@@ -1238,7 +1238,7 @@ body {
 }
 
 .quiz-progress-text {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--gray-700);
   text-align: center;
@@ -1268,13 +1268,13 @@ body {
 }
 
 .quiz-score-value {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--warning);
 }
 
 .quiz-score-icon {
-  font-size: 20px;
+  font-size: 26px;
 }
 
 /* Question */
@@ -1295,9 +1295,9 @@ body {
 
 .quiz-category,
 .quiz-matiere {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -1312,7 +1312,7 @@ body {
 }
 
 .quiz-question-text {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
   color: var(--gray-900);
   line-height: 1.5;
@@ -1331,8 +1331,8 @@ body {
 .quiz-option {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px;
+  gap: 16px;
+  padding: 20px;
   background: white;
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
@@ -1360,14 +1360,14 @@ body {
 }
 
 .option-key {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   background: var(--gray-100);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--gray-600);
   flex-shrink: 0;
@@ -1385,7 +1385,7 @@ body {
 
 .option-text {
   flex: 1;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--gray-700);
   font-family: inherit;
@@ -1402,20 +1402,20 @@ body {
 }
 
 .explanation-text {
-  font-size: 16px;
+  font-size: 20px;
   color: var(--gray-700);
   line-height: 1.5;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .quiz-next-btn {
   width: 100%;
-  padding: 16px;
+  padding: 20px;
   background: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1523,10 +1523,10 @@ body {
 }
 
 .test-btn {
-  padding: 18px 24px;
+  padding: 22px 28px;
   border: none;
   border-radius: var(--radius);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1574,11 +1574,11 @@ body {
 
 .config-mode-btn {
   flex: 1;
-  padding: 16px 12px;
+  padding: 18px 14px;
   background: var(--gray-100);
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--gray-600);
   cursor: pointer;
@@ -1700,15 +1700,40 @@ body {
 }
 
 /* Responsive Test */
-@media (max-height: 700px) {
-  .test-title { font-size: 26px; }
-  .config-title { font-size: 18px; }
-  .config-chip { padding: 8px 12px; font-size: 14px; }
-  .config-label { font-size: 16px; }
-  .quiz-question-text { font-size: 18px; }
-  .quiz-option { padding: 14px; }
-  .option-text { font-size: 16px; }
-  .results-icon { font-size: 60px; }
-  .results-title { font-size: 28px; }
-  .score-value { font-size: 36px; }
+@media (max-height: 750px) {
+  .test-title { font-size: 28px; }
+  .config-title { font-size: 22px; }
+  .config-chip { padding: 12px 16px; font-size: 18px; }
+  .config-label { font-size: 20px; }
+  .config-toggle { padding: 10px 14px; font-size: 16px; }
+  .config-mode-btn { padding: 14px 10px; font-size: 18px; }
+  .quiz-question-text { font-size: 24px; }
+  .quiz-option { padding: 16px; }
+  .option-key { width: 44px; height: 44px; font-size: 22px; }
+  .option-text { font-size: 20px; }
+  .explanation-text { font-size: 18px; }
+  .quiz-next-btn { padding: 16px; font-size: 20px; }
+  .results-icon { font-size: 70px; }
+  .results-title { font-size: 30px; }
+  .score-value { font-size: 42px; }
+  .test-btn { padding: 18px 22px; font-size: 20px; }
+}
+
+@media (min-height: 900px) {
+  .test-title { font-size: 38px; }
+  .config-title { font-size: 30px; }
+  .config-chip { padding: 18px 26px; font-size: 24px; }
+  .config-label { font-size: 26px; }
+  .config-toggle { padding: 16px 22px; font-size: 22px; }
+  .config-mode-btn { padding: 22px 18px; font-size: 26px; }
+  .quiz-question-text { font-size: 34px; }
+  .quiz-option { padding: 24px; }
+  .option-key { width: 60px; height: 60px; font-size: 30px; }
+  .option-text { font-size: 28px; }
+  .explanation-text { font-size: 24px; }
+  .quiz-next-btn { padding: 24px; font-size: 28px; }
+  .results-icon { font-size: 100px; }
+  .results-title { font-size: 44px; }
+  .score-value { font-size: 60px; }
+  .test-btn { padding: 26px 34px; font-size: 28px; }
 }

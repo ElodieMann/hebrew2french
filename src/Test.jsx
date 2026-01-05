@@ -15,7 +15,7 @@ export default function Test({ onBack }) {
   const [filterProf, setFilterProf] = useState(null);
   const [filterMisrad, setFilterMisrad] = useState(null);
   const [filterWrong, setFilterWrong] = useState(false); // Filtre questions ratées
-  const [questionCount, setQuestionCount] = useState(10);
+  const [questionCount, setQuestionCount] = useState(999); // Toutes les questions
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
 
   // Quiz state
@@ -564,25 +564,6 @@ export default function Test({ onBack }) {
         {/* Options */}
         <div className="config-section">
           <h3 className="config-title">⚙️ Options</h3>
-
-          <div className="config-row">
-            <span className="config-label">Questions :</span>
-            <div className="config-number">
-              <button
-                className="config-num-btn"
-                onClick={() => setQuestionCount((c) => Math.max(5, c - 5))}
-              >
-                −
-              </button>
-              <span className="config-num-value">{questionCount}</span>
-              <button
-                className="config-num-btn"
-                onClick={() => setQuestionCount((c) => Math.min(filteredQuestions.length || 100, c + 5))}
-              >
-                +
-              </button>
-            </div>
-          </div>
 
           <div className="config-row">
             <span className="config-label">Mélanger :</span>
