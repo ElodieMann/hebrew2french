@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Oulpan from "./Oulpan";
+import Test from "./Test";
 import "./App.css";
 
 export default function App() {
@@ -26,11 +27,10 @@ export default function App() {
             <button
               className="home-choice-btn test-btn"
               onClick={() => setCurrentApp("test")}
-              disabled
             >
               <span className="home-choice-icon">📝</span>
               <span className="home-choice-title">Test</span>
-              <span className="home-choice-desc">Bientôt disponible...</span>
+              <span className="home-choice-desc">QCM par catégorie</span>
             </button>
           </div>
         </div>
@@ -43,19 +43,9 @@ export default function App() {
     return <Oulpan onBack={() => setCurrentApp(null)} />;
   }
 
-  // Test (future feature)
+  // Test
   if (currentApp === "test") {
-    return (
-      <div className="app">
-        <div className="empty-state">
-          <span className="empty-icon">🚧</span>
-          <span className="empty-text">Bientôt disponible !</span>
-          <button className="reset-btn" onClick={() => setCurrentApp(null)}>
-            🏠 Retour à l'accueil
-          </button>
-        </div>
-      </div>
-    );
+    return <Test onBack={() => setCurrentApp(null)} />;
   }
 
   return null;

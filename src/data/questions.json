@@ -1,0 +1,78 @@
+[
+  {
+    "grande_categorie": "אנטומיה",
+    "matiere": "מערכת השרירים",
+    "is_misrad_haavoda": false,
+    "is_prof": true,
+    "question": "מהו התפקיד של שרירי קיר הבטן (paroi abdominale)?",
+    "options": {
+      "A": "ייצור הורמונים",
+      "B": "הגנה על איברים פנימיים כמו המעיים",
+      "C": "ויסות טמפרטורת המוח",
+      "D": "ספיגת חומרים מזינים"
+    },
+    "reponse_correcte": "B",
+    "explication": "שרירי קיר הבטן משמשים להגנה על האיברים הפנימיים הנמצאים בחלל הבטן."
+  },
+  {
+    "grande_categorie": "אנטומיה",
+    "matiere": "מערכת השרירים",
+    "is_misrad_haavoda": true,
+    "is_prof": true,
+    "question": "איזה סוג שריר נקרא גם 'שריר רצוני' (muscle volontaire)?",
+    "options": {
+      "A": "שריר חלק",
+      "B": "שריר הלב",
+      "C": "שריר השלד (משורטט)",
+      "D": "שריר המעיים"
+    },
+    "reponse_correcte": "C",
+    "explication": "שריר השלד נקרא רצוני כיוון שתנועותיו נמצאות בשליטת האדם."
+  },
+  {
+    "grande_categorie": "אנטומיה",
+    "matiere": "מערכת השרירים",
+    "is_misrad_haavoda": true,
+    "is_prof": false,
+    "question": "מהי היחידה התפקודית (unité fonctionnelle) הקטנה ביותר במנגנון ההתכווצות של השריר?",
+    "options": {
+      "A": "מיופיבריל",
+      "B": "סרקומר (Sarcomère)",
+      "C": "אקטין",
+      "D": "מיוזין"
+    },
+    "reponse_correcte": "B",
+    "explication": "הסרקומר הוא היחידה התפקודית הקטנה ביותר המכילה את חלבוני הכיווץ."
+  },
+  {
+    "grande_categorie": "אנטומיה",
+    "matiere": "מערכת השרירים",
+    "is_misrad_haavoda": false,
+    "is_prof": true,
+    "question": "מהו המוליך העצבי (neurotransmetteur) המשתחרר בסינפסה בין העצב לשריר ומביא להפעלתו?",
+    "options": {
+      "A": "דופמין",
+      "B": "אדרנלין",
+      "C": "אצטילכולין (Acétylcholine)",
+      "D": "סרוטונין"
+    },
+    "reponse_correcte": "C",
+    "explication": "האצטילכולין נקשר לקולטנים בשריר ויוצר אות חשמלי המביא להתכווצותו."
+  },
+  {
+    "grande_categorie": "אנטומיה",
+    "matiere": "מערכת השרירים",
+    "is_misrad_haavoda": false,
+    "is_prof": true,
+    "question": "מה נכון לגבי שריר חלק (muscle lisse)?",
+    "options": {
+      "A": "הוא מחובר לעצמות השלד",
+      "B": "פעולתו רצונית בלבד",
+      "C": "הוא מצוי באיברים חלולים כמו כלי דם ומעיים",
+      "D": "הוא זקוק לכמות גדולה מאוד של אנרגיה ביחס לשריר שלד"
+    },
+    "reponse_correcte": "C",
+    "explication": "שרירים חלקים נמצאים באיברים פנימיים ופעולתם היא בלתי רצונית."
+  }
+]
+
