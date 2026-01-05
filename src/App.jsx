@@ -526,7 +526,11 @@ export default function App() {
             <div
               className="progress-fill"
               style={{
-                width: `${words.length > 0 ? ((words.length - reviewCount) / words.length) * 100 : 0}%`,
+                width: `${
+                  words.length > 0
+                    ? ((words.length - reviewCount) / words.length) * 100
+                    : 0
+                }%`,
               }}
             />
           </div>
