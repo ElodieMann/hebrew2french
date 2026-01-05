@@ -501,6 +501,14 @@ export default function Oulpan({ onBack }) {
       <header className="header">
         <div className="mode-toggle">
           <button
+            className="reset-small-btn home-small-btn"
+            onClick={onBack}
+            title="Accueil"
+          >
+            🏠
+          </button>
+
+          <button
             className={`mode-btn ${mode === "learn" ? "active" : ""}`}
             onClick={() => {
               setMode("learn");
@@ -573,13 +581,6 @@ export default function Oulpan({ onBack }) {
             title="Tout remettre à zéro"
           >
             🔄
-          </button>
-          <button
-            className="reset-small-btn home-small-btn"
-            onClick={onBack}
-            title="Accueil"
-          >
-            🏠
           </button>
         </div>
       </header>

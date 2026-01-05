@@ -509,9 +509,8 @@ export default function Test({ onBack }) {
   return (
     <div className="app test-app">
       <header className="test-header">
-        <button className="mode-btn" onClick={onBack}>
-          <span className="mode-icon">←</span>
-          <span className="mode-text">Accueil</span>
+        <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+          🏠
         </button>
         <h1 className="test-title">📝 Test</h1>
         {wrongQuestions.length > 0 && (
