@@ -574,7 +574,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   padding-bottom: 16px;
 }
 
@@ -772,7 +772,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   padding-bottom: 16px;
 }
 
