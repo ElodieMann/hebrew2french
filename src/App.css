@@ -2147,6 +2147,61 @@ body {
   font-weight: 600;
 }
 
+.stats-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-play-btn {
+  padding: 4px 10px;
+  background: var(--primary-light);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.stats-play-btn:active {
+  background: var(--primary);
+  color: white;
+}
+
+.stats-wrong-btn {
+  padding: 6px 12px;
+  background: var(--warning-light);
+  border: 1px solid var(--warning);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warning);
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-start;
+}
+
+.stats-wrong-btn:active {
+  background: var(--warning);
+  color: white;
+}
+
+.stats-box.clickable {
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.stats-box.clickable:active {
+  transform: scale(0.95);
+}
+
+.stats-box.clickable:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive Test - déjà petit, pas besoin de réduire */
 
 @media (min-height: 900px) {

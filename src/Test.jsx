@@ -96,23 +96,23 @@ export default function Test({ onBack }) {
     return questions.filter((q) => q.wrong);
   }, [questions]);
 
-  // Stats par catégorie
+  // Stats par catégorie (answered OU wrong = répondu)
   const categoryStats = useMemo(() => {
     const allCategories = [...new Set(questions.flatMap((q) => toArray(q.grande_categorie)))].filter(Boolean).sort();
     return allCategories.map((cat) => {
       const catQuestions = questions.filter((q) => toArray(q.grande_categorie).includes(cat));
-      const answered = catQuestions.filter((q) => q.answered).length;
+      const answered = catQuestions.filter((q) => q.answered || q.wrong).length;
       const wrong = catQuestions.filter((q) => q.wrong).length;
       return { name: cat, total: catQuestions.length, answered, wrong };
     });
   }, [questions]);
 
-  // Stats par matière
+  // Stats par matière (answered OU wrong = répondu)
   const matiereStats = useMemo(() => {
     const allMatieres = [...new Set(questions.flatMap((q) => toArray(q.matiere)))].filter(Boolean).sort();
     return allMatieres.map((mat) => {
       const matQuestions = questions.filter((q) => toArray(q.matiere).includes(mat));
-      const answered = matQuestions.filter((q) => q.answered).length;
+      const answered = matQuestions.filter((q) => q.answered || q.wrong).length;
       const wrong = matQuestions.filter((q) => q.wrong).length;
       return { name: mat, total: matQuestions.length, answered, wrong };
     });
@@ -271,6 +271,21 @@ export default function Test({ onBack }) {
   // Sélectionner toutes les matières
   const selectAllMatieres = () => {
     setSelectedMatieres([...matieres]);
+  };
+
+  // Aller au review avec un filtre (depuis stats)
+  const goToReviewWithFilter = (type, value) => {
+    if (type === "category") {
+      setSelectedCategories([value]);
+      setSelectedMatieres([]);
+    } else if (type === "matiere") {
+      setSelectedCategories([]);
+      setSelectedMatieres([value]);
+    } else {
+      setSelectedCategories([]);
+      setSelectedMatieres([]);
+    }
+    setMode("review");
   };
 
   /* LOADING STATE */
@@ -534,8 +549,32 @@ export default function Test({ onBack }) {
 
   /* STATS */
   if (mode === "stats") {
-    const totalAnswered = questions.filter((q) => q.answered).length;
+    const totalAnswered = questions.filter((q) => q.answered || q.wrong).length;
     const totalWrong = wrongQuestions.length;
+
+    // Fonction pour démarrer un quiz sur les non-répondues d'une catégorie/matière
+    const startUnansweredQuiz = (type, value) => {
+      let unanswered = questions.filter((q) => !q.answered && !q.wrong);
+      if (type === "category") {
+        unanswered = unanswered.filter((q) => toArray(q.grande_categorie).includes(value));
+      } else if (type === "matiere") {
+        unanswered = unanswered.filter((q) => toArray(q.matiere).includes(value));
+      }
+      
+      if (unanswered.length === 0) {
+        alert("Toutes les questions ont été répondues !");
+        return;
+      }
+
+      let selected = shuffleQuestions ? shuffle(unanswered) : unanswered;
+      setQuizQuestions(selected);
+      setCurrentIndex(0);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      setScore(0);
+      setAnswers([]);
+      setMode("quiz");
+    };
 
     return (
       <div className="app test-app">
@@ -560,10 +599,14 @@ export default function Test({ onBack }) {
               <span className="stats-number">{questions.length}</span>
               <span className="stats-label">Total</span>
             </div>
-            <div className="stats-box wrong">
+            <button 
+              className="stats-box wrong clickable"
+              onClick={() => goToReviewWithFilter("all")}
+              disabled={totalWrong === 0}
+            >
               <span className="stats-number">{totalWrong}</span>
               <span className="stats-label">À réviser</span>
-            </div>
+            </button>
           </div>
 
           {/* Par catégorie */}
@@ -574,7 +617,18 @@ export default function Test({ onBack }) {
                 <div key={stat.name} className="stats-item">
                   <div className="stats-item-header">
                     <span className="stats-item-name">{stat.name}</span>
-                    <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                    <div className="stats-item-actions">
+                      {stat.answered < stat.total && (
+                        <button 
+                          className="stats-play-btn"
+                          onClick={() => startUnansweredQuiz("category", stat.name)}
+                          title="Questions non répondues"
+                        >
+                          ▶️ {stat.total - stat.answered}
+                        </button>
+                      )}
+                      <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                    </div>
                   </div>
                   <div className="stats-progress-bar">
                     <div 
@@ -583,7 +637,12 @@ export default function Test({ onBack }) {
                     />
                   </div>
                   {stat.wrong > 0 && (
-                    <span className="stats-wrong-badge">📌 {stat.wrong}</span>
+                    <button 
+                      className="stats-wrong-btn"
+                      onClick={() => goToReviewWithFilter("category", stat.name)}
+                    >
+                      📌 {stat.wrong} à réviser
+                    </button>
                   )}
                 </div>
               ))}
@@ -598,7 +657,18 @@ export default function Test({ onBack }) {
                 <div key={stat.name} className="stats-item">
                   <div className="stats-item-header">
                     <span className="stats-item-name">{stat.name}</span>
-                    <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                    <div className="stats-item-actions">
+                      {stat.answered < stat.total && (
+                        <button 
+                          className="stats-play-btn"
+                          onClick={() => startUnansweredQuiz("matiere", stat.name)}
+                          title="Questions non répondues"
+                        >
+                          ▶️ {stat.total - stat.answered}
+                        </button>
+                      )}
+                      <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                    </div>
                   </div>
                   <div className="stats-progress-bar">
                     <div 
@@ -607,7 +677,12 @@ export default function Test({ onBack }) {
                     />
                   </div>
                   {stat.wrong > 0 && (
-                    <span className="stats-wrong-badge">📌 {stat.wrong}</span>
+                    <button 
+                      className="stats-wrong-btn"
+                      onClick={() => goToReviewWithFilter("matiere", stat.name)}
+                    >
+                      📌 {stat.wrong} à réviser
+                    </button>
                   )}
                 </div>
               ))}
