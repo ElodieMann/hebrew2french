@@ -288,6 +288,47 @@ export default function Test({ onBack }) {
     setMode("review");
   };
 
+  // Remettre à zéro TOUT (answered + wrong) par catégorie/matière
+  const handleFullReset = async (type, value) => {
+    let toReset = [];
+    let message = "";
+
+    if (type === "category") {
+      toReset = questionsRef.current.filter(
+        (q) => (q.answered || q.wrong) && toArray(q.grande_categorie).includes(value)
+      );
+      message = `Remettre à zéro TOUTES les réponses de "${value}" ? (${toReset.length} questions)`;
+    } else if (type === "matiere") {
+      toReset = questionsRef.current.filter(
+        (q) => (q.answered || q.wrong) && toArray(q.matiere).includes(value)
+      );
+      message = `Remettre à zéro TOUTES les réponses de "${value}" ? (${toReset.length} questions)`;
+    } else {
+      toReset = questionsRef.current.filter((q) => q.answered || q.wrong);
+      message = `Remettre à zéro TOUTES les réponses ? (${toReset.length} questions)`;
+    }
+
+    if (toReset.length === 0) {
+      alert("Aucune question à remettre à zéro !");
+      return;
+    }
+
+    if (!confirm(message)) return;
+
+    const batch = writeBatch(db);
+    toReset.forEach((q) => {
+      batch.update(doc(db, "questions", q.id), { wrong: false, answered: false });
+    });
+    await batch.commit();
+
+    const resetIds = new Set(toReset.map((q) => q.id));
+    const updated = questionsRef.current.map((q) =>
+      resetIds.has(q.id) ? { ...q, wrong: false, answered: false } : q
+    );
+    setQuestions(updated);
+    questionsRef.current = updated;
+  };
+
   /* LOADING STATE */
   if (loading) {
     return (
@@ -628,6 +669,15 @@ export default function Test({ onBack }) {
                         </button>
                       )}
                       <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                      {stat.answered > 0 && (
+                        <button 
+                          className="stats-reset-btn"
+                          onClick={() => handleFullReset("category", stat.name)}
+                          title="Remettre à zéro"
+                        >
+                          🔄
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="stats-progress-bar">
@@ -668,6 +718,15 @@ export default function Test({ onBack }) {
                         </button>
                       )}
                       <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                      {stat.answered > 0 && (
+                        <button 
+                          className="stats-reset-btn"
+                          onClick={() => handleFullReset("matiere", stat.name)}
+                          title="Remettre à zéro"
+                        >
+                          🔄
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="stats-progress-bar">
@@ -688,6 +747,16 @@ export default function Test({ onBack }) {
               ))}
             </div>
           </div>
+
+          {/* Reset global */}
+          {totalAnswered > 0 && (
+            <button 
+              className="stats-reset-all-btn"
+              onClick={() => handleFullReset("all")}
+            >
+              🔄 Tout remettre à zéro
+            </button>
+          )}
         </div>
       </div>
     );
