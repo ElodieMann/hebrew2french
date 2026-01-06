@@ -605,7 +605,7 @@ body {
 .review-fr {
   font-size: 14px;
   color: var(--gray-500);
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .review-item-actions {
@@ -807,7 +807,7 @@ body {
 .search-fr {
   font-size: 14px;
   color: var(--gray-500);
-  margin-top: 8px;
+  margin-top: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
