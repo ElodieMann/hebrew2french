@@ -20,7 +20,7 @@ const matchesFilter = (questionValue, selectedValues) => {
 export default function Test({ onBack }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState("config"); // config | quiz | results | review
+  const [mode, setMode] = useState("config"); // config | quiz | results | review | stats
 
   // Filtres
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -96,6 +96,28 @@ export default function Test({ onBack }) {
     return questions.filter((q) => q.wrong);
   }, [questions]);
 
+  // Stats par catégorie
+  const categoryStats = useMemo(() => {
+    const allCategories = [...new Set(questions.flatMap((q) => toArray(q.grande_categorie)))].filter(Boolean).sort();
+    return allCategories.map((cat) => {
+      const catQuestions = questions.filter((q) => toArray(q.grande_categorie).includes(cat));
+      const answered = catQuestions.filter((q) => q.answered).length;
+      const wrong = catQuestions.filter((q) => q.wrong).length;
+      return { name: cat, total: catQuestions.length, answered, wrong };
+    });
+  }, [questions]);
+
+  // Stats par matière
+  const matiereStats = useMemo(() => {
+    const allMatieres = [...new Set(questions.flatMap((q) => toArray(q.matiere)))].filter(Boolean).sort();
+    return allMatieres.map((mat) => {
+      const matQuestions = questions.filter((q) => toArray(q.matiere).includes(mat));
+      const answered = matQuestions.filter((q) => q.answered).length;
+      const wrong = matQuestions.filter((q) => q.wrong).length;
+      return { name: mat, total: matQuestions.length, answered, wrong };
+    });
+  }, [questions]);
+
   // Démarrer le quiz
   const startQuiz = () => {
     let selected = [...filteredQuestions];
@@ -121,28 +143,26 @@ export default function Test({ onBack }) {
     const current = quizQuestions[currentIndex];
     const isCorrect = key === current.reponse_correcte;
 
+    // Marquer comme répondu + correct/wrong
+    const updateData = { answered: true };
+
     if (isCorrect) {
       setScore((s) => s + 1);
       // Si c'était une question "wrong" et qu'on répond bien, on la retire
       if (current.wrong) {
-        await updateDoc(doc(db, "questions", current.id), { wrong: false });
-        const updated = questionsRef.current.map((q) =>
-          q.id === current.id ? { ...q, wrong: false } : q
-        );
-        setQuestions(updated);
-        questionsRef.current = updated;
+        updateData.wrong = false;
       }
     } else {
       // Marquer comme à réviser
-      if (!current.wrong) {
-        await updateDoc(doc(db, "questions", current.id), { wrong: true });
-        const updated = questionsRef.current.map((q) =>
-          q.id === current.id ? { ...q, wrong: true } : q
-        );
-        setQuestions(updated);
-        questionsRef.current = updated;
-      }
+      updateData.wrong = true;
     }
+
+    await updateDoc(doc(db, "questions", current.id), updateData);
+    const updated = questionsRef.current.map((q) =>
+      q.id === current.id ? { ...q, ...updateData } : q
+    );
+    setQuestions(updated);
+    questionsRef.current = updated;
 
     setAnswers((prev) => [...prev, { question: current, selected: key, correct: isCorrect }]);
     setShowExplanation(true);
@@ -385,12 +405,20 @@ export default function Test({ onBack }) {
 
     return (
       <div className="app test-app">
+        <header className="test-header">
+          <button className="reset-small-btn home-small-btn" onClick={() => setMode("config")} title="Retour">
+            ←
+          </button>
+          <h1 className="test-title">📊 Résultats</h1>
+          <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+            🏠
+          </button>
+        </header>
         <div className="test-results">
           <div className="results-header">
             <span className="results-icon">
               {percentage >= 80 ? "🏆" : percentage >= 50 ? "👍" : "📚"}
             </span>
-            <h2 className="results-title">Résultats</h2>
           </div>
 
           <div className="results-score">
@@ -422,9 +450,6 @@ export default function Test({ onBack }) {
                 📌 Réviser ({wrongQuestions.length})
               </button>
             )}
-            <button className="test-btn secondary" onClick={onBack}>
-              🏠 Accueil
-            </button>
           </div>
         </div>
       </div>
@@ -463,7 +488,9 @@ export default function Test({ onBack }) {
           <div className="quiz-meta">
             <span className="quiz-category">{toArray(current.grande_categorie).join(", ")}</span>
             <span className="quiz-matiere">{toArray(current.matiere).join(", ")}</span>
-            {current.wrong && <span className="quiz-wrong-badge">📌</span>}
+            {current.is_prof && <span className="quiz-badge prof">👩‍🏫</span>}
+            {current.is_misrad_haavoda && <span className="quiz-badge misrad">🏛️</span>}
+            {current.wrong && <span className="quiz-badge wrong">📌</span>}
           </div>
           <p className="quiz-question-text" dir="rtl">{current.question}</p>
         </div>
@@ -505,6 +532,92 @@ export default function Test({ onBack }) {
     );
   }
 
+  /* STATS */
+  if (mode === "stats") {
+    const totalAnswered = questions.filter((q) => q.answered).length;
+    const totalWrong = wrongQuestions.length;
+
+    return (
+      <div className="app test-app">
+        <header className="test-header">
+          <button className="reset-small-btn home-small-btn" onClick={() => setMode("config")} title="Retour">
+            ←
+          </button>
+          <h1 className="test-title">📊 Progression</h1>
+          <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+            🏠
+          </button>
+        </header>
+
+        <div className="stats-container">
+          {/* Résumé global */}
+          <div className="stats-summary">
+            <div className="stats-box">
+              <span className="stats-number">{totalAnswered}</span>
+              <span className="stats-label">Répondues</span>
+            </div>
+            <div className="stats-box">
+              <span className="stats-number">{questions.length}</span>
+              <span className="stats-label">Total</span>
+            </div>
+            <div className="stats-box wrong">
+              <span className="stats-number">{totalWrong}</span>
+              <span className="stats-label">À réviser</span>
+            </div>
+          </div>
+
+          {/* Par catégorie */}
+          <div className="stats-section">
+            <h3 className="stats-title">📁 Par catégorie</h3>
+            <div className="stats-list">
+              {categoryStats.map((stat) => (
+                <div key={stat.name} className="stats-item">
+                  <div className="stats-item-header">
+                    <span className="stats-item-name">{stat.name}</span>
+                    <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                  </div>
+                  <div className="stats-progress-bar">
+                    <div 
+                      className="stats-progress-fill"
+                      style={{ width: `${(stat.answered / stat.total) * 100}%` }}
+                    />
+                  </div>
+                  {stat.wrong > 0 && (
+                    <span className="stats-wrong-badge">📌 {stat.wrong}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Par matière */}
+          <div className="stats-section">
+            <h3 className="stats-title">📚 Par matière</h3>
+            <div className="stats-list">
+              {matiereStats.map((stat) => (
+                <div key={stat.name} className="stats-item">
+                  <div className="stats-item-header">
+                    <span className="stats-item-name">{stat.name}</span>
+                    <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                  </div>
+                  <div className="stats-progress-bar">
+                    <div 
+                      className="stats-progress-fill"
+                      style={{ width: `${(stat.answered / stat.total) * 100}%` }}
+                    />
+                  </div>
+                  {stat.wrong > 0 && (
+                    <span className="stats-wrong-badge">📌 {stat.wrong}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* CONFIG */
   return (
     <div className="app test-app">
@@ -513,6 +626,9 @@ export default function Test({ onBack }) {
           🏠
         </button>
         <h1 className="test-title">📝 Test</h1>
+        <button className="reset-small-btn" onClick={() => setMode("stats")} title="Progression">
+          📊
+        </button>
         {wrongQuestions.length > 0 && (
           <button className="review-badge-btn" onClick={() => setMode("review")}>
             📌 {wrongQuestions.length}
