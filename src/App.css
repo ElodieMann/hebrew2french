@@ -190,6 +190,10 @@ body {
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.3px;
+}
+
+.stat.wrong .stat-value {
+  color: var(--warning);
   margin-top: 2px;
 }
 

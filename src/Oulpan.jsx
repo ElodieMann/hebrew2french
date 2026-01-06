@@ -57,7 +57,15 @@ export default function Oulpan({ onBack }) {
     if (mode === "search" || mode === "add") return;
 
     if (words.length > 0 && queue.length === 0) {
-      const base = mode === "review" ? words.filter((w) => w.wrong) : words;
+      let base;
+      if (mode === "review") {
+        // Mode révision : mots wrong uniquement
+        base = words.filter((w) => w.wrong);
+      } else {
+        // Mode learn : mots non encore répondus, sinon tous si tout fait
+        const unanswered = words.filter((w) => !w.answered);
+        base = unanswered.length > 0 ? unanswered : words;
+      }
 
       const shuffled = shuffle(base.length ? base : words);
       setQueue(shuffled);
@@ -78,21 +86,35 @@ export default function Oulpan({ onBack }) {
   }, [current]);
 
   /* CLICK */
-  const handleClick = (choice) => {
+  const handleClick = async (choice) => {
     if (status !== "idle") return;
 
     if (choice.fr === current.fr) {
       setStatus("correct");
+
+      // Marquer comme répondu (et retirer de wrong si c'était le cas)
+      const updateData = { answered: true };
+      if (current.wrong) {
+        updateData.wrong = false;
+      }
+      await updateDoc(doc(db, "words", current.id), updateData);
+
+      const updated = wordsRef.current.map((w) =>
+        w.id === current.id ? { ...w, ...updateData } : w
+      );
+      setWords(updated);
+      wordsRef.current = updated;
     } else {
       setStatus("wrong");
 
       // Marquer comme à réviser dans Firebase
-      updateDoc(doc(db, "words", current.id), { wrong: true });
+      await updateDoc(doc(db, "words", current.id), { wrong: true, answered: true });
 
       const updated = wordsRef.current.map((w) =>
-        w.id === current.id ? { ...w, wrong: true } : w
+        w.id === current.id ? { ...w, wrong: true, answered: true } : w
       );
       setWords(updated);
+      wordsRef.current = updated;
 
       setTimeout(() => setStatus("idle"), 900);
     }
@@ -189,16 +211,16 @@ export default function Oulpan({ onBack }) {
   const handleResetAll = async () => {
     if (!confirm("Remettre toute la progression à zéro ?")) return;
 
-    const wordsToReset = wordsRef.current.filter((w) => w.wrong);
+    const wordsToReset = wordsRef.current.filter((w) => w.wrong || w.answered);
     if (wordsToReset.length === 0) return;
 
     const batch = writeBatch(db);
     wordsToReset.forEach((w) => {
-      batch.update(doc(db, "words", w.id), { wrong: false });
+      batch.update(doc(db, "words", w.id), { wrong: false, answered: false });
     });
     await batch.commit();
 
-    const updated = wordsRef.current.map((w) => ({ ...w, wrong: false }));
+    const updated = wordsRef.current.map((w) => ({ ...w, wrong: false, answered: false }));
     setWords(updated);
     wordsRef.current = updated;
     setQueue([]);
@@ -226,6 +248,7 @@ export default function Oulpan({ onBack }) {
 
   const reviewCount = words.filter((w) => w.wrong).length;
   const reviewWords = words.filter((w) => w.wrong);
+  const answeredCount = words.filter((w) => w.answered).length;
 
   const searchResults = searchQuery.trim()
     ? words.filter(
@@ -543,10 +566,14 @@ export default function Oulpan({ onBack }) {
 
         <div className="stats">
           <div className="stat">
-            <span className="stat-value">{words.length}</span>
-            <span className="stat-label">Mots</span>
+            <span className="stat-value">{answeredCount}</span>
+            <span className="stat-label">Faits</span>
           </div>
           <div className="stat">
+            <span className="stat-value">{words.length}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat wrong">
             <span className="stat-value">{reviewCount}</span>
             <span className="stat-label">À réviser</span>
           </div>
@@ -559,14 +586,14 @@ export default function Oulpan({ onBack }) {
               style={{
                 width: `${
                   words.length > 0
-                    ? ((words.length - reviewCount) / words.length) * 100
+                    ? (answeredCount / words.length) * 100
                     : 0
                 }%`,
               }}
             />
           </div>
           <span className="progress-count">
-            {words.length - reviewCount}/{words.length}
+            {answeredCount}/{words.length}
           </span>
           <button
             className="reset-small-btn"
