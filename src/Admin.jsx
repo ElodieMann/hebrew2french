@@ -1,0 +1,617 @@
+import { useEffect, useState, useMemo } from "react";
+import { db } from "./firebase";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+
+// Helper: convertir en tableau
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+export default function Admin({ onBack }) {
+  const [tab, setTab] = useState("questions"); // questions | words
+  const [loading, setLoading] = useState(true);
+  
+  // Data
+  const [questions, setQuestions] = useState([]);
+  const [words, setWords] = useState([]);
+  
+  // Search & Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterMatiere, setFilterMatiere] = useState("");
+  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
+  
+  // Edit modal
+  const [editItem, setEditItem] = useState(null);
+  const [editData, setEditData] = useState({});
+  
+  // Delete confirmation
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  /* LOAD DATA */
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [questionsSnap, wordsSnap] = await Promise.all([
+          getDocs(collection(db, "questions")),
+          getDocs(collection(db, "words")),
+        ]);
+        
+        setQuestions(
+          questionsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+        setWords(
+          wordsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+      } catch (error) {
+        console.error("Erreur chargement:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Catégories et matières uniques
+  const categories = useMemo(() => {
+    const all = questions.flatMap((q) => toArray(q.grande_categorie));
+    return [...new Set(all)].filter(Boolean).sort();
+  }, [questions]);
+
+  const matieres = useMemo(() => {
+    let base = questions;
+    if (filterCategory) {
+      base = base.filter((q) => toArray(q.grande_categorie).includes(filterCategory));
+    }
+    const all = base.flatMap((q) => toArray(q.matiere));
+    return [...new Set(all)].filter(Boolean).sort();
+  }, [questions, filterCategory]);
+
+  // Filtrer les questions
+  const filteredQuestions = useMemo(() => {
+    let result = questions;
+    
+    // Signalés d'abord
+    if (showFlaggedOnly) {
+      result = result.filter((q) => q.flagged);
+    }
+    
+    // Catégorie
+    if (filterCategory) {
+      result = result.filter((q) => toArray(q.grande_categorie).includes(filterCategory));
+    }
+    
+    // Matière
+    if (filterMatiere) {
+      result = result.filter((q) => toArray(q.matiere).includes(filterMatiere));
+    }
+    
+    // Recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((q) =>
+        q.question?.toLowerCase().includes(query) ||
+        Object.values(q.options || {}).some((opt) =>
+          opt?.toLowerCase().includes(query)
+        )
+      );
+    }
+    
+    // Trier: flagged en premier
+    return result.sort((a, b) => {
+      if (a.flagged && !b.flagged) return -1;
+      if (!a.flagged && b.flagged) return 1;
+      return 0;
+    });
+  }, [questions, searchQuery, filterCategory, filterMatiere, showFlaggedOnly]);
+
+  // Filtrer les mots
+  const filteredWords = useMemo(() => {
+    let result = words;
+    
+    if (showFlaggedOnly) {
+      result = result.filter((w) => w.flagged);
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((w) =>
+        w.he?.includes(searchQuery) ||
+        w.fr?.toLowerCase().includes(query)
+      );
+    }
+    
+    return result.sort((a, b) => {
+      if (a.flagged && !b.flagged) return -1;
+      if (!a.flagged && b.flagged) return 1;
+      return 0;
+    });
+  }, [words, searchQuery, showFlaggedOnly]);
+
+  // Compter les signalés
+  const flaggedQuestionsCount = questions.filter((q) => q.flagged).length;
+  const flaggedWordsCount = words.filter((w) => w.flagged).length;
+
+  /* EDIT HANDLERS */
+  const openEdit = (item, type) => {
+    setEditItem({ ...item, type });
+    if (type === "question") {
+      setEditData({
+        question: item.question || "",
+        reponse_correcte: item.reponse_correcte || "A",
+        options: { ...item.options },
+        explication: item.explication || "",
+        grande_categorie: toArray(item.grande_categorie).join(", "),
+        matiere: toArray(item.matiere).join(", "),
+        is_prof: item.is_prof || false,
+        is_misrad_haavoda: item.is_misrad_haavoda || false,
+      });
+    } else {
+      setEditData({
+        he: item.he || "",
+        fr: item.fr || "",
+      });
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!editItem) return;
+    
+    try {
+      if (editItem.type === "question") {
+        const updateData = {
+          question: editData.question,
+          reponse_correcte: editData.reponse_correcte,
+          options: editData.options,
+          explication: editData.explication,
+          grande_categorie: editData.grande_categorie.split(",").map((s) => s.trim()).filter(Boolean),
+          matiere: editData.matiere.split(",").map((s) => s.trim()).filter(Boolean),
+          is_prof: editData.is_prof,
+          is_misrad_haavoda: editData.is_misrad_haavoda,
+          flagged: false, // Retirer le flag après édition
+        };
+        
+        await updateDoc(doc(db, "questions", editItem.id), updateData);
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === editItem.id ? { ...q, ...updateData } : q))
+        );
+      } else {
+        const updateData = {
+          he: editData.he,
+          fr: editData.fr,
+          flagged: false,
+        };
+        
+        await updateDoc(doc(db, "words", editItem.id), updateData);
+        setWords((prev) =>
+          prev.map((w) => (w.id === editItem.id ? { ...w, ...updateData } : w))
+        );
+      }
+      
+      setEditItem(null);
+      setEditData({});
+    } catch (error) {
+      console.error("Erreur sauvegarde:", error);
+      alert("Erreur lors de la sauvegarde");
+    }
+  };
+
+  /* DELETE HANDLERS */
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    
+    try {
+      const { item, type } = deleteConfirm;
+      
+      if (type === "question") {
+        await deleteDoc(doc(db, "questions", item.id));
+        setQuestions((prev) => prev.filter((q) => q.id !== item.id));
+      } else {
+        await deleteDoc(doc(db, "words", item.id));
+        setWords((prev) => prev.filter((w) => w.id !== item.id));
+      }
+      
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Erreur suppression:", error);
+      alert("Erreur lors de la suppression");
+    }
+  };
+
+  /* UNFLAG */
+  const handleUnflag = async (item, type) => {
+    try {
+      const collectionName = type === "question" ? "questions" : "words";
+      await updateDoc(doc(db, collectionName, item.id), { flagged: false });
+      
+      if (type === "question") {
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === item.id ? { ...q, flagged: false } : q))
+        );
+      } else {
+        setWords((prev) =>
+          prev.map((w) => (w.id === item.id ? { ...w, flagged: false } : w))
+        );
+      }
+    } catch (error) {
+      console.error("Erreur unflag:", error);
+    }
+  };
+
+  /* LOADING */
+  if (loading) {
+    return (
+      <div className="app admin-app">
+        <div className="empty-state">
+          <span className="empty-icon">⏳</span>
+          <span className="empty-text">Chargement...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app admin-app">
+      {/* Header */}
+      <header className="admin-header">
+        <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+          🏠
+        </button>
+        <h1 className="admin-title">🛠️ Admin</h1>
+      </header>
+
+      {/* Tabs */}
+      <div className="admin-tabs">
+        <button
+          className={`admin-tab ${tab === "questions" ? "active" : ""}`}
+          onClick={() => {
+            setTab("questions");
+            setSearchQuery("");
+          }}
+        >
+          📝 Questions
+          {flaggedQuestionsCount > 0 && (
+            <span className="admin-tab-badge">{flaggedQuestionsCount}</span>
+          )}
+        </button>
+        <button
+          className={`admin-tab ${tab === "words" ? "active" : ""}`}
+          onClick={() => {
+            setTab("words");
+            setSearchQuery("");
+            setFilterCategory("");
+            setFilterMatiere("");
+          }}
+        >
+          📚 Mots
+          {flaggedWordsCount > 0 && (
+            <span className="admin-tab-badge">{flaggedWordsCount}</span>
+          )}
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="admin-filters">
+        <input
+          type="text"
+          className="admin-search"
+          placeholder={tab === "questions" ? "Rechercher une question..." : "Rechercher un mot..."}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        
+        <button
+          className={`admin-filter-btn ${showFlaggedOnly ? "active" : ""}`}
+          onClick={() => setShowFlaggedOnly(!showFlaggedOnly)}
+        >
+          ⚠️ Signalés ({tab === "questions" ? flaggedQuestionsCount : flaggedWordsCount})
+        </button>
+
+        {tab === "questions" && (
+          <div className="admin-filter-row">
+            <select
+              className="admin-filter-select"
+              value={filterCategory}
+              onChange={(e) => {
+                setFilterCategory(e.target.value);
+                setFilterMatiere("");
+              }}
+            >
+              <option value="">Toutes catégories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            
+            {filterCategory && matieres.length > 0 && (
+              <select
+                className="admin-filter-select"
+                value={filterMatiere}
+                onChange={(e) => setFilterMatiere(e.target.value)}
+              >
+                <option value="">Toutes matières</option>
+                {matieres.map((mat) => (
+                  <option key={mat} value={mat}>{mat}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Results count */}
+      <div className="admin-results-count">
+        {tab === "questions"
+          ? `${filteredQuestions.length} question(s)`
+          : `${filteredWords.length} mot(s)`}
+      </div>
+
+      {/* List */}
+      <div className="admin-list">
+        {tab === "questions" ? (
+          filteredQuestions.length === 0 ? (
+            <div className="admin-empty">Aucune question trouvée</div>
+          ) : (
+            filteredQuestions.map((q) => (
+              <div key={q.id} className={`admin-item ${q.flagged ? "flagged" : ""}`}>
+                <div className="admin-item-content">
+                  {q.flagged && <span className="admin-flag-icon">⚠️</span>}
+                  <div className="admin-item-meta">
+                    <span className="admin-meta-cat">{toArray(q.grande_categorie).join(", ")}</span>
+                    <span className="admin-meta-mat">{toArray(q.matiere).join(", ")}</span>
+                  </div>
+                  <p className="admin-item-text" dir="rtl">
+                    {q.question?.length > 100 ? q.question.substring(0, 100) + "..." : q.question}
+                  </p>
+                  <div className="admin-item-answer">
+                    Réponse: <strong>{q.reponse_correcte}</strong> - {q.options?.[q.reponse_correcte]}
+                  </div>
+                </div>
+                <div className="admin-item-actions">
+                  <button
+                    className="admin-action-btn edit"
+                    onClick={() => openEdit(q, "question")}
+                    title="Modifier"
+                  >
+                    ✏️
+                  </button>
+                  {q.flagged && (
+                    <button
+                      className="admin-action-btn unflag"
+                      onClick={() => handleUnflag(q, "question")}
+                      title="Retirer le signalement"
+                    >
+                      ✓
+                    </button>
+                  )}
+                  <button
+                    className="admin-action-btn delete"
+                    onClick={() => setDeleteConfirm({ item: q, type: "question" })}
+                    title="Supprimer"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))
+          )
+        ) : (
+          filteredWords.length === 0 ? (
+            <div className="admin-empty">Aucun mot trouvé</div>
+          ) : (
+            filteredWords.map((w) => (
+              <div key={w.id} className={`admin-item ${w.flagged ? "flagged" : ""}`}>
+                <div className="admin-item-content">
+                  {w.flagged && <span className="admin-flag-icon">⚠️</span>}
+                  <div className="admin-word-pair">
+                    <span className="admin-word-he">{w.he}</span>
+                    <span className="admin-word-fr">{w.fr}</span>
+                  </div>
+                </div>
+                <div className="admin-item-actions">
+                  <button
+                    className="admin-action-btn edit"
+                    onClick={() => openEdit(w, "word")}
+                    title="Modifier"
+                  >
+                    ✏️
+                  </button>
+                  {w.flagged && (
+                    <button
+                      className="admin-action-btn unflag"
+                      onClick={() => handleUnflag(w, "word")}
+                      title="Retirer le signalement"
+                    >
+                      ✓
+                    </button>
+                  )}
+                  <button
+                    className="admin-action-btn delete"
+                    onClick={() => setDeleteConfirm({ item: w, type: "word" })}
+                    title="Supprimer"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
+
+      {/* Edit Modal */}
+      {editItem && (
+        <div className="admin-modal-overlay" onClick={() => setEditItem(null)}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2>✏️ Modifier</h2>
+              <button className="admin-modal-close" onClick={() => setEditItem(null)}>✕</button>
+            </div>
+            
+            <div className="admin-modal-body">
+              {editItem.type === "question" ? (
+                <>
+                  <div className="admin-field">
+                    <label>Question</label>
+                    <textarea
+                      value={editData.question}
+                      onChange={(e) => setEditData({ ...editData, question: e.target.value })}
+                      dir="rtl"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div className="admin-field">
+                    <label>Réponse correcte</label>
+                    <select
+                      value={editData.reponse_correcte}
+                      onChange={(e) => setEditData({ ...editData, reponse_correcte: e.target.value })}
+                    >
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                    </select>
+                  </div>
+                  
+                  {["A", "B", "C", "D"].map((key) => (
+                    <div key={key} className="admin-field">
+                      <label>Option {key}</label>
+                      <input
+                        type="text"
+                        value={editData.options?.[key] || ""}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            options: { ...editData.options, [key]: e.target.value },
+                          })
+                        }
+                        dir="rtl"
+                      />
+                    </div>
+                  ))}
+                  
+                  <div className="admin-field">
+                    <label>Explication</label>
+                    <textarea
+                      value={editData.explication}
+                      onChange={(e) => setEditData({ ...editData, explication: e.target.value })}
+                      dir="rtl"
+                      rows={2}
+                    />
+                  </div>
+                  
+                  <div className="admin-field">
+                    <label>Catégories (séparées par virgule)</label>
+                    <input
+                      type="text"
+                      value={editData.grande_categorie}
+                      onChange={(e) => setEditData({ ...editData, grande_categorie: e.target.value })}
+                      dir="rtl"
+                    />
+                  </div>
+                  
+                  <div className="admin-field">
+                    <label>Matières (séparées par virgule)</label>
+                    <input
+                      type="text"
+                      value={editData.matiere}
+                      onChange={(e) => setEditData({ ...editData, matiere: e.target.value })}
+                      dir="rtl"
+                    />
+                  </div>
+                  
+                  <div className="admin-field-row">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={editData.is_prof}
+                        onChange={(e) => setEditData({ ...editData, is_prof: e.target.checked })}
+                      />
+                      Prof
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={editData.is_misrad_haavoda}
+                        onChange={(e) => setEditData({ ...editData, is_misrad_haavoda: e.target.checked })}
+                      />
+                      Misrad Haavoda
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="admin-field">
+                    <label>Hébreu</label>
+                    <input
+                      type="text"
+                      value={editData.he}
+                      onChange={(e) => setEditData({ ...editData, he: e.target.value })}
+                      dir="rtl"
+                    />
+                  </div>
+                  
+                  <div className="admin-field">
+                    <label>Français</label>
+                    <input
+                      type="text"
+                      value={editData.fr}
+                      onChange={(e) => setEditData({ ...editData, fr: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            
+            <div className="admin-modal-footer">
+              <button className="admin-modal-btn cancel" onClick={() => setEditItem(null)}>
+                Annuler
+              </button>
+              <button className="admin-modal-btn save" onClick={saveEdit}>
+                💾 Sauvegarder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="admin-modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="admin-modal confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2>🗑️ Confirmer la suppression</h2>
+            </div>
+            
+            <div className="admin-modal-body">
+              <p>Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+              <p className="admin-confirm-preview">
+                {deleteConfirm.type === "question"
+                  ? deleteConfirm.item.question?.substring(0, 50) + "..."
+                  : `${deleteConfirm.item.he} - ${deleteConfirm.item.fr}`}
+              </p>
+            </div>
+            
+            <div className="admin-modal-footer">
+              <button className="admin-modal-btn cancel" onClick={() => setDeleteConfirm(null)}>
+                Annuler
+              </button>
+              <button className="admin-modal-btn delete" onClick={confirmDelete}>
+                🗑️ Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

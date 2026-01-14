@@ -547,6 +547,24 @@ export default function Test({ onBack }) {
             {current.is_prof && <span className="quiz-badge prof">👩‍🏫</span>}
             {current.is_misrad_haavoda && <span className="quiz-badge misrad">🏛️</span>}
             {current.wrong && <span className="quiz-badge wrong">📌</span>}
+            <button
+              className={`quiz-flag-btn ${current.flagged ? "flagged" : ""}`}
+              onClick={async () => {
+                await updateDoc(doc(db, "questions", current.id), { flagged: !current.flagged });
+                const updated = questionsRef.current.map((q) =>
+                  q.id === current.id ? { ...q, flagged: !current.flagged } : q
+                );
+                setQuestions(updated);
+                questionsRef.current = updated;
+                // Mettre à jour aussi la question actuelle dans le quiz
+                setQuizQuestions((prev) =>
+                  prev.map((q) => (q.id === current.id ? { ...q, flagged: !current.flagged } : q))
+                );
+              }}
+              title={current.flagged ? "Retirer le signalement" : "Signaler une erreur"}
+            >
+              {current.flagged ? "✓" : "⚠️"}
+            </button>
           </div>
           <p className="quiz-question-text" dir="rtl">{current.question}</p>
         </div>

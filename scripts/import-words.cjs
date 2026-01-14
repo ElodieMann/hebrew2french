@@ -23,9 +23,9 @@
  * -----------------------------------------------------
  */
 
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
-import { readFileSync, writeFileSync } from "fs";
+const { initializeApp } = require("firebase/app");
+const { getFirestore, collection, addDoc, getDocs } = require("firebase/firestore");
+const { readFileSync, writeFileSync } = require("fs");
 
 const firebaseConfig = {
   apiKey: "AIzaSyCirsTIEJXkj6SDL6W-inUV3Gw0uOyH_is",

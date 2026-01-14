@@ -1,10 +1,11 @@
 import { useState } from "react";
 import Oulpan from "./Oulpan";
 import Test from "./Test";
+import Admin from "./Admin";
 import "./App.css";
 
 export default function App() {
-  const [currentApp, setCurrentApp] = useState(null); // null = home, "oulpan", "test"
+  const [currentApp, setCurrentApp] = useState(null); // null = home, "oulpan", "test", "admin"
 
   // Page d'accueil
   if (!currentApp) {
@@ -35,6 +36,13 @@ export default function App() {
               <span className="home-choice-desc">QCM par catégorie</span>
             </button>
           </div>
+
+          <button
+            className="home-admin-btn"
+            onClick={() => setCurrentApp("admin")}
+          >
+            🛠️ Admin
+          </button>
         </div>
       </div>
     );
@@ -48,6 +56,11 @@ export default function App() {
   // Test
   if (currentApp === "test") {
     return <Test onBack={() => setCurrentApp(null)} />;
+  }
+
+  // Admin
+  if (currentApp === "admin") {
+    return <Admin onBack={() => setCurrentApp(null)} />;
   }
 
   return null;

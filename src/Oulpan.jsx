@@ -617,6 +617,20 @@ export default function Oulpan({ onBack }) {
         <div className="word-card">
           <div className="card-actions">
             <button
+              className={`action-btn flag-action ${current.flagged ? "flagged" : ""}`}
+              onClick={async () => {
+                await updateDoc(doc(db, "words", current.id), { flagged: !current.flagged });
+                const updated = wordsRef.current.map((w) =>
+                  w.id === current.id ? { ...w, flagged: !current.flagged } : w
+                );
+                setWords(updated);
+                wordsRef.current = updated;
+              }}
+              title={current.flagged ? "Retirer le signalement" : "Signaler une erreur"}
+            >
+              {current.flagged ? "✓" : "⚠️"}
+            </button>
+            <button
               className={`action-btn review-action ${
                 markedReview ? "marked" : ""
               }`}
