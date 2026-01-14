@@ -21,6 +21,10 @@ export default function Test({ onBack }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState("config"); // config | quiz | results | review | stats
+  
+  // Modal édition rapide
+  const [editModal, setEditModal] = useState(null);
+  const [editData, setEditData] = useState({});
 
   // Filtres
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -235,6 +239,51 @@ export default function Test({ onBack }) {
 
   // Ancien alias pour compatibilité
   const handleResetAllWrong = () => handleResetWrong("all");
+
+  // Ouvrir le modal d'édition rapide
+  const openQuickEdit = (question) => {
+    setEditModal(question);
+    setEditData({
+      question: question.question || "",
+      reponse_correcte: question.reponse_correcte || "A",
+      options: { ...question.options },
+      explication: question.explication || "",
+    });
+  };
+
+  // Sauvegarder l'édition rapide
+  const saveQuickEdit = async () => {
+    if (!editModal) return;
+    
+    try {
+      const updateData = {
+        question: editData.question,
+        reponse_correcte: editData.reponse_correcte,
+        options: editData.options,
+        explication: editData.explication,
+        flagged: false,
+      };
+      
+      await updateDoc(doc(db, "questions", editModal.id), updateData);
+      
+      const updated = questionsRef.current.map((q) =>
+        q.id === editModal.id ? { ...q, ...updateData } : q
+      );
+      setQuestions(updated);
+      questionsRef.current = updated;
+      
+      // Mettre à jour aussi dans le quiz en cours
+      setQuizQuestions((prev) =>
+        prev.map((q) => (q.id === editModal.id ? { ...q, ...updateData } : q))
+      );
+      
+      setEditModal(null);
+      setEditData({});
+    } catch (error) {
+      console.error("Erreur sauvegarde:", error);
+      alert("Erreur lors de la sauvegarde");
+    }
+  };
 
   // Ajouter une catégorie (depuis select)
   const addCategory = (cat) => {
@@ -547,24 +596,32 @@ export default function Test({ onBack }) {
             {current.is_prof && <span className="quiz-badge prof">👩‍🏫</span>}
             {current.is_misrad_haavoda && <span className="quiz-badge misrad">🏛️</span>}
             {current.wrong && <span className="quiz-badge wrong">📌</span>}
-            <button
-              className={`quiz-flag-btn ${current.flagged ? "flagged" : ""}`}
-              onClick={async () => {
-                await updateDoc(doc(db, "questions", current.id), { flagged: !current.flagged });
-                const updated = questionsRef.current.map((q) =>
-                  q.id === current.id ? { ...q, flagged: !current.flagged } : q
-                );
-                setQuestions(updated);
-                questionsRef.current = updated;
-                // Mettre à jour aussi la question actuelle dans le quiz
-                setQuizQuestions((prev) =>
-                  prev.map((q) => (q.id === current.id ? { ...q, flagged: !current.flagged } : q))
-                );
-              }}
-              title={current.flagged ? "Retirer le signalement" : "Signaler une erreur"}
-            >
-              {current.flagged ? "✓" : "⚠️"}
-            </button>
+            <div className="quiz-edit-actions">
+              <button
+                className="quiz-edit-btn"
+                onClick={() => openQuickEdit(current)}
+                title="Modifier cette question"
+              >
+                ✏️
+              </button>
+              <button
+                className={`quiz-flag-btn ${current.flagged ? "flagged" : ""}`}
+                onClick={async () => {
+                  await updateDoc(doc(db, "questions", current.id), { flagged: !current.flagged });
+                  const updated = questionsRef.current.map((q) =>
+                    q.id === current.id ? { ...q, flagged: !current.flagged } : q
+                  );
+                  setQuestions(updated);
+                  questionsRef.current = updated;
+                  setQuizQuestions((prev) =>
+                    prev.map((q) => (q.id === current.id ? { ...q, flagged: !current.flagged } : q))
+                  );
+                }}
+                title={current.flagged ? "Retirer le signalement" : "Signaler pour plus tard"}
+              >
+                {current.flagged ? "✓" : "⚠️"}
+              </button>
+            </div>
           </div>
           <p className="quiz-question-text" dir="rtl">{current.question}</p>
         </div>
@@ -600,6 +657,79 @@ export default function Test({ onBack }) {
             <button className="quiz-next-btn" onClick={nextQuestion}>
               {currentIndex + 1 >= quizQuestions.length ? "Voir les résultats" : "Question suivante"} →
             </button>
+          </div>
+        )}
+
+        {/* Modal d'édition rapide */}
+        {editModal && (
+          <div className="admin-modal-overlay" onClick={() => setEditModal(null)}>
+            <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-modal-header">
+                <h2>✏️ Modifier la question</h2>
+                <button className="admin-modal-close" onClick={() => setEditModal(null)}>✕</button>
+              </div>
+              
+              <div className="admin-modal-body">
+                <div className="admin-field">
+                  <label>Question</label>
+                  <textarea
+                    value={editData.question}
+                    onChange={(e) => setEditData({ ...editData, question: e.target.value })}
+                    dir="rtl"
+                    rows={3}
+                  />
+                </div>
+                
+                <div className="admin-field">
+                  <label>Réponse correcte</label>
+                  <select
+                    value={editData.reponse_correcte}
+                    onChange={(e) => setEditData({ ...editData, reponse_correcte: e.target.value })}
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
+                </div>
+                
+                {["A", "B", "C", "D"].map((key) => (
+                  <div key={key} className="admin-field">
+                    <label>Option {key} {key === editData.reponse_correcte && "✓"}</label>
+                    <input
+                      type="text"
+                      value={editData.options?.[key] || ""}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          options: { ...editData.options, [key]: e.target.value },
+                        })
+                      }
+                      dir="rtl"
+                    />
+                  </div>
+                ))}
+                
+                <div className="admin-field">
+                  <label>Explication</label>
+                  <textarea
+                    value={editData.explication}
+                    onChange={(e) => setEditData({ ...editData, explication: e.target.value })}
+                    dir="rtl"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              
+              <div className="admin-modal-footer">
+                <button className="admin-modal-btn cancel" onClick={() => setEditModal(null)}>
+                  Annuler
+                </button>
+                <button className="admin-modal-btn save" onClick={saveQuickEdit}>
+                  💾 Sauvegarder
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

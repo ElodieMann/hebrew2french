@@ -2740,6 +2740,34 @@ body {
   color: white;
 }
 
+/* Edit action button */
+.edit-action {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+/* Quiz edit actions group */
+.quiz-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.quiz-edit-btn {
+  padding: 4px 8px;
+  background: var(--primary-light);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-edit-btn:active {
+  transform: scale(0.95);
+  background: var(--primary);
+}
+
 /* Responsive Test - déjà petit, pas besoin de réduire */
 
 @media (min-height: 900px) {

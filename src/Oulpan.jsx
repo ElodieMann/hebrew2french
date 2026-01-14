@@ -26,6 +26,10 @@ export default function Oulpan({ onBack }) {
   // Pour ajouter un mot
   const [newHe, setNewHe] = useState("");
   const [newFr, setNewFr] = useState("");
+  
+  // Modal édition rapide
+  const [editModal, setEditModal] = useState(null);
+  const [editData, setEditData] = useState({});
 
   const wordsRef = useRef([]);
   wordsRef.current = words;
@@ -244,6 +248,46 @@ export default function Oulpan({ onBack }) {
 
     setNewHe("");
     setNewFr("");
+  };
+
+  /* QUICK EDIT */
+  const openQuickEdit = (word) => {
+    setEditModal(word);
+    setEditData({
+      he: word.he || "",
+      fr: word.fr || "",
+    });
+  };
+
+  const saveQuickEdit = async () => {
+    if (!editModal) return;
+    
+    try {
+      const updateData = {
+        he: editData.he,
+        fr: editData.fr,
+        flagged: false,
+      };
+      
+      await updateDoc(doc(db, "words", editModal.id), updateData);
+      
+      const updated = wordsRef.current.map((w) =>
+        w.id === editModal.id ? { ...w, ...updateData } : w
+      );
+      setWords(updated);
+      wordsRef.current = updated;
+      
+      // Mettre à jour le mot courant si c'est celui qu'on édite
+      if (current && current.id === editModal.id) {
+        setCurrent({ ...current, ...updateData });
+      }
+      
+      setEditModal(null);
+      setEditData({});
+    } catch (error) {
+      console.error("Erreur sauvegarde:", error);
+      alert("Erreur lors de la sauvegarde");
+    }
   };
 
   const reviewCount = words.filter((w) => w.wrong).length;
@@ -617,6 +661,13 @@ export default function Oulpan({ onBack }) {
         <div className="word-card">
           <div className="card-actions">
             <button
+              className="action-btn edit-action"
+              onClick={() => openQuickEdit(current)}
+              title="Modifier ce mot"
+            >
+              ✏️
+            </button>
+            <button
               className={`action-btn flag-action ${current.flagged ? "flagged" : ""}`}
               onClick={async () => {
                 await updateDoc(doc(db, "words", current.id), { flagged: !current.flagged });
@@ -626,7 +677,7 @@ export default function Oulpan({ onBack }) {
                 setWords(updated);
                 wordsRef.current = updated;
               }}
-              title={current.flagged ? "Retirer le signalement" : "Signaler une erreur"}
+              title={current.flagged ? "Retirer le signalement" : "Signaler pour plus tard"}
             >
               {current.flagged ? "✓" : "⚠️"}
             </button>
@@ -651,6 +702,49 @@ export default function Oulpan({ onBack }) {
           <span className="hebrew">{current.he}</span>
         </div>
       </main>
+
+      {/* Modal d'édition rapide */}
+      {editModal && (
+        <div className="admin-modal-overlay" onClick={() => setEditModal(null)}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2>✏️ Modifier le mot</h2>
+              <button className="admin-modal-close" onClick={() => setEditModal(null)}>✕</button>
+            </div>
+            
+            <div className="admin-modal-body">
+              <div className="admin-field">
+                <label>Hébreu</label>
+                <input
+                  type="text"
+                  value={editData.he}
+                  onChange={(e) => setEditData({ ...editData, he: e.target.value })}
+                  dir="rtl"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="admin-field">
+                <label>Français</label>
+                <input
+                  type="text"
+                  value={editData.fr}
+                  onChange={(e) => setEditData({ ...editData, fr: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="admin-modal-footer">
+              <button className="admin-modal-btn cancel" onClick={() => setEditModal(null)}>
+                Annuler
+              </button>
+              <button className="admin-modal-btn save" onClick={saveQuickEdit}>
+                💾 Sauvegarder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CHOICES or POPUP */}
       <footer className="choices">
