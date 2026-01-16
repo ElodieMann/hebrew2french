@@ -750,7 +750,7 @@ body {
 .search-input {
   width: 100%;
   padding: 20px 22px;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 600;
   border: 3px solid var(--gray-200);
   border-radius: var(--radius);
@@ -799,7 +799,7 @@ body {
 }
 
 .search-he {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   direction: rtl;
   color: var(--gray-900);
@@ -828,7 +828,7 @@ body {
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2358,6 +2358,63 @@ body {
   cursor: pointer;
 }
 
+.admin-filter-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-badge-btn {
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.admin-badge-btn.active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-badge-btn.misrad.active {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.admin-badge-btn.answered.active {
+  background: var(--success-light);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.admin-badge-btn:active {
+  transform: scale(0.95);
+}
+
+.admin-clear-filters {
+  padding: 8px 14px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-clear-filters:active {
+  background: var(--gray-200);
+}
+
 .admin-results-count {
   font-size: 13px;
   font-weight: 600;
@@ -2429,6 +2486,27 @@ body {
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
+}
+
+.admin-meta-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.admin-meta-badge.prof {
+  background: #e0f2fe;
+}
+
+.admin-meta-badge.misrad {
+  background: #fef3c7;
+}
+
+.admin-meta-badge.answered {
+  background: var(--success-light);
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .admin-item-text {

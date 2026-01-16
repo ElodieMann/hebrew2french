@@ -27,6 +27,9 @@ export default function Admin({ onBack }) {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterMatiere, setFilterMatiere] = useState("");
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
+  const [filterProf, setFilterProf] = useState(null); // null = tous, true = prof, false = non-prof
+  const [filterMisrad, setFilterMisrad] = useState(null); // null = tous, true = misrad, false = non-misrad
+  const [filterAnswered, setFilterAnswered] = useState(null); // null = tous, true = répondues, false = non-répondues
   
   // Edit modal
   const [editItem, setEditItem] = useState(null);
@@ -93,6 +96,21 @@ export default function Admin({ onBack }) {
       result = result.filter((q) => toArray(q.matiere).includes(filterMatiere));
     }
     
+    // Prof
+    if (filterProf !== null) {
+      result = result.filter((q) => q.is_prof === filterProf);
+    }
+    
+    // Misrad
+    if (filterMisrad !== null) {
+      result = result.filter((q) => q.is_misrad_haavoda === filterMisrad);
+    }
+    
+    // Answered
+    if (filterAnswered !== null) {
+      result = result.filter((q) => (q.answered || q.wrong) === filterAnswered);
+    }
+    
     // Recherche
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -110,7 +128,7 @@ export default function Admin({ onBack }) {
       if (!a.flagged && b.flagged) return 1;
       return 0;
     });
-  }, [questions, searchQuery, filterCategory, filterMatiere, showFlaggedOnly]);
+  }, [questions, searchQuery, filterCategory, filterMatiere, showFlaggedOnly, filterProf, filterMisrad, filterAnswered]);
 
   // Filtrer les mots
   const filteredWords = useMemo(() => {
@@ -315,34 +333,90 @@ export default function Admin({ onBack }) {
         </button>
 
         {tab === "questions" && (
-          <div className="admin-filter-row">
-            <select
-              className="admin-filter-select"
-              value={filterCategory}
-              onChange={(e) => {
-                setFilterCategory(e.target.value);
-                setFilterMatiere("");
-              }}
-            >
-              <option value="">Toutes catégories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            
-            {filterCategory && matieres.length > 0 && (
+          <>
+            <div className="admin-filter-row">
               <select
                 className="admin-filter-select"
-                value={filterMatiere}
-                onChange={(e) => setFilterMatiere(e.target.value)}
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                  setFilterMatiere("");
+                }}
               >
-                <option value="">Toutes matières</option>
-                {matieres.map((mat) => (
-                  <option key={mat} value={mat}>{mat}</option>
+                <option value="">Toutes catégories</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
+              
+              {filterCategory && matieres.length > 0 && (
+                <select
+                  className="admin-filter-select"
+                  value={filterMatiere}
+                  onChange={(e) => setFilterMatiere(e.target.value)}
+                >
+                  <option value="">Toutes matières</option>
+                  {matieres.map((mat) => (
+                    <option key={mat} value={mat}>{mat}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            
+            <div className="admin-filter-badges">
+              <button
+                className={`admin-badge-btn ${filterProf === true ? "active" : ""}`}
+                onClick={() => setFilterProf(filterProf === true ? null : true)}
+              >
+                👩‍🏫 Prof
+              </button>
+              <button
+                className={`admin-badge-btn ${filterProf === false ? "active" : ""}`}
+                onClick={() => setFilterProf(filterProf === false ? null : false)}
+              >
+                ❌ Non-Prof
+              </button>
+              <button
+                className={`admin-badge-btn misrad ${filterMisrad === true ? "active" : ""}`}
+                onClick={() => setFilterMisrad(filterMisrad === true ? null : true)}
+              >
+                🏛️ Misrad
+              </button>
+              <button
+                className={`admin-badge-btn misrad ${filterMisrad === false ? "active" : ""}`}
+                onClick={() => setFilterMisrad(filterMisrad === false ? null : false)}
+              >
+                ❌ Non-Misrad
+              </button>
+              <button
+                className={`admin-badge-btn answered ${filterAnswered === true ? "active" : ""}`}
+                onClick={() => setFilterAnswered(filterAnswered === true ? null : true)}
+              >
+                ✓ Répondues
+              </button>
+              <button
+                className={`admin-badge-btn answered ${filterAnswered === false ? "active" : ""}`}
+                onClick={() => setFilterAnswered(filterAnswered === false ? null : false)}
+              >
+                ○ Non-répondues
+              </button>
+            </div>
+            
+            {(filterProf !== null || filterMisrad !== null || filterAnswered !== null || filterCategory || filterMatiere) && (
+              <button
+                className="admin-clear-filters"
+                onClick={() => {
+                  setFilterProf(null);
+                  setFilterMisrad(null);
+                  setFilterAnswered(null);
+                  setFilterCategory("");
+                  setFilterMatiere("");
+                }}
+              >
+                🗑️ Effacer les filtres
+              </button>
             )}
-          </div>
+          </>
         )}
       </div>
 
@@ -366,6 +440,9 @@ export default function Admin({ onBack }) {
                   <div className="admin-item-meta">
                     <span className="admin-meta-cat">{toArray(q.grande_categorie).join(", ")}</span>
                     <span className="admin-meta-mat">{toArray(q.matiere).join(", ")}</span>
+                    {q.is_prof && <span className="admin-meta-badge prof">👩‍🏫</span>}
+                    {q.is_misrad_haavoda && <span className="admin-meta-badge misrad">🏛️</span>}
+                    {(q.answered || q.wrong) && <span className="admin-meta-badge answered">✓</span>}
                   </div>
                   <p className="admin-item-text" dir="rtl">
                     {q.question?.length > 100 ? q.question.substring(0, 100) + "..." : q.question}
