@@ -1,6 +1,13 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { db } from "./firebase";
-import { collection, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  writeBatch,
+  deleteDoc,
+} from "firebase/firestore";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 
@@ -21,7 +28,7 @@ export default function Test({ onBack }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState("config"); // config | quiz | results | review | stats
-  
+
   // Modal édition rapide
   const [editModal, setEditModal] = useState(null);
   const [editData, setEditData] = useState({});
@@ -77,7 +84,9 @@ export default function Test({ onBack }) {
   const matieres = useMemo(() => {
     let base = filterWrong ? questions.filter((q) => q.wrong) : questions;
     if (selectedCategories.length > 0) {
-      base = base.filter((q) => matchesFilter(q.grande_categorie, selectedCategories));
+      base = base.filter((q) =>
+        matchesFilter(q.grande_categorie, selectedCategories)
+      );
     }
     const allMatieres = base.flatMap((q) => toArray(q.matiere));
     return [...new Set(allMatieres)].filter(Boolean).sort();
@@ -90,10 +99,18 @@ export default function Test({ onBack }) {
       if (!matchesFilter(q.grande_categorie, selectedCategories)) return false;
       if (!matchesFilter(q.matiere, selectedMatieres)) return false;
       if (filterProf !== null && q.is_prof !== filterProf) return false;
-      if (filterMisrad !== null && q.is_misrad_haavoda !== filterMisrad) return false;
+      if (filterMisrad !== null && q.is_misrad_haavoda !== filterMisrad)
+        return false;
       return true;
     });
-  }, [questions, selectedCategories, selectedMatieres, filterProf, filterMisrad, filterWrong]);
+  }, [
+    questions,
+    selectedCategories,
+    selectedMatieres,
+    filterProf,
+    filterMisrad,
+    filterWrong,
+  ]);
 
   // Questions à réviser
   const wrongQuestions = useMemo(() => {
@@ -102,9 +119,15 @@ export default function Test({ onBack }) {
 
   // Stats par catégorie (answered OU wrong = répondu)
   const categoryStats = useMemo(() => {
-    const allCategories = [...new Set(questions.flatMap((q) => toArray(q.grande_categorie)))].filter(Boolean).sort();
+    const allCategories = [
+      ...new Set(questions.flatMap((q) => toArray(q.grande_categorie))),
+    ]
+      .filter(Boolean)
+      .sort();
     return allCategories.map((cat) => {
-      const catQuestions = questions.filter((q) => toArray(q.grande_categorie).includes(cat));
+      const catQuestions = questions.filter((q) =>
+        toArray(q.grande_categorie).includes(cat)
+      );
       const answered = catQuestions.filter((q) => q.answered || q.wrong).length;
       const wrong = catQuestions.filter((q) => q.wrong).length;
       return { name: cat, total: catQuestions.length, answered, wrong };
@@ -113,9 +136,15 @@ export default function Test({ onBack }) {
 
   // Stats par matière (answered OU wrong = répondu)
   const matiereStats = useMemo(() => {
-    const allMatieres = [...new Set(questions.flatMap((q) => toArray(q.matiere)))].filter(Boolean).sort();
+    const allMatieres = [
+      ...new Set(questions.flatMap((q) => toArray(q.matiere))),
+    ]
+      .filter(Boolean)
+      .sort();
     return allMatieres.map((mat) => {
-      const matQuestions = questions.filter((q) => toArray(q.matiere).includes(mat));
+      const matQuestions = questions.filter((q) =>
+        toArray(q.matiere).includes(mat)
+      );
       const answered = matQuestions.filter((q) => q.answered || q.wrong).length;
       const wrong = matQuestions.filter((q) => q.wrong).length;
       return { name: mat, total: matQuestions.length, answered, wrong };
@@ -168,7 +197,10 @@ export default function Test({ onBack }) {
     setQuestions(updated);
     questionsRef.current = updated;
 
-    setAnswers((prev) => [...prev, { question: current, selected: key, correct: isCorrect }]);
+    setAnswers((prev) => [
+      ...prev,
+      { question: current, selected: key, correct: isCorrect },
+    ]);
     setShowExplanation(true);
   };
 
@@ -254,7 +286,7 @@ export default function Test({ onBack }) {
   // Sauvegarder l'édition rapide
   const saveQuickEdit = async () => {
     if (!editModal) return;
-    
+
     try {
       const updateData = {
         question: editData.question,
@@ -263,25 +295,61 @@ export default function Test({ onBack }) {
         explication: editData.explication,
         flagged: false,
       };
-      
+
       await updateDoc(doc(db, "questions", editModal.id), updateData);
-      
+
       const updated = questionsRef.current.map((q) =>
         q.id === editModal.id ? { ...q, ...updateData } : q
       );
       setQuestions(updated);
       questionsRef.current = updated;
-      
+
       // Mettre à jour aussi dans le quiz en cours
       setQuizQuestions((prev) =>
         prev.map((q) => (q.id === editModal.id ? { ...q, ...updateData } : q))
       );
-      
+
       setEditModal(null);
       setEditData({});
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
       alert("Erreur lors de la sauvegarde");
+    }
+  };
+
+  // Supprimer la question courante
+  const handleDeleteQuestion = async () => {
+    if (!confirm("Supprimer cette question définitivement ?")) return;
+
+    const questionToDelete = quizQuestions[currentIndex];
+
+    try {
+      await deleteDoc(doc(db, "questions", questionToDelete.id));
+
+      // Retirer de la liste locale
+      const updated = questionsRef.current.filter(
+        (q) => q.id !== questionToDelete.id
+      );
+      setQuestions(updated);
+      questionsRef.current = updated;
+
+      // Retirer du quiz et passer à la suivante
+      const newQuizQuestions = quizQuestions.filter(
+        (q) => q.id !== questionToDelete.id
+      );
+      setQuizQuestions(newQuizQuestions);
+
+      if (newQuizQuestions.length === 0) {
+        setMode("results");
+      } else if (currentIndex >= newQuizQuestions.length) {
+        setCurrentIndex(newQuizQuestions.length - 1);
+      }
+
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+    } catch (error) {
+      console.error("Erreur suppression:", error);
+      alert("Erreur lors de la suppression");
     }
   };
 
@@ -344,7 +412,8 @@ export default function Test({ onBack }) {
 
     if (type === "category") {
       toReset = questionsRef.current.filter(
-        (q) => (q.answered || q.wrong) && toArray(q.grande_categorie).includes(value)
+        (q) =>
+          (q.answered || q.wrong) && toArray(q.grande_categorie).includes(value)
       );
       message = `Remettre à zéro TOUTES les réponses de "${value}" ? (${toReset.length} questions)`;
     } else if (type === "matiere") {
@@ -366,7 +435,10 @@ export default function Test({ onBack }) {
 
     const batch = writeBatch(db);
     toReset.forEach((q) => {
-      batch.update(doc(db, "questions", q.id), { wrong: false, answered: false });
+      batch.update(doc(db, "questions", q.id), {
+        wrong: false,
+        answered: false,
+      });
     });
     await batch.commit();
 
@@ -425,25 +497,39 @@ export default function Test({ onBack }) {
         </header>
 
         {/* Filtres rapides */}
-        {[...new Set(wrongQuestions.flatMap((q) => toArray(q.grande_categorie)))].length > 1 && (
+        {[
+          ...new Set(
+            wrongQuestions.flatMap((q) => toArray(q.grande_categorie))
+          ),
+        ].length > 1 && (
           <div className="review-filters">
-            <select 
+            <select
               className="config-select"
               value=""
               onChange={(e) => addCategory(e.target.value)}
             >
               <option value="">+ Filtrer par catégorie</option>
-              {[...new Set(wrongQuestions.flatMap((q) => toArray(q.grande_categorie)))]
-                .filter(c => !selectedCategories.includes(c))
+              {[
+                ...new Set(
+                  wrongQuestions.flatMap((q) => toArray(q.grande_categorie))
+                ),
+              ]
+                .filter((c) => !selectedCategories.includes(c))
                 .sort()
                 .map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
                 ))}
             </select>
             {selectedCategories.length > 0 && (
               <div className="selected-chips">
                 {selectedCategories.map((cat) => (
-                  <span key={cat} className="selected-chip" onClick={() => removeCategory(cat)}>
+                  <span
+                    key={cat}
+                    className="selected-chip"
+                    onClick={() => removeCategory(cat)}
+                  >
                     {cat} ✕
                   </span>
                 ))}
@@ -470,11 +556,17 @@ export default function Test({ onBack }) {
                   <div key={q.id} className="review-question-item">
                     <div className="review-question-content">
                       <div className="review-question-meta">
-                        <span className="quiz-category small">{toArray(q.grande_categorie).join(", ")}</span>
-                        <span className="quiz-matiere small">{toArray(q.matiere).join(", ")}</span>
+                        <span className="quiz-category small">
+                          {toArray(q.grande_categorie).join(", ")}
+                        </span>
+                        <span className="quiz-matiere small">
+                          {toArray(q.matiere).join(", ")}
+                        </span>
                       </div>
                       <p className="review-question-text" dir="rtl">
-                        {q.question.length > 80 ? q.question.substring(0, 80) + "..." : q.question}
+                        {q.question.length > 80
+                          ? q.question.substring(0, 80) + "..."
+                          : q.question}
                       </p>
                     </div>
                     <button
@@ -488,14 +580,19 @@ export default function Test({ onBack }) {
                 ))}
               </div>
 
-              <button className="reset-all-review-btn" onClick={handleResetAllWrong}>
+              <button
+                className="reset-all-review-btn"
+                onClick={handleResetAllWrong}
+              >
                 🗑️ Tout effacer
               </button>
             </>
           ) : (
             <div className="review-empty">
               <span className="review-empty-icon">🎉</span>
-              <span className="review-empty-text">Aucune question à réviser !</span>
+              <span className="review-empty-text">
+                Aucune question à réviser !
+              </span>
             </div>
           )}
         </div>
@@ -511,11 +608,19 @@ export default function Test({ onBack }) {
     return (
       <div className="app test-app">
         <header className="test-header">
-          <button className="reset-small-btn home-small-btn" onClick={() => setMode("config")} title="Retour">
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={() => setMode("config")}
+            title="Retour"
+          >
             ←
           </button>
           <h1 className="test-title">📊 Résultats</h1>
-          <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={onBack}
+            title="Accueil"
+          >
             🏠
           </button>
         </header>
@@ -527,13 +632,18 @@ export default function Test({ onBack }) {
           </div>
 
           <div className="results-score">
-            <span className="score-value">{score}/{quizQuestions.length}</span>
+            <span className="score-value">
+              {score}/{quizQuestions.length}
+            </span>
             <span className="score-percent">{percentage}%</span>
           </div>
 
           <div className="results-summary">
             {answers.map((a, i) => (
-              <div key={i} className={`result-item ${a.correct ? "correct" : "wrong"}`}>
+              <div
+                key={i}
+                className={`result-item ${a.correct ? "correct" : "wrong"}`}
+              >
                 <span className="result-num">{i + 1}</span>
                 <span className="result-status">{a.correct ? "✓" : "✗"}</span>
               </div>
@@ -547,11 +657,17 @@ export default function Test({ onBack }) {
           )}
 
           <div className="results-actions">
-            <button className="test-btn primary" onClick={() => setMode("config")}>
+            <button
+              className="test-btn primary"
+              onClick={() => setMode("config")}
+            >
               🔄 Nouveau quiz
             </button>
             {wrongQuestions.length > 0 && (
-              <button className="test-btn review" onClick={() => setMode("review")}>
+              <button
+                className="test-btn review"
+                onClick={() => setMode("review")}
+              >
                 📌 Réviser ({wrongQuestions.length})
               </button>
             )}
@@ -579,7 +695,11 @@ export default function Test({ onBack }) {
             <div className="quiz-progress-bar">
               <div
                 className="quiz-progress-fill"
-                style={{ width: `${((currentIndex + 1) / quizQuestions.length) * 100}%` }}
+                style={{
+                  width: `${
+                    ((currentIndex + 1) / quizQuestions.length) * 100
+                  }%`,
+                }}
               />
             </div>
           </div>
@@ -591,10 +711,16 @@ export default function Test({ onBack }) {
 
         <div className="quiz-question">
           <div className="quiz-meta">
-            <span className="quiz-category">{toArray(current.grande_categorie).join(", ")}</span>
-            <span className="quiz-matiere">{toArray(current.matiere).join(", ")}</span>
+            <span className="quiz-category">
+              {toArray(current.grande_categorie).join(", ")}
+            </span>
+            <span className="quiz-matiere">
+              {toArray(current.matiere).join(", ")}
+            </span>
             {current.is_prof && <span className="quiz-badge prof">👩‍🏫</span>}
-            {current.is_misrad_haavoda && <span className="quiz-badge misrad">🏛️</span>}
+            {current.is_misrad_haavoda && (
+              <span className="quiz-badge misrad">🏛️</span>
+            )}
             {current.wrong && <span className="quiz-badge wrong">📌</span>}
             <div className="quiz-edit-actions">
               <button
@@ -607,23 +733,44 @@ export default function Test({ onBack }) {
               <button
                 className={`quiz-flag-btn ${current.flagged ? "flagged" : ""}`}
                 onClick={async () => {
-                  await updateDoc(doc(db, "questions", current.id), { flagged: !current.flagged });
+                  await updateDoc(doc(db, "questions", current.id), {
+                    flagged: !current.flagged,
+                  });
                   const updated = questionsRef.current.map((q) =>
-                    q.id === current.id ? { ...q, flagged: !current.flagged } : q
+                    q.id === current.id
+                      ? { ...q, flagged: !current.flagged }
+                      : q
                   );
                   setQuestions(updated);
                   questionsRef.current = updated;
                   setQuizQuestions((prev) =>
-                    prev.map((q) => (q.id === current.id ? { ...q, flagged: !current.flagged } : q))
+                    prev.map((q) =>
+                      q.id === current.id
+                        ? { ...q, flagged: !current.flagged }
+                        : q
+                    )
                   );
                 }}
-                title={current.flagged ? "Retirer le signalement" : "Signaler pour plus tard"}
+                title={
+                  current.flagged
+                    ? "Retirer le signalement"
+                    : "Signaler pour plus tard"
+                }
               >
                 {current.flagged ? "✓" : "⚠️"}
               </button>
+              <button
+                className="quiz-delete-btn"
+                onClick={handleDeleteQuestion}
+                title="Supprimer cette question"
+              >
+                🗑️
+              </button>
             </div>
           </div>
-          <p className="quiz-question-text" dir="rtl">{current.question}</p>
+          <p className="quiz-question-text" dir="rtl">
+            {current.question}
+          </p>
         </div>
 
         <div className="quiz-options">
@@ -645,7 +792,9 @@ export default function Test({ onBack }) {
                 disabled={!!selectedAnswer}
               >
                 <span className="option-key">{key}</span>
-                <span className="option-text" dir="rtl">{value}</span>
+                <span className="option-text" dir="rtl">
+                  {value}
+                </span>
               </button>
             );
           })}
@@ -653,38 +802,58 @@ export default function Test({ onBack }) {
 
         {showExplanation && (
           <div className="quiz-explanation">
-            <p className="explanation-text" dir="rtl">{current.explication}</p>
+            <p className="explanation-text" dir="rtl">
+              {current.explication}
+            </p>
             <button className="quiz-next-btn" onClick={nextQuestion}>
-              {currentIndex + 1 >= quizQuestions.length ? "Voir les résultats" : "Question suivante"} →
+              {currentIndex + 1 >= quizQuestions.length
+                ? "Voir les résultats"
+                : "Question suivante"}{" "}
+              →
             </button>
           </div>
         )}
 
         {/* Modal d'édition rapide */}
         {editModal && (
-          <div className="admin-modal-overlay" onClick={() => setEditModal(null)}>
+          <div
+            className="admin-modal-overlay"
+            onClick={() => setEditModal(null)}
+          >
             <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
               <div className="admin-modal-header">
                 <h2>✏️ Modifier la question</h2>
-                <button className="admin-modal-close" onClick={() => setEditModal(null)}>✕</button>
+                <button
+                  className="admin-modal-close"
+                  onClick={() => setEditModal(null)}
+                >
+                  ✕
+                </button>
               </div>
-              
+
               <div className="admin-modal-body">
                 <div className="admin-field">
                   <label>Question</label>
                   <textarea
                     value={editData.question}
-                    onChange={(e) => setEditData({ ...editData, question: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, question: e.target.value })
+                    }
                     dir="rtl"
                     rows={3}
                   />
                 </div>
-                
+
                 <div className="admin-field">
                   <label>Réponse correcte</label>
                   <select
                     value={editData.reponse_correcte}
-                    onChange={(e) => setEditData({ ...editData, reponse_correcte: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({
+                        ...editData,
+                        reponse_correcte: e.target.value,
+                      })
+                    }
                   >
                     <option value="A">A</option>
                     <option value="B">B</option>
@@ -692,40 +861,53 @@ export default function Test({ onBack }) {
                     <option value="D">D</option>
                   </select>
                 </div>
-                
+
                 {["A", "B", "C", "D"].map((key) => (
                   <div key={key} className="admin-field">
-                    <label>Option {key} {key === editData.reponse_correcte && "✓"}</label>
+                    <label>
+                      Option {key} {key === editData.reponse_correcte && "✓"}
+                    </label>
                     <input
                       type="text"
                       value={editData.options?.[key] || ""}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
-                          options: { ...editData.options, [key]: e.target.value },
+                          options: {
+                            ...editData.options,
+                            [key]: e.target.value,
+                          },
                         })
                       }
                       dir="rtl"
                     />
                   </div>
                 ))}
-                
+
                 <div className="admin-field">
                   <label>Explication</label>
                   <textarea
                     value={editData.explication}
-                    onChange={(e) => setEditData({ ...editData, explication: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, explication: e.target.value })
+                    }
                     dir="rtl"
                     rows={2}
                   />
                 </div>
               </div>
-              
+
               <div className="admin-modal-footer">
-                <button className="admin-modal-btn cancel" onClick={() => setEditModal(null)}>
+                <button
+                  className="admin-modal-btn cancel"
+                  onClick={() => setEditModal(null)}
+                >
                   Annuler
                 </button>
-                <button className="admin-modal-btn save" onClick={saveQuickEdit}>
+                <button
+                  className="admin-modal-btn save"
+                  onClick={saveQuickEdit}
+                >
                   💾 Sauvegarder
                 </button>
               </div>
@@ -745,11 +927,15 @@ export default function Test({ onBack }) {
     const startUnansweredQuiz = (type, value) => {
       let unanswered = questions.filter((q) => !q.answered && !q.wrong);
       if (type === "category") {
-        unanswered = unanswered.filter((q) => toArray(q.grande_categorie).includes(value));
+        unanswered = unanswered.filter((q) =>
+          toArray(q.grande_categorie).includes(value)
+        );
       } else if (type === "matiere") {
-        unanswered = unanswered.filter((q) => toArray(q.matiere).includes(value));
+        unanswered = unanswered.filter((q) =>
+          toArray(q.matiere).includes(value)
+        );
       }
-      
+
       if (unanswered.length === 0) {
         alert("Toutes les questions ont été répondues !");
         return;
@@ -768,11 +954,19 @@ export default function Test({ onBack }) {
     return (
       <div className="app test-app">
         <header className="test-header">
-          <button className="reset-small-btn home-small-btn" onClick={() => setMode("config")} title="Retour">
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={() => setMode("config")}
+            title="Retour"
+          >
             ←
           </button>
           <h1 className="test-title">📊 Progression</h1>
-          <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={onBack}
+            title="Accueil"
+          >
             🏠
           </button>
         </header>
@@ -788,7 +982,7 @@ export default function Test({ onBack }) {
               <span className="stats-number">{questions.length}</span>
               <span className="stats-label">Total</span>
             </div>
-            <button 
+            <button
               className="stats-box wrong clickable"
               onClick={() => goToReviewWithFilter("all")}
               disabled={totalWrong === 0}
@@ -808,17 +1002,21 @@ export default function Test({ onBack }) {
                     <span className="stats-item-name">{stat.name}</span>
                     <div className="stats-item-actions">
                       {stat.answered < stat.total && (
-                        <button 
+                        <button
                           className="stats-play-btn"
-                          onClick={() => startUnansweredQuiz("category", stat.name)}
+                          onClick={() =>
+                            startUnansweredQuiz("category", stat.name)
+                          }
                           title="Questions non répondues"
                         >
                           ▶️ {stat.total - stat.answered}
                         </button>
                       )}
-                      <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                      <span className="stats-item-count">
+                        {stat.answered}/{stat.total}
+                      </span>
                       {stat.answered > 0 && (
-                        <button 
+                        <button
                           className="stats-reset-btn"
                           onClick={() => handleFullReset("category", stat.name)}
                           title="Remettre à zéro"
@@ -829,15 +1027,19 @@ export default function Test({ onBack }) {
                     </div>
                   </div>
                   <div className="stats-progress-bar">
-                    <div 
+                    <div
                       className="stats-progress-fill"
-                      style={{ width: `${(stat.answered / stat.total) * 100}%` }}
+                      style={{
+                        width: `${(stat.answered / stat.total) * 100}%`,
+                      }}
                     />
                   </div>
                   {stat.wrong > 0 && (
-                    <button 
+                    <button
                       className="stats-wrong-btn"
-                      onClick={() => goToReviewWithFilter("category", stat.name)}
+                      onClick={() =>
+                        goToReviewWithFilter("category", stat.name)
+                      }
                     >
                       📌 {stat.wrong} à réviser
                     </button>
@@ -857,17 +1059,21 @@ export default function Test({ onBack }) {
                     <span className="stats-item-name">{stat.name}</span>
                     <div className="stats-item-actions">
                       {stat.answered < stat.total && (
-                        <button 
+                        <button
                           className="stats-play-btn"
-                          onClick={() => startUnansweredQuiz("matiere", stat.name)}
+                          onClick={() =>
+                            startUnansweredQuiz("matiere", stat.name)
+                          }
                           title="Questions non répondues"
                         >
                           ▶️ {stat.total - stat.answered}
                         </button>
                       )}
-                      <span className="stats-item-count">{stat.answered}/{stat.total}</span>
+                      <span className="stats-item-count">
+                        {stat.answered}/{stat.total}
+                      </span>
                       {stat.answered > 0 && (
-                        <button 
+                        <button
                           className="stats-reset-btn"
                           onClick={() => handleFullReset("matiere", stat.name)}
                           title="Remettre à zéro"
@@ -878,13 +1084,15 @@ export default function Test({ onBack }) {
                     </div>
                   </div>
                   <div className="stats-progress-bar">
-                    <div 
+                    <div
                       className="stats-progress-fill"
-                      style={{ width: `${(stat.answered / stat.total) * 100}%` }}
+                      style={{
+                        width: `${(stat.answered / stat.total) * 100}%`,
+                      }}
                     />
                   </div>
                   {stat.wrong > 0 && (
-                    <button 
+                    <button
                       className="stats-wrong-btn"
                       onClick={() => goToReviewWithFilter("matiere", stat.name)}
                     >
@@ -898,7 +1106,7 @@ export default function Test({ onBack }) {
 
           {/* Reset global */}
           {totalAnswered > 0 && (
-            <button 
+            <button
               className="stats-reset-all-btn"
               onClick={() => handleFullReset("all")}
             >
@@ -914,15 +1122,26 @@ export default function Test({ onBack }) {
   return (
     <div className="app test-app">
       <header className="test-header">
-        <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+        <button
+          className="reset-small-btn home-small-btn"
+          onClick={onBack}
+          title="Accueil"
+        >
           🏠
         </button>
         <h1 className="test-title">📝 Test</h1>
-        <button className="reset-small-btn" onClick={() => setMode("stats")} title="Progression">
+        <button
+          className="reset-small-btn"
+          onClick={() => setMode("stats")}
+          title="Progression"
+        >
           📊
         </button>
         {wrongQuestions.length > 0 && (
-          <button className="review-badge-btn" onClick={() => setMode("review")}>
+          <button
+            className="review-badge-btn"
+            onClick={() => setMode("review")}
+          >
             📌 {wrongQuestions.length}
           </button>
         )}
@@ -943,7 +1162,9 @@ export default function Test({ onBack }) {
               📚 Toutes ({questions.length})
             </button>
             <button
-              className={`config-mode-btn review ${filterWrong ? "active" : ""}`}
+              className={`config-mode-btn review ${
+                filterWrong ? "active" : ""
+              }`}
               onClick={() => {
                 setFilterWrong(true);
                 setSelectedCategories([]);
@@ -961,17 +1182,21 @@ export default function Test({ onBack }) {
           <div className="config-section">
             <h3 className="config-title">📁 Catégories</h3>
             <div className="select-with-all">
-              <select 
+              <select
                 className="config-select"
                 value=""
                 onChange={(e) => addCategory(e.target.value)}
               >
                 <option value="">+ Ajouter une catégorie</option>
-                {categories.filter(c => !selectedCategories.includes(c)).map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
+                {categories
+                  .filter((c) => !selectedCategories.includes(c))
+                  .map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
               </select>
-              <button 
+              <button
                 className="select-all-btn"
                 onClick={selectAllCategories}
                 disabled={selectedCategories.length === categories.length}
@@ -982,7 +1207,11 @@ export default function Test({ onBack }) {
             {selectedCategories.length > 0 && (
               <div className="selected-chips">
                 {selectedCategories.map((cat) => (
-                  <span key={cat} className="selected-chip" onClick={() => removeCategory(cat)}>
+                  <span
+                    key={cat}
+                    className="selected-chip"
+                    onClick={() => removeCategory(cat)}
+                  >
                     {cat} ✕
                   </span>
                 ))}
@@ -999,17 +1228,21 @@ export default function Test({ onBack }) {
           <div className="config-section">
             <h3 className="config-title">📚 Matières</h3>
             <div className="select-with-all">
-              <select 
+              <select
                 className="config-select"
                 value=""
                 onChange={(e) => addMatiere(e.target.value)}
               >
                 <option value="">+ Ajouter une matière</option>
-                {matieres.filter(m => !selectedMatieres.includes(m)).map((mat) => (
-                  <option key={mat} value={mat}>{mat}</option>
-                ))}
+                {matieres
+                  .filter((m) => !selectedMatieres.includes(m))
+                  .map((mat) => (
+                    <option key={mat} value={mat}>
+                      {mat}
+                    </option>
+                  ))}
               </select>
-              <button 
+              <button
                 className="select-all-btn"
                 onClick={selectAllMatieres}
                 disabled={selectedMatieres.length === matieres.length}
@@ -1020,7 +1253,11 @@ export default function Test({ onBack }) {
             {selectedMatieres.length > 0 && (
               <div className="selected-chips">
                 {selectedMatieres.map((mat) => (
-                  <span key={mat} className="selected-chip" onClick={() => removeMatiere(mat)}>
+                  <span
+                    key={mat}
+                    className="selected-chip"
+                    onClick={() => removeMatiere(mat)}
+                  >
                     {mat} ✕
                   </span>
                 ))}
@@ -1040,19 +1277,25 @@ export default function Test({ onBack }) {
             <span className="config-label">Prof :</span>
             <div className="config-toggle-group">
               <button
-                className={`config-toggle ${filterProf === null ? "active" : ""}`}
+                className={`config-toggle ${
+                  filterProf === null ? "active" : ""
+                }`}
                 onClick={() => setFilterProf(null)}
               >
                 Tous
               </button>
               <button
-                className={`config-toggle ${filterProf === true ? "active" : ""}`}
+                className={`config-toggle ${
+                  filterProf === true ? "active" : ""
+                }`}
                 onClick={() => setFilterProf(true)}
               >
                 ✓
               </button>
               <button
-                className={`config-toggle ${filterProf === false ? "active" : ""}`}
+                className={`config-toggle ${
+                  filterProf === false ? "active" : ""
+                }`}
                 onClick={() => setFilterProf(false)}
               >
                 ✗
@@ -1064,19 +1307,25 @@ export default function Test({ onBack }) {
             <span className="config-label">Misrad :</span>
             <div className="config-toggle-group">
               <button
-                className={`config-toggle ${filterMisrad === null ? "active" : ""}`}
+                className={`config-toggle ${
+                  filterMisrad === null ? "active" : ""
+                }`}
                 onClick={() => setFilterMisrad(null)}
               >
                 Tous
               </button>
               <button
-                className={`config-toggle ${filterMisrad === true ? "active" : ""}`}
+                className={`config-toggle ${
+                  filterMisrad === true ? "active" : ""
+                }`}
                 onClick={() => setFilterMisrad(true)}
               >
                 ✓
               </button>
               <button
-                className={`config-toggle ${filterMisrad === false ? "active" : ""}`}
+                className={`config-toggle ${
+                  filterMisrad === false ? "active" : ""
+                }`}
                 onClick={() => setFilterMisrad(false)}
               >
                 ✗
@@ -1092,7 +1341,9 @@ export default function Test({ onBack }) {
           <div className="config-row">
             <span className="config-label">Mélanger :</span>
             <button
-              className={`config-toggle-single ${shuffleQuestions ? "active" : ""}`}
+              className={`config-toggle-single ${
+                shuffleQuestions ? "active" : ""
+              }`}
               onClick={() => setShuffleQuestions((s) => !s)}
             >
               {shuffleQuestions ? "✓ Oui" : "✗ Non"}
@@ -1104,9 +1355,9 @@ export default function Test({ onBack }) {
         <div className="config-start">
           <p className="config-count">
             {filteredQuestions.length} question(s) disponible(s)
-            {filteredQuestions.filter(q => q.wrong).length > 0 && (
+            {filteredQuestions.filter((q) => q.wrong).length > 0 && (
               <span className="config-wrong-count">
-                ({filteredQuestions.filter(q => q.wrong).length} à réviser)
+                ({filteredQuestions.filter((q) => q.wrong).length} à réviser)
               </span>
             )}
           </p>
@@ -1123,22 +1374,24 @@ export default function Test({ onBack }) {
         <div className="config-section config-reset-section">
           <h3 className="config-title">🔄 Remettre à zéro</h3>
           <div className="config-reset-buttons">
-            {selectedMatieres.length > 0 && filteredQuestions.filter(q => q.wrong).length > 0 && (
-              <button
-                className="config-reset-btn"
-                onClick={() => handleResetWrong("matiere")}
-              >
-                📚 {selectedMatieres[0]}
-              </button>
-            )}
-            {selectedCategories.length > 0 && filteredQuestions.filter(q => q.wrong).length > 0 && (
-              <button
-                className="config-reset-btn"
-                onClick={() => handleResetWrong("category")}
-              >
-                📁 {selectedCategories[0]}
-              </button>
-            )}
+            {selectedMatieres.length > 0 &&
+              filteredQuestions.filter((q) => q.wrong).length > 0 && (
+                <button
+                  className="config-reset-btn"
+                  onClick={() => handleResetWrong("matiere")}
+                >
+                  📚 {selectedMatieres[0]}
+                </button>
+              )}
+            {selectedCategories.length > 0 &&
+              filteredQuestions.filter((q) => q.wrong).length > 0 && (
+                <button
+                  className="config-reset-btn"
+                  onClick={() => handleResetWrong("category")}
+                >
+                  📁 {selectedCategories[0]}
+                </button>
+              )}
             {wrongQuestions.length > 0 && (
               <button
                 className="config-reset-btn reset-all"

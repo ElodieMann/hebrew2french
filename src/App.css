@@ -2768,6 +2768,21 @@ body {
   background: var(--primary);
 }
 
+.quiz-delete-btn {
+  padding: 4px 8px;
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-delete-btn:active {
+  transform: scale(0.95);
+  background: var(--danger);
+}
+
 /* Responsive Test - déjà petit, pas besoin de réduire */
 
 @media (min-height: 900px) {
