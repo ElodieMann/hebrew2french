@@ -96,14 +96,17 @@ export default function Admin({ onBack }) {
       result = result.filter((q) => toArray(q.matiere).includes(filterMatiere));
     }
     
-    // Prof
-    if (filterProf !== null) {
-      result = result.filter((q) => q.is_prof === filterProf);
-    }
-    
-    // Misrad
-    if (filterMisrad !== null) {
-      result = result.filter((q) => q.is_misrad_haavoda === filterMisrad);
+    // Prof / Misrad (OR logic si les deux sont true)
+    if (filterProf === true && filterMisrad === true) {
+      // Si les deux sont sélectionnés, c'est un OR
+      result = result.filter((q) => q.is_prof === true || q.is_misrad_haavoda === true);
+    } else {
+      if (filterProf !== null) {
+        result = result.filter((q) => q.is_prof === filterProf);
+      }
+      if (filterMisrad !== null) {
+        result = result.filter((q) => q.is_misrad_haavoda === filterMisrad);
+      }
     }
     
     // Answered
