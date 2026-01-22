@@ -98,9 +98,16 @@ export default function Test({ onBack }) {
       if (filterWrong && !q.wrong) return false;
       if (!matchesFilter(q.grande_categorie, selectedCategories)) return false;
       if (!matchesFilter(q.matiere, selectedMatieres)) return false;
-      if (filterProf !== null && q.is_prof !== filterProf) return false;
-      if (filterMisrad !== null && q.is_misrad_haavoda !== filterMisrad)
-        return false;
+      
+      // Prof / Misrad (OR logic si les deux sont true)
+      if (filterProf === true && filterMisrad === true) {
+        // Si les deux sont sélectionnés, c'est un OR
+        if (!q.is_prof && !q.is_misrad_haavoda) return false;
+      } else {
+        if (filterProf !== null && q.is_prof !== filterProf) return false;
+        if (filterMisrad !== null && q.is_misrad_haavoda !== filterMisrad) return false;
+      }
+      
       return true;
     });
   }, [
