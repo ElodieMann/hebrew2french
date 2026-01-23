@@ -6,6 +6,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 
 // Helper: convertir en tableau
@@ -37,6 +38,10 @@ export default function Admin({ onBack }) {
   
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  
+  // Bulk delete confirmation
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   /* LOAD DATA */
   useEffect(() => {
@@ -246,6 +251,45 @@ export default function Admin({ onBack }) {
     }
   };
 
+  /* BULK DELETE */
+  const confirmBulkDelete = async () => {
+    setBulkDeleting(true);
+    
+    try {
+      const itemsToDelete = tab === "questions" ? filteredQuestions : filteredWords;
+      const collectionName = tab === "questions" ? "questions" : "words";
+      
+      // Supprimer par batch de 500 (limite Firestore)
+      const batchSize = 500;
+      for (let i = 0; i < itemsToDelete.length; i += batchSize) {
+        const batch = writeBatch(db);
+        const chunk = itemsToDelete.slice(i, i + batchSize);
+        
+        chunk.forEach((item) => {
+          batch.delete(doc(db, collectionName, item.id));
+        });
+        
+        await batch.commit();
+      }
+      
+      // Mettre à jour le state local
+      const deletedIds = new Set(itemsToDelete.map((item) => item.id));
+      
+      if (tab === "questions") {
+        setQuestions((prev) => prev.filter((q) => !deletedIds.has(q.id)));
+      } else {
+        setWords((prev) => prev.filter((w) => !deletedIds.has(w.id)));
+      }
+      
+      setBulkDeleteConfirm(false);
+    } catch (error) {
+      console.error("Erreur suppression en masse:", error);
+      alert("Erreur lors de la suppression en masse");
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   /* UNFLAG */
   const handleUnflag = async (item, type) => {
     try {
@@ -423,11 +467,24 @@ export default function Admin({ onBack }) {
         )}
       </div>
 
-      {/* Results count */}
-      <div className="admin-results-count">
-        {tab === "questions"
-          ? `${filteredQuestions.length} question(s)`
-          : `${filteredWords.length} mot(s)`}
+      {/* Results count + Bulk delete */}
+      <div className="admin-results-row">
+        <div className="admin-results-count">
+          {tab === "questions"
+            ? `${filteredQuestions.length} question(s)`
+            : `${filteredWords.length} mot(s)`}
+        </div>
+        
+        {/* Bouton supprimer tout - visible si filtres actifs et résultats > 0 */}
+        {((tab === "questions" && filteredQuestions.length > 0 && (searchQuery || filterCategory || filterMatiere || filterProf !== null || filterMisrad !== null || filterAnswered !== null || showFlaggedOnly)) ||
+          (tab === "words" && filteredWords.length > 0 && (searchQuery || showFlaggedOnly))) && (
+          <button
+            className="admin-bulk-delete-btn"
+            onClick={() => setBulkDeleteConfirm(true)}
+          >
+            🗑️ Supprimer tout ({tab === "questions" ? filteredQuestions.length : filteredWords.length})
+          </button>
+        )}
       </div>
 
       {/* List */}
@@ -686,6 +743,55 @@ export default function Admin({ onBack }) {
               </button>
               <button className="admin-modal-btn delete" onClick={confirmDelete}>
                 🗑️ Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation */}
+      {bulkDeleteConfirm && (
+        <div className="admin-modal-overlay" onClick={() => !bulkDeleting && setBulkDeleteConfirm(false)}>
+          <div className="admin-modal confirm bulk" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2>⚠️ Suppression en masse</h2>
+            </div>
+            
+            <div className="admin-modal-body">
+              <p className="admin-bulk-warning">
+                Attention ! Cette action est <strong>irréversible</strong>.
+              </p>
+              <p className="admin-bulk-count">
+                {tab === "questions" 
+                  ? `${filteredQuestions.length} question(s)` 
+                  : `${filteredWords.length} mot(s)`} 
+                {" "}seront supprimé(e)s définitivement.
+              </p>
+              {(filterCategory || filterMatiere) && (
+                <p className="admin-bulk-filters">
+                  Filtres actifs: {filterCategory && <span>{filterCategory}</span>}
+                  {filterCategory && filterMatiere && " → "}
+                  {filterMatiere && <span>{filterMatiere}</span>}
+                </p>
+              )}
+            </div>
+            
+            <div className="admin-modal-footer">
+              <button 
+                className="admin-modal-btn cancel" 
+                onClick={() => setBulkDeleteConfirm(false)}
+                disabled={bulkDeleting}
+              >
+                Annuler
+              </button>
+              <button 
+                className="admin-modal-btn delete bulk" 
+                onClick={confirmBulkDelete}
+                disabled={bulkDeleting}
+              >
+                {bulkDeleting 
+                  ? "⏳ Suppression..." 
+                  : `🗑️ Supprimer ${tab === "questions" ? filteredQuestions.length : filteredWords.length} élément(s)`}
               </button>
             </div>
           </div>

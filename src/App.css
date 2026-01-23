@@ -2415,11 +2415,35 @@ body {
   background: var(--gray-200);
 }
 
+.admin-results-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
 .admin-results-count {
   font-size: 13px;
   font-weight: 600;
   color: var(--gray-500);
-  margin-bottom: 10px;
+}
+
+.admin-bulk-delete-btn {
+  font-size: 13px;
+  padding: 8px 12px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-bulk-delete-btn:hover {
+  background: #cc0000;
+  transform: scale(1.02);
 }
 
 .admin-list {
@@ -2613,6 +2637,56 @@ body {
 
 .admin-modal.confirm {
   max-width: 400px;
+}
+
+.admin-modal.confirm.bulk {
+  max-width: 450px;
+}
+
+.admin-bulk-warning {
+  color: #ff4444;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.admin-bulk-count {
+  font-size: 16px;
+  margin-bottom: 10px;
+  padding: 12px;
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.admin-bulk-count strong {
+  color: #ff4444;
+}
+
+.admin-bulk-filters {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-top: 8px;
+}
+
+.admin-bulk-filters span {
+  background: var(--gray-200);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin: 0 4px;
+}
+
+.admin-modal-btn.delete.bulk {
+  background: #ff4444;
+}
+
+.admin-modal-btn.delete.bulk:hover:not(:disabled) {
+  background: #cc0000;
+}
+
+.admin-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .admin-modal-header {
