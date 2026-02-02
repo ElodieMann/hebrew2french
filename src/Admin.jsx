@@ -15,14 +15,24 @@ const toArray = (value) => {
   return Array.isArray(value) ? value : [value];
 };
 
+// Helper: normaliser le texte pour la recherche (retire les accents et voyelles hébraïques)
+const normalizeSearch = (str) => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Retire les diacritiques latins (accents)
+    .replace(/[\u0591-\u05C7]/g, ""); // Retire les voyelles hébraïques (nikud)
+};
+
 export default function Admin({ onBack }) {
   const [tab, setTab] = useState("questions"); // questions | words
   const [loading, setLoading] = useState(true);
-  
+
   // Data
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
-  
+
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -31,14 +41,14 @@ export default function Admin({ onBack }) {
   const [filterProf, setFilterProf] = useState(null); // null = tous, true = prof, false = non-prof
   const [filterMisrad, setFilterMisrad] = useState(null); // null = tous, true = misrad, false = non-misrad
   const [filterAnswered, setFilterAnswered] = useState(null); // null = tous, true = répondues, false = non-répondues
-  
+
   // Edit modal
   const [editItem, setEditItem] = useState(null);
   const [editData, setEditData] = useState({});
-  
+
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  
+
   // Bulk delete confirmation
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -51,13 +61,11 @@ export default function Admin({ onBack }) {
           getDocs(collection(db, "questions")),
           getDocs(collection(db, "words")),
         ]);
-        
+
         setQuestions(
-          questionsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+          questionsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
         );
-        setWords(
-          wordsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        );
+        setWords(wordsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
         console.error("Erreur chargement:", error);
       } finally {
@@ -76,7 +84,9 @@ export default function Admin({ onBack }) {
   const matieres = useMemo(() => {
     let base = questions;
     if (filterCategory) {
-      base = base.filter((q) => toArray(q.grande_categorie).includes(filterCategory));
+      base = base.filter((q) =>
+        toArray(q.grande_categorie).includes(filterCategory),
+      );
     }
     const all = base.flatMap((q) => toArray(q.matiere));
     return [...new Set(all)].filter(Boolean).sort();
@@ -85,26 +95,30 @@ export default function Admin({ onBack }) {
   // Filtrer les questions
   const filteredQuestions = useMemo(() => {
     let result = questions;
-    
+
     // Signalés d'abord
     if (showFlaggedOnly) {
       result = result.filter((q) => q.flagged);
     }
-    
+
     // Catégorie
     if (filterCategory) {
-      result = result.filter((q) => toArray(q.grande_categorie).includes(filterCategory));
+      result = result.filter((q) =>
+        toArray(q.grande_categorie).includes(filterCategory),
+      );
     }
-    
+
     // Matière
     if (filterMatiere) {
       result = result.filter((q) => toArray(q.matiere).includes(filterMatiere));
     }
-    
+
     // Prof / Misrad (OR logic si les deux sont true)
     if (filterProf === true && filterMisrad === true) {
       // Si les deux sont sélectionnés, c'est un OR
-      result = result.filter((q) => q.is_prof === true || q.is_misrad_haavoda === true);
+      result = result.filter(
+        (q) => q.is_prof === true || q.is_misrad_haavoda === true,
+      );
     } else {
       if (filterProf !== null) {
         result = result.filter((q) => q.is_prof === filterProf);
@@ -113,47 +127,58 @@ export default function Admin({ onBack }) {
         result = result.filter((q) => q.is_misrad_haavoda === filterMisrad);
       }
     }
-    
+
     // Answered
     if (filterAnswered !== null) {
       result = result.filter((q) => (q.answered || q.wrong) === filterAnswered);
     }
-    
-    // Recherche
+
+    // Recherche (insensible aux accents)
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((q) =>
-        q.question?.toLowerCase().includes(query) ||
-        Object.values(q.options || {}).some((opt) =>
-          opt?.toLowerCase().includes(query)
-        )
+      const query = normalizeSearch(searchQuery);
+      result = result.filter(
+        (q) =>
+          normalizeSearch(q.question).includes(query) ||
+          Object.values(q.options || {}).some((opt) =>
+            normalizeSearch(opt).includes(query),
+          ),
       );
     }
-    
+
     // Trier: flagged en premier
     return result.sort((a, b) => {
       if (a.flagged && !b.flagged) return -1;
       if (!a.flagged && b.flagged) return 1;
       return 0;
     });
-  }, [questions, searchQuery, filterCategory, filterMatiere, showFlaggedOnly, filterProf, filterMisrad, filterAnswered]);
+  }, [
+    questions,
+    searchQuery,
+    filterCategory,
+    filterMatiere,
+    showFlaggedOnly,
+    filterProf,
+    filterMisrad,
+    filterAnswered,
+  ]);
 
   // Filtrer les mots
   const filteredWords = useMemo(() => {
     let result = words;
-    
+
     if (showFlaggedOnly) {
       result = result.filter((w) => w.flagged);
     }
-    
+
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((w) =>
-        w.he?.includes(searchQuery) ||
-        w.fr?.toLowerCase().includes(query)
+      const query = normalizeSearch(searchQuery);
+      result = result.filter(
+        (w) =>
+          normalizeSearch(w.he).includes(query) ||
+          normalizeSearch(w.fr).includes(query),
       );
     }
-    
+
     return result.sort((a, b) => {
       if (a.flagged && !b.flagged) return -1;
       if (!a.flagged && b.flagged) return 1;
@@ -189,7 +214,7 @@ export default function Admin({ onBack }) {
 
   const saveEdit = async () => {
     if (!editItem) return;
-    
+
     try {
       if (editItem.type === "question") {
         const updateData = {
@@ -197,16 +222,22 @@ export default function Admin({ onBack }) {
           reponse_correcte: editData.reponse_correcte,
           options: editData.options,
           explication: editData.explication,
-          grande_categorie: editData.grande_categorie.split(",").map((s) => s.trim()).filter(Boolean),
-          matiere: editData.matiere.split(",").map((s) => s.trim()).filter(Boolean),
+          grande_categorie: editData.grande_categorie
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          matiere: editData.matiere
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
           is_prof: editData.is_prof,
           is_misrad_haavoda: editData.is_misrad_haavoda,
           flagged: false, // Retirer le flag après édition
         };
-        
+
         await updateDoc(doc(db, "questions", editItem.id), updateData);
         setQuestions((prev) =>
-          prev.map((q) => (q.id === editItem.id ? { ...q, ...updateData } : q))
+          prev.map((q) => (q.id === editItem.id ? { ...q, ...updateData } : q)),
         );
       } else {
         const updateData = {
@@ -214,13 +245,13 @@ export default function Admin({ onBack }) {
           fr: editData.fr,
           flagged: false,
         };
-        
+
         await updateDoc(doc(db, "words", editItem.id), updateData);
         setWords((prev) =>
-          prev.map((w) => (w.id === editItem.id ? { ...w, ...updateData } : w))
+          prev.map((w) => (w.id === editItem.id ? { ...w, ...updateData } : w)),
         );
       }
-      
+
       setEditItem(null);
       setEditData({});
     } catch (error) {
@@ -232,10 +263,10 @@ export default function Admin({ onBack }) {
   /* DELETE HANDLERS */
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
-    
+
     try {
       const { item, type } = deleteConfirm;
-      
+
       if (type === "question") {
         await deleteDoc(doc(db, "questions", item.id));
         setQuestions((prev) => prev.filter((q) => q.id !== item.id));
@@ -243,7 +274,7 @@ export default function Admin({ onBack }) {
         await deleteDoc(doc(db, "words", item.id));
         setWords((prev) => prev.filter((w) => w.id !== item.id));
       }
-      
+
       setDeleteConfirm(null);
     } catch (error) {
       console.error("Erreur suppression:", error);
@@ -254,33 +285,34 @@ export default function Admin({ onBack }) {
   /* BULK DELETE */
   const confirmBulkDelete = async () => {
     setBulkDeleting(true);
-    
+
     try {
-      const itemsToDelete = tab === "questions" ? filteredQuestions : filteredWords;
+      const itemsToDelete =
+        tab === "questions" ? filteredQuestions : filteredWords;
       const collectionName = tab === "questions" ? "questions" : "words";
-      
+
       // Supprimer par batch de 500 (limite Firestore)
       const batchSize = 500;
       for (let i = 0; i < itemsToDelete.length; i += batchSize) {
         const batch = writeBatch(db);
         const chunk = itemsToDelete.slice(i, i + batchSize);
-        
+
         chunk.forEach((item) => {
           batch.delete(doc(db, collectionName, item.id));
         });
-        
+
         await batch.commit();
       }
-      
+
       // Mettre à jour le state local
       const deletedIds = new Set(itemsToDelete.map((item) => item.id));
-      
+
       if (tab === "questions") {
         setQuestions((prev) => prev.filter((q) => !deletedIds.has(q.id)));
       } else {
         setWords((prev) => prev.filter((w) => !deletedIds.has(w.id)));
       }
-      
+
       setBulkDeleteConfirm(false);
     } catch (error) {
       console.error("Erreur suppression en masse:", error);
@@ -295,14 +327,14 @@ export default function Admin({ onBack }) {
     try {
       const collectionName = type === "question" ? "questions" : "words";
       await updateDoc(doc(db, collectionName, item.id), { flagged: false });
-      
+
       if (type === "question") {
         setQuestions((prev) =>
-          prev.map((q) => (q.id === item.id ? { ...q, flagged: false } : q))
+          prev.map((q) => (q.id === item.id ? { ...q, flagged: false } : q)),
         );
       } else {
         setWords((prev) =>
-          prev.map((w) => (w.id === item.id ? { ...w, flagged: false } : w))
+          prev.map((w) => (w.id === item.id ? { ...w, flagged: false } : w)),
         );
       }
     } catch (error) {
@@ -326,7 +358,11 @@ export default function Admin({ onBack }) {
     <div className="app admin-app">
       {/* Header */}
       <header className="admin-header">
-        <button className="reset-small-btn home-small-btn" onClick={onBack} title="Accueil">
+        <button
+          className="reset-small-btn home-small-btn"
+          onClick={onBack}
+          title="Accueil"
+        >
           🏠
         </button>
         <h1 className="admin-title">🛠️ Admin</h1>
@@ -367,16 +403,21 @@ export default function Admin({ onBack }) {
         <input
           type="text"
           className="admin-search"
-          placeholder={tab === "questions" ? "Rechercher une question..." : "Rechercher un mot..."}
+          placeholder={
+            tab === "questions"
+              ? "Rechercher une question..."
+              : "Rechercher un mot..."
+          }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        
+
         <button
           className={`admin-filter-btn ${showFlaggedOnly ? "active" : ""}`}
           onClick={() => setShowFlaggedOnly(!showFlaggedOnly)}
         >
-          ⚠️ Signalés ({tab === "questions" ? flaggedQuestionsCount : flaggedWordsCount})
+          ⚠️ Signalés (
+          {tab === "questions" ? flaggedQuestionsCount : flaggedWordsCount})
         </button>
 
         {tab === "questions" && (
@@ -392,10 +433,12 @@ export default function Admin({ onBack }) {
               >
                 <option value="">Toutes catégories</option>
                 {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
                 ))}
               </select>
-              
+
               {filterCategory && matieres.length > 0 && (
                 <select
                   className="admin-filter-select"
@@ -404,12 +447,14 @@ export default function Admin({ onBack }) {
                 >
                   <option value="">Toutes matières</option>
                   {matieres.map((mat) => (
-                    <option key={mat} value={mat}>{mat}</option>
+                    <option key={mat} value={mat}>
+                      {mat}
+                    </option>
                   ))}
                 </select>
               )}
             </div>
-            
+
             <div className="admin-filter-badges">
               <button
                 className={`admin-badge-btn ${filterProf === true ? "active" : ""}`}
@@ -419,37 +464,51 @@ export default function Admin({ onBack }) {
               </button>
               <button
                 className={`admin-badge-btn ${filterProf === false ? "active" : ""}`}
-                onClick={() => setFilterProf(filterProf === false ? null : false)}
+                onClick={() =>
+                  setFilterProf(filterProf === false ? null : false)
+                }
               >
                 ❌ Non-Prof
               </button>
               <button
                 className={`admin-badge-btn misrad ${filterMisrad === true ? "active" : ""}`}
-                onClick={() => setFilterMisrad(filterMisrad === true ? null : true)}
+                onClick={() =>
+                  setFilterMisrad(filterMisrad === true ? null : true)
+                }
               >
                 🏛️ Misrad
               </button>
               <button
                 className={`admin-badge-btn misrad ${filterMisrad === false ? "active" : ""}`}
-                onClick={() => setFilterMisrad(filterMisrad === false ? null : false)}
+                onClick={() =>
+                  setFilterMisrad(filterMisrad === false ? null : false)
+                }
               >
                 ❌ Non-Misrad
               </button>
               <button
                 className={`admin-badge-btn answered ${filterAnswered === true ? "active" : ""}`}
-                onClick={() => setFilterAnswered(filterAnswered === true ? null : true)}
+                onClick={() =>
+                  setFilterAnswered(filterAnswered === true ? null : true)
+                }
               >
                 ✓ Répondues
               </button>
               <button
                 className={`admin-badge-btn answered ${filterAnswered === false ? "active" : ""}`}
-                onClick={() => setFilterAnswered(filterAnswered === false ? null : false)}
+                onClick={() =>
+                  setFilterAnswered(filterAnswered === false ? null : false)
+                }
               >
                 ○ Non-répondues
               </button>
             </div>
-            
-            {(filterProf !== null || filterMisrad !== null || filterAnswered !== null || filterCategory || filterMatiere) && (
+
+            {(filterProf !== null ||
+              filterMisrad !== null ||
+              filterAnswered !== null ||
+              filterCategory ||
+              filterMatiere) && (
               <button
                 className="admin-clear-filters"
                 onClick={() => {
@@ -474,15 +533,29 @@ export default function Admin({ onBack }) {
             ? `${filteredQuestions.length} question(s)`
             : `${filteredWords.length} mot(s)`}
         </div>
-        
+
         {/* Bouton supprimer tout - visible si filtres actifs et résultats > 0 */}
-        {((tab === "questions" && filteredQuestions.length > 0 && (searchQuery || filterCategory || filterMatiere || filterProf !== null || filterMisrad !== null || filterAnswered !== null || showFlaggedOnly)) ||
-          (tab === "words" && filteredWords.length > 0 && (searchQuery || showFlaggedOnly))) && (
+        {((tab === "questions" &&
+          filteredQuestions.length > 0 &&
+          (searchQuery ||
+            filterCategory ||
+            filterMatiere ||
+            filterProf !== null ||
+            filterMisrad !== null ||
+            filterAnswered !== null ||
+            showFlaggedOnly)) ||
+          (tab === "words" &&
+            filteredWords.length > 0 &&
+            (searchQuery || showFlaggedOnly))) && (
           <button
             className="admin-bulk-delete-btn"
             onClick={() => setBulkDeleteConfirm(true)}
           >
-            🗑️ Supprimer tout ({tab === "questions" ? filteredQuestions.length : filteredWords.length})
+            🗑️ Supprimer tout (
+            {tab === "questions"
+              ? filteredQuestions.length
+              : filteredWords.length}
+            )
           </button>
         )}
       </div>
@@ -494,21 +567,37 @@ export default function Admin({ onBack }) {
             <div className="admin-empty">Aucune question trouvée</div>
           ) : (
             filteredQuestions.map((q) => (
-              <div key={q.id} className={`admin-item ${q.flagged ? "flagged" : ""}`}>
+              <div
+                key={q.id}
+                className={`admin-item ${q.flagged ? "flagged" : ""}`}
+              >
                 <div className="admin-item-content">
                   {q.flagged && <span className="admin-flag-icon">⚠️</span>}
                   <div className="admin-item-meta">
-                    <span className="admin-meta-cat">{toArray(q.grande_categorie).join(", ")}</span>
-                    <span className="admin-meta-mat">{toArray(q.matiere).join(", ")}</span>
-                    {q.is_prof && <span className="admin-meta-badge prof">👩‍🏫</span>}
-                    {q.is_misrad_haavoda && <span className="admin-meta-badge misrad">🏛️</span>}
-                    {(q.answered || q.wrong) && <span className="admin-meta-badge answered">✓</span>}
+                    <span className="admin-meta-cat">
+                      {toArray(q.grande_categorie).join(", ")}
+                    </span>
+                    <span className="admin-meta-mat">
+                      {toArray(q.matiere).join(", ")}
+                    </span>
+                    {q.is_prof && (
+                      <span className="admin-meta-badge prof">👩‍🏫</span>
+                    )}
+                    {q.is_misrad_haavoda && (
+                      <span className="admin-meta-badge misrad">🏛️</span>
+                    )}
+                    {(q.answered || q.wrong) && (
+                      <span className="admin-meta-badge answered">✓</span>
+                    )}
                   </div>
                   <p className="admin-item-text" dir="rtl">
-                    {q.question?.length > 100 ? q.question.substring(0, 100) + "..." : q.question}
+                    {q.question?.length > 100
+                      ? q.question.substring(0, 100) + "..."
+                      : q.question}
                   </p>
                   <div className="admin-item-answer">
-                    Réponse: <strong>{q.reponse_correcte}</strong> - {q.options?.[q.reponse_correcte]}
+                    Réponse: <strong>{q.reponse_correcte}</strong> -{" "}
+                    {q.options?.[q.reponse_correcte]}
                   </div>
                 </div>
                 <div className="admin-item-actions">
@@ -530,7 +619,9 @@ export default function Admin({ onBack }) {
                   )}
                   <button
                     className="admin-action-btn delete"
-                    onClick={() => setDeleteConfirm({ item: q, type: "question" })}
+                    onClick={() =>
+                      setDeleteConfirm({ item: q, type: "question" })
+                    }
                     title="Supprimer"
                   >
                     🗑️
@@ -539,47 +630,48 @@ export default function Admin({ onBack }) {
               </div>
             ))
           )
+        ) : filteredWords.length === 0 ? (
+          <div className="admin-empty">Aucun mot trouvé</div>
         ) : (
-          filteredWords.length === 0 ? (
-            <div className="admin-empty">Aucun mot trouvé</div>
-          ) : (
-            filteredWords.map((w) => (
-              <div key={w.id} className={`admin-item ${w.flagged ? "flagged" : ""}`}>
-                <div className="admin-item-content">
-                  {w.flagged && <span className="admin-flag-icon">⚠️</span>}
-                  <div className="admin-word-pair">
-                    <span className="admin-word-he">{w.he}</span>
-                    <span className="admin-word-fr">{w.fr}</span>
-                  </div>
-                </div>
-                <div className="admin-item-actions">
-                  <button
-                    className="admin-action-btn edit"
-                    onClick={() => openEdit(w, "word")}
-                    title="Modifier"
-                  >
-                    ✏️
-                  </button>
-                  {w.flagged && (
-                    <button
-                      className="admin-action-btn unflag"
-                      onClick={() => handleUnflag(w, "word")}
-                      title="Retirer le signalement"
-                    >
-                      ✓
-                    </button>
-                  )}
-                  <button
-                    className="admin-action-btn delete"
-                    onClick={() => setDeleteConfirm({ item: w, type: "word" })}
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
+          filteredWords.map((w) => (
+            <div
+              key={w.id}
+              className={`admin-item ${w.flagged ? "flagged" : ""}`}
+            >
+              <div className="admin-item-content">
+                {w.flagged && <span className="admin-flag-icon">⚠️</span>}
+                <div className="admin-word-pair">
+                  <span className="admin-word-he">{w.he}</span>
+                  <span className="admin-word-fr">{w.fr}</span>
                 </div>
               </div>
-            ))
-          )
+              <div className="admin-item-actions">
+                <button
+                  className="admin-action-btn edit"
+                  onClick={() => openEdit(w, "word")}
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+                {w.flagged && (
+                  <button
+                    className="admin-action-btn unflag"
+                    onClick={() => handleUnflag(w, "word")}
+                    title="Retirer le signalement"
+                  >
+                    ✓
+                  </button>
+                )}
+                <button
+                  className="admin-action-btn delete"
+                  onClick={() => setDeleteConfirm({ item: w, type: "word" })}
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
 
@@ -589,9 +681,14 @@ export default function Admin({ onBack }) {
           <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
               <h2>✏️ Modifier</h2>
-              <button className="admin-modal-close" onClick={() => setEditItem(null)}>✕</button>
+              <button
+                className="admin-modal-close"
+                onClick={() => setEditItem(null)}
+              >
+                ✕
+              </button>
             </div>
-            
+
             <div className="admin-modal-body">
               {editItem.type === "question" ? (
                 <>
@@ -599,17 +696,24 @@ export default function Admin({ onBack }) {
                     <label>Question</label>
                     <textarea
                       value={editData.question}
-                      onChange={(e) => setEditData({ ...editData, question: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({ ...editData, question: e.target.value })
+                      }
                       dir="rtl"
                       rows={3}
                     />
                   </div>
-                  
+
                   <div className="admin-field">
                     <label>Réponse correcte</label>
                     <select
                       value={editData.reponse_correcte}
-                      onChange={(e) => setEditData({ ...editData, reponse_correcte: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          reponse_correcte: e.target.value,
+                        })
+                      }
                     >
                       <option value="A">A</option>
                       <option value="B">B</option>
@@ -617,7 +721,7 @@ export default function Admin({ onBack }) {
                       <option value="D">D</option>
                     </select>
                   </div>
-                  
+
                   {["A", "B", "C", "D"].map((key) => (
                     <div key={key} className="admin-field">
                       <label>Option {key}</label>
@@ -627,50 +731,70 @@ export default function Admin({ onBack }) {
                         onChange={(e) =>
                           setEditData({
                             ...editData,
-                            options: { ...editData.options, [key]: e.target.value },
+                            options: {
+                              ...editData.options,
+                              [key]: e.target.value,
+                            },
                           })
                         }
                         dir="rtl"
                       />
                     </div>
                   ))}
-                  
+
                   <div className="admin-field">
                     <label>Explication</label>
                     <textarea
                       value={editData.explication}
-                      onChange={(e) => setEditData({ ...editData, explication: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          explication: e.target.value,
+                        })
+                      }
                       dir="rtl"
                       rows={2}
                     />
                   </div>
-                  
+
                   <div className="admin-field">
                     <label>Catégories (séparées par virgule)</label>
                     <input
                       type="text"
                       value={editData.grande_categorie}
-                      onChange={(e) => setEditData({ ...editData, grande_categorie: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          grande_categorie: e.target.value,
+                        })
+                      }
                       dir="rtl"
                     />
                   </div>
-                  
+
                   <div className="admin-field">
                     <label>Matières (séparées par virgule)</label>
                     <input
                       type="text"
                       value={editData.matiere}
-                      onChange={(e) => setEditData({ ...editData, matiere: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({ ...editData, matiere: e.target.value })
+                      }
                       dir="rtl"
                     />
                   </div>
-                  
+
                   <div className="admin-field-row">
                     <label>
                       <input
                         type="checkbox"
                         checked={editData.is_prof}
-                        onChange={(e) => setEditData({ ...editData, is_prof: e.target.checked })}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            is_prof: e.target.checked,
+                          })
+                        }
                       />
                       Prof
                     </label>
@@ -678,7 +802,12 @@ export default function Admin({ onBack }) {
                       <input
                         type="checkbox"
                         checked={editData.is_misrad_haavoda}
-                        onChange={(e) => setEditData({ ...editData, is_misrad_haavoda: e.target.checked })}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            is_misrad_haavoda: e.target.checked,
+                          })
+                        }
                       />
                       Misrad Haavoda
                     </label>
@@ -691,25 +820,32 @@ export default function Admin({ onBack }) {
                     <input
                       type="text"
                       value={editData.he}
-                      onChange={(e) => setEditData({ ...editData, he: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({ ...editData, he: e.target.value })
+                      }
                       dir="rtl"
                     />
                   </div>
-                  
+
                   <div className="admin-field">
                     <label>Français</label>
                     <input
                       type="text"
                       value={editData.fr}
-                      onChange={(e) => setEditData({ ...editData, fr: e.target.value })}
+                      onChange={(e) =>
+                        setEditData({ ...editData, fr: e.target.value })
+                      }
                     />
                   </div>
                 </>
               )}
             </div>
-            
+
             <div className="admin-modal-footer">
-              <button className="admin-modal-btn cancel" onClick={() => setEditItem(null)}>
+              <button
+                className="admin-modal-btn cancel"
+                onClick={() => setEditItem(null)}
+              >
                 Annuler
               </button>
               <button className="admin-modal-btn save" onClick={saveEdit}>
@@ -722,12 +858,18 @@ export default function Admin({ onBack }) {
 
       {/* Delete Confirmation */}
       {deleteConfirm && (
-        <div className="admin-modal-overlay" onClick={() => setDeleteConfirm(null)}>
-          <div className="admin-modal confirm" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-overlay"
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <div
+            className="admin-modal confirm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="admin-modal-header">
               <h2>🗑️ Confirmer la suppression</h2>
             </div>
-            
+
             <div className="admin-modal-body">
               <p>Êtes-vous sûr de vouloir supprimer cet élément ?</p>
               <p className="admin-confirm-preview">
@@ -736,12 +878,18 @@ export default function Admin({ onBack }) {
                   : `${deleteConfirm.item.he} - ${deleteConfirm.item.fr}`}
               </p>
             </div>
-            
+
             <div className="admin-modal-footer">
-              <button className="admin-modal-btn cancel" onClick={() => setDeleteConfirm(null)}>
+              <button
+                className="admin-modal-btn cancel"
+                onClick={() => setDeleteConfirm(null)}
+              >
                 Annuler
               </button>
-              <button className="admin-modal-btn delete" onClick={confirmDelete}>
+              <button
+                className="admin-modal-btn delete"
+                onClick={confirmDelete}
+              >
                 🗑️ Supprimer
               </button>
             </div>
@@ -751,46 +899,53 @@ export default function Admin({ onBack }) {
 
       {/* Bulk Delete Confirmation */}
       {bulkDeleteConfirm && (
-        <div className="admin-modal-overlay" onClick={() => !bulkDeleting && setBulkDeleteConfirm(false)}>
-          <div className="admin-modal confirm bulk" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="admin-modal-overlay"
+          onClick={() => !bulkDeleting && setBulkDeleteConfirm(false)}
+        >
+          <div
+            className="admin-modal confirm bulk"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="admin-modal-header">
               <h2>⚠️ Suppression en masse</h2>
             </div>
-            
+
             <div className="admin-modal-body">
               <p className="admin-bulk-warning">
                 Attention ! Cette action est <strong>irréversible</strong>.
               </p>
               <p className="admin-bulk-count">
-                {tab === "questions" 
-                  ? `${filteredQuestions.length} question(s)` 
-                  : `${filteredWords.length} mot(s)`} 
-                {" "}seront supprimé(e)s définitivement.
+                {tab === "questions"
+                  ? `${filteredQuestions.length} question(s)`
+                  : `${filteredWords.length} mot(s)`}{" "}
+                seront supprimé(e)s définitivement.
               </p>
               {(filterCategory || filterMatiere) && (
                 <p className="admin-bulk-filters">
-                  Filtres actifs: {filterCategory && <span>{filterCategory}</span>}
+                  Filtres actifs:{" "}
+                  {filterCategory && <span>{filterCategory}</span>}
                   {filterCategory && filterMatiere && " → "}
                   {filterMatiere && <span>{filterMatiere}</span>}
                 </p>
               )}
             </div>
-            
+
             <div className="admin-modal-footer">
-              <button 
-                className="admin-modal-btn cancel" 
+              <button
+                className="admin-modal-btn cancel"
                 onClick={() => setBulkDeleteConfirm(false)}
                 disabled={bulkDeleting}
               >
                 Annuler
               </button>
-              <button 
-                className="admin-modal-btn delete bulk" 
+              <button
+                className="admin-modal-btn delete bulk"
                 onClick={confirmBulkDelete}
                 disabled={bulkDeleting}
               >
-                {bulkDeleting 
-                  ? "⏳ Suppression..." 
+                {bulkDeleting
+                  ? "⏳ Suppression..."
                   : `🗑️ Supprimer ${tab === "questions" ? filteredQuestions.length : filteredWords.length} élément(s)`}
               </button>
             </div>
@@ -800,4 +955,3 @@ export default function Admin({ onBack }) {
     </div>
   );
 }
-

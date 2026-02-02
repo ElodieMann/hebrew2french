@@ -12,6 +12,16 @@ import {
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 
+// Helper: normaliser le texte pour la recherche (retire les accents et voyelles hébraïques)
+const normalizeSearch = (str) => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Retire les diacritiques latins (accents)
+    .replace(/[\u0591-\u05C7]/g, ""); // Retire les voyelles hébraïques (nikud)
+};
+
 export default function Oulpan({ onBack }) {
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +36,7 @@ export default function Oulpan({ onBack }) {
   // Pour ajouter un mot
   const [newHe, setNewHe] = useState("");
   const [newFr, setNewFr] = useState("");
-  
+
   // Modal édition rapide
   const [editModal, setEditModal] = useState(null);
   const [editData, setEditData] = useState({});
@@ -104,7 +114,7 @@ export default function Oulpan({ onBack }) {
       await updateDoc(doc(db, "words", current.id), updateData);
 
       const updated = wordsRef.current.map((w) =>
-        w.id === current.id ? { ...w, ...updateData } : w
+        w.id === current.id ? { ...w, ...updateData } : w,
       );
       setWords(updated);
       wordsRef.current = updated;
@@ -112,10 +122,13 @@ export default function Oulpan({ onBack }) {
       setStatus("wrong");
 
       // Marquer comme à réviser dans Firebase
-      await updateDoc(doc(db, "words", current.id), { wrong: true, answered: true });
+      await updateDoc(doc(db, "words", current.id), {
+        wrong: true,
+        answered: true,
+      });
 
       const updated = wordsRef.current.map((w) =>
-        w.id === current.id ? { ...w, wrong: true, answered: true } : w
+        w.id === current.id ? { ...w, wrong: true, answered: true } : w,
       );
       setWords(updated);
       wordsRef.current = updated;
@@ -161,7 +174,7 @@ export default function Oulpan({ onBack }) {
     await updateDoc(doc(db, "words", current.id), { wrong: true });
 
     const updated = wordsRef.current.map((w) =>
-      w.id === current.id ? { ...w, wrong: true } : w
+      w.id === current.id ? { ...w, wrong: true } : w,
     );
     setWords(updated);
 
@@ -176,7 +189,7 @@ export default function Oulpan({ onBack }) {
       await updateDoc(doc(db, "words", current.id), { wrong: false });
 
       const updated = wordsRef.current.map((w) =>
-        w.id === current.id ? { ...w, wrong: false } : w
+        w.id === current.id ? { ...w, wrong: false } : w,
       );
       setWords(updated);
     }
@@ -193,7 +206,7 @@ export default function Oulpan({ onBack }) {
     await updateDoc(doc(db, "words", current.id), { wrong: true });
 
     const updated = wordsRef.current.map((w) =>
-      w.id === current.id ? { ...w, wrong: true } : w
+      w.id === current.id ? { ...w, wrong: true } : w,
     );
 
     setWords(updated);
@@ -205,7 +218,7 @@ export default function Oulpan({ onBack }) {
     await updateDoc(doc(db, "words", wordId), { wrong: false });
 
     const updated = wordsRef.current.map((w) =>
-      w.id === wordId ? { ...w, wrong: false } : w
+      w.id === wordId ? { ...w, wrong: false } : w,
     );
     setWords(updated);
     wordsRef.current = updated;
@@ -224,7 +237,11 @@ export default function Oulpan({ onBack }) {
     });
     await batch.commit();
 
-    const updated = wordsRef.current.map((w) => ({ ...w, wrong: false, answered: false }));
+    const updated = wordsRef.current.map((w) => ({
+      ...w,
+      wrong: false,
+      answered: false,
+    }));
     setWords(updated);
     wordsRef.current = updated;
     setQueue([]);
@@ -261,27 +278,27 @@ export default function Oulpan({ onBack }) {
 
   const saveQuickEdit = async () => {
     if (!editModal) return;
-    
+
     try {
       const updateData = {
         he: editData.he,
         fr: editData.fr,
         flagged: false,
       };
-      
+
       await updateDoc(doc(db, "words", editModal.id), updateData);
-      
+
       const updated = wordsRef.current.map((w) =>
-        w.id === editModal.id ? { ...w, ...updateData } : w
+        w.id === editModal.id ? { ...w, ...updateData } : w,
       );
       setWords(updated);
       wordsRef.current = updated;
-      
+
       // Mettre à jour le mot courant si c'est celui qu'on édite
       if (current && current.id === editModal.id) {
         setCurrent({ ...current, ...updateData });
       }
-      
+
       setEditModal(null);
       setEditData({});
     } catch (error) {
@@ -297,8 +314,8 @@ export default function Oulpan({ onBack }) {
   const searchResults = searchQuery.trim()
     ? words.filter(
         (w) =>
-          w.he.includes(searchQuery) ||
-          w.fr.toLowerCase().includes(searchQuery.toLowerCase())
+          normalizeSearch(w.he).includes(normalizeSearch(searchQuery)) ||
+          normalizeSearch(w.fr).includes(normalizeSearch(searchQuery)),
       )
     : [];
 
@@ -413,7 +430,7 @@ export default function Oulpan({ onBack }) {
                           wrong: true,
                         });
                         const updated = wordsRef.current.map((word) =>
-                          word.id === w.id ? { ...word, wrong: true } : word
+                          word.id === w.id ? { ...word, wrong: true } : word,
                         );
                         setWords(updated);
                         wordsRef.current = updated;
@@ -629,9 +646,7 @@ export default function Oulpan({ onBack }) {
               className="progress-fill"
               style={{
                 width: `${
-                  words.length > 0
-                    ? (answeredCount / words.length) * 100
-                    : 0
+                  words.length > 0 ? (answeredCount / words.length) * 100 : 0
                 }%`,
               }}
             />
@@ -670,14 +685,20 @@ export default function Oulpan({ onBack }) {
             <button
               className={`action-btn flag-action ${current.flagged ? "flagged" : ""}`}
               onClick={async () => {
-                await updateDoc(doc(db, "words", current.id), { flagged: !current.flagged });
+                await updateDoc(doc(db, "words", current.id), {
+                  flagged: !current.flagged,
+                });
                 const updated = wordsRef.current.map((w) =>
-                  w.id === current.id ? { ...w, flagged: !current.flagged } : w
+                  w.id === current.id ? { ...w, flagged: !current.flagged } : w,
                 );
                 setWords(updated);
                 wordsRef.current = updated;
               }}
-              title={current.flagged ? "Retirer le signalement" : "Signaler pour plus tard"}
+              title={
+                current.flagged
+                  ? "Retirer le signalement"
+                  : "Signaler pour plus tard"
+              }
             >
               {current.flagged ? "✓" : "⚠️"}
             </button>
@@ -709,33 +730,45 @@ export default function Oulpan({ onBack }) {
           <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
               <h2>✏️ Modifier le mot</h2>
-              <button className="admin-modal-close" onClick={() => setEditModal(null)}>✕</button>
+              <button
+                className="admin-modal-close"
+                onClick={() => setEditModal(null)}
+              >
+                ✕
+              </button>
             </div>
-            
+
             <div className="admin-modal-body">
               <div className="admin-field">
                 <label>Hébreu</label>
                 <input
                   type="text"
                   value={editData.he}
-                  onChange={(e) => setEditData({ ...editData, he: e.target.value })}
+                  onChange={(e) =>
+                    setEditData({ ...editData, he: e.target.value })
+                  }
                   dir="rtl"
                   autoFocus
                 />
               </div>
-              
+
               <div className="admin-field">
                 <label>Français</label>
                 <input
                   type="text"
                   value={editData.fr}
-                  onChange={(e) => setEditData({ ...editData, fr: e.target.value })}
+                  onChange={(e) =>
+                    setEditData({ ...editData, fr: e.target.value })
+                  }
                 />
               </div>
             </div>
-            
+
             <div className="admin-modal-footer">
-              <button className="admin-modal-btn cancel" onClick={() => setEditModal(null)}>
+              <button
+                className="admin-modal-btn cancel"
+                onClick={() => setEditModal(null)}
+              >
                 Annuler
               </button>
               <button className="admin-modal-btn save" onClick={saveQuickEdit}>
@@ -784,4 +817,3 @@ export default function Oulpan({ onBack }) {
     </div>
   );
 }
-
