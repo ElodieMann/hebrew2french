@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import actifsData from "./data/actifs.json";
 
 // Structure pour les différents jeux de données
@@ -24,8 +24,8 @@ const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 
 export default function Categorie({ onBack }) {
   // Sélection du dataset et mode
-  const [selectedDataset, setSelectedDataset] = useState(null); // null = choix dataset
-  const [mode, setMode] = useState(null); // null = choix mode, "mode1" ou "mode2"
+  const [selectedDataset, setSelectedDataset] = useState(null);
+  const [mode, setMode] = useState(null);
 
   // État du quiz
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,6 +34,9 @@ export default function Categorie({ onBack }) {
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState(0);
   const [quizItems, setQuizItems] = useState([]);
+
+  // Options mélangées pour la question courante
+  const [shuffledOptions, setShuffledOptions] = useState([]);
 
   // Préparer les données du dataset sélectionné
   const dataset = selectedDataset ? DATASETS[selectedDataset] : null;
@@ -45,7 +48,6 @@ export default function Categorie({ onBack }) {
     const data = dataset.data;
     const cats = Object.keys(data);
 
-    // Créer un mapping item -> catégories (un item peut appartenir à plusieurs catégories)
     const mapping = {};
     const items = new Set();
 
@@ -64,6 +66,15 @@ export default function Categorie({ onBack }) {
     };
   }, [dataset]);
 
+  // Mélanger les options quand on change de question
+  useEffect(() => {
+    if (mode === "mode1" && categories.length > 0) {
+      setShuffledOptions(shuffle(categories));
+    } else if (mode === "mode2" && allItems.length > 0) {
+      setShuffledOptions(shuffle(allItems));
+    }
+  }, [mode, currentIndex, categories, allItems]);
+
   // Démarrer le quiz
   const startQuiz = (selectedMode) => {
     setMode(selectedMode);
@@ -74,11 +85,11 @@ export default function Categorie({ onBack }) {
     setSelectedAnswers([]);
 
     if (selectedMode === "mode1") {
-      // Mode 1: mélanger les items
       setQuizItems(shuffle(allItems));
+      setShuffledOptions(shuffle(categories));
     } else {
-      // Mode 2: mélanger les catégories
       setQuizItems(shuffle(categories));
+      setShuffledOptions(shuffle(allItems));
     }
   };
 
@@ -91,6 +102,7 @@ export default function Categorie({ onBack }) {
     setShowAnswer(false);
     setSelectedAnswers([]);
     setQuizItems([]);
+    setShuffledOptions([]);
   };
 
   // Retour au choix de dataset
@@ -117,7 +129,7 @@ export default function Categorie({ onBack }) {
 
   const nextMode1 = () => {
     if (currentIndex + 1 >= quizItems.length) {
-      // Fin du quiz - on reste sur le résultat final
+      setCurrentIndex((i) => i + 1); // Aller aux résultats
       return;
     }
     setCurrentIndex((i) => i + 1);
@@ -128,7 +140,7 @@ export default function Categorie({ onBack }) {
 
   /* ========== MODE 2: Catégorie → Items ========== */
   const toggleMode2Answer = (item) => {
-    if (showResult) return;
+    if (showResult || showAnswer) return;
 
     setSelectedAnswers((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
@@ -139,7 +151,6 @@ export default function Categorie({ onBack }) {
     const currentCategory = quizItems[currentIndex];
     const correctItems = dataset.data[currentCategory] || [];
 
-    // Calculer si toutes les bonnes réponses sont sélectionnées et aucune mauvaise
     const selectedSet = new Set(selectedAnswers);
     const correctSet = new Set(correctItems);
 
@@ -159,6 +170,7 @@ export default function Categorie({ onBack }) {
 
   const nextMode2 = () => {
     if (currentIndex + 1 >= quizItems.length) {
+      setCurrentIndex((i) => i + 1); // Aller aux résultats
       return;
     }
     setCurrentIndex((i) => i + 1);
@@ -171,7 +183,9 @@ export default function Categorie({ onBack }) {
     setShowAnswer(true);
   };
 
-  /* ========== CHOIX DU DATASET ========== */
+  /* ========== RENDER ========== */
+
+  // Choix du dataset
   if (!selectedDataset) {
     return (
       <div className="app categorie-app">
@@ -184,6 +198,7 @@ export default function Categorie({ onBack }) {
             🏠
           </button>
           <h1 className="categorie-title">🗂️ Catégories</h1>
+          <div style={{ width: 32 }} />
         </header>
 
         <div className="categorie-datasets">
@@ -203,7 +218,7 @@ export default function Categorie({ onBack }) {
     );
   }
 
-  /* ========== CHOIX DU MODE ========== */
+  // Choix du mode
   if (!mode) {
     return (
       <div className="app categorie-app">
@@ -218,6 +233,7 @@ export default function Categorie({ onBack }) {
           <h1 className="categorie-title">
             {dataset.icon} {dataset.name}
           </h1>
+          <div style={{ width: 32 }} />
         </header>
 
         <div className="categorie-modes">
@@ -256,15 +272,17 @@ export default function Categorie({ onBack }) {
     );
   }
 
-  /* ========== FIN DU QUIZ ========== */
-  const isFinished =
-    currentIndex >= quizItems.length - 1 && showResult && !showAnswer;
+  // Variables communes pour le quiz
   const totalQuestions = quizItems.length;
   const progress =
-    ((currentIndex + (showResult ? 1 : 0)) / totalQuestions) * 100;
+    totalQuestions > 0
+      ? ((currentIndex + (showResult ? 1 : 0)) / totalQuestions) * 100
+      : 0;
 
+  // Résultats finaux
   if (currentIndex >= quizItems.length) {
-    const percentage = Math.round((score / totalQuestions) * 100);
+    const percentage =
+      totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
     return (
       <div className="app categorie-app">
@@ -277,6 +295,7 @@ export default function Categorie({ onBack }) {
             ←
           </button>
           <h1 className="categorie-title">📊 Résultats</h1>
+          <div style={{ width: 32 }} />
         </header>
 
         <div className="categorie-results">
@@ -306,14 +325,10 @@ export default function Categorie({ onBack }) {
     );
   }
 
-  /* ========== MODE 1: QUIZ ========== */
+  // Mode 1: Item → Catégorie
   if (mode === "mode1") {
     const currentItem = quizItems[currentIndex];
     const correctCategories = itemToCategories[currentItem] || [];
-    const shuffledCategories = useMemo(
-      () => shuffle(categories),
-      [currentIndex],
-    );
 
     return (
       <div className="app categorie-app">
@@ -346,7 +361,7 @@ export default function Categorie({ onBack }) {
         </div>
 
         <div className="categorie-options mode1">
-          {shuffledCategories.map((cat) => {
+          {shuffledOptions.map((cat) => {
             let className = "categorie-option";
             if (showResult) {
               if (correctCategories.includes(cat)) {
@@ -386,11 +401,10 @@ export default function Categorie({ onBack }) {
     );
   }
 
-  /* ========== MODE 2: QUIZ ========== */
+  // Mode 2: Catégorie → Items
   if (mode === "mode2") {
     const currentCategory = quizItems[currentIndex];
     const correctItems = dataset.data[currentCategory] || [];
-    const shuffledItems = useMemo(() => shuffle(allItems), [currentIndex]);
 
     return (
       <div className="app categorie-app">
@@ -420,7 +434,7 @@ export default function Categorie({ onBack }) {
           <div className="question-item category" dir="rtl">
             {currentCategory}
           </div>
-          {!showResult && (
+          {!showResult && !showAnswer && (
             <p className="question-hint">
               {correctItems.length} élément(s) à trouver
             </p>
@@ -428,7 +442,7 @@ export default function Categorie({ onBack }) {
         </div>
 
         <div className="categorie-options mode2">
-          {shuffledItems.map((item) => {
+          {shuffledOptions.map((item) => {
             let className = "categorie-option";
             const isCorrect = correctItems.includes(item);
             const isSelected = selectedAnswers.includes(item);
