@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Oulpan from "./Oulpan";
 import Test from "./Test";
+import Categorie from "./Categorie";
 import Admin from "./Admin";
 import "./App.css";
 
 export default function App() {
-  const [currentApp, setCurrentApp] = useState(null); // null = home, "oulpan", "test", "admin"
+  const [currentApp, setCurrentApp] = useState(null); // null = home, "oulpan", "test", "categorie", "admin"
 
   // Page d'accueil
   if (!currentApp) {
@@ -35,6 +36,17 @@ export default function App() {
               <span className="home-choice-title">Test</span>
               <span className="home-choice-desc">QCM par catégorie</span>
             </button>
+
+            <button
+              className="home-choice-btn categorie-btn"
+              onClick={() => setCurrentApp("categorie")}
+            >
+              <span className="home-choice-icon">🗂️</span>
+              <span className="home-choice-title">Catégories</span>
+              <span className="home-choice-desc">
+                Mémoriser les associations
+              </span>
+            </button>
           </div>
 
           <button
@@ -56,6 +68,11 @@ export default function App() {
   // Test
   if (currentApp === "test") {
     return <Test onBack={() => setCurrentApp(null)} />;
+  }
+
+  // Categorie
+  if (currentApp === "categorie") {
+    return <Categorie onBack={() => setCurrentApp(null)} />;
   }
 
   // Admin
