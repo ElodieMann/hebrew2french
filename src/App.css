@@ -3185,20 +3185,24 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 0 16px;
+  padding: 0 16px 16px;
   justify-content: center;
   flex: 1;
   align-content: flex-start;
+  overflow-y: auto;
+  max-height: calc(100vh - 320px);
 }
 
 .categorie-options.mode1 {
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .categorie-options.mode1 .categorie-option {
   width: 100%;
   max-width: 300px;
+  text-align: center;
 }
 
 .categorie-option {
@@ -3241,6 +3245,19 @@ body {
   animation: pulse-missed 1s ease-in-out infinite;
 }
 
+.categorie-option.shake {
+  animation: shake 0.5s ease-in-out;
+  border-color: var(--danger);
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.categorie-option.disabled-wrong {
+  opacity: 0.4;
+  pointer-events: none;
+  border-color: var(--danger);
+  background: rgba(231, 76, 60, 0.1);
+}
+
 @keyframes pulse-missed {
   0%,
   100% {
@@ -3248,6 +3265,25 @@ body {
   }
   50% {
     opacity: 0.7;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(6px);
   }
 }
 
@@ -3283,6 +3319,10 @@ body {
 .categorie-btn.primary:disabled {
   background: var(--border);
   color: var(--text-light);
+}
+
+.categorie-btn.shake {
+  animation: shake 0.5s ease-in-out;
 }
 
 .categorie-btn.secondary {
@@ -3339,6 +3379,12 @@ body {
 
 /* Home button for Categorie */
 .home-choice-btn.categorie-btn {
-  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-  box-shadow: 0 8px 24px rgba(155, 89, 182, 0.3);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f4ff 100%);
+  box-shadow: 0 8px 24px rgba(155, 89, 182, 0.15);
+  border: 2px solid #e0d4f0;
+}
+
+.home-choice-btn.categorie-btn .home-choice-title,
+.home-choice-btn.categorie-btn .home-choice-desc {
+  color: #333;
 }

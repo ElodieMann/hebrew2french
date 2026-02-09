@@ -29,8 +29,10 @@ export default function Categorie({ onBack }) {
 
   // État du quiz
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState([]);
-  const [showResult, setShowResult] = useState(false);
+  const [selectedAnswers, setSelectedAnswers] = useState([]); // Pour mode 2
+  const [wrongAnswers, setWrongAnswers] = useState([]); // Réponses fausses (désactivées)
+  const [shakingOption, setShakingOption] = useState(null); // Option qui secoue
+  const [foundCorrect, setFoundCorrect] = useState(false); // A trouvé la bonne réponse
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState(0);
   const [quizItems, setQuizItems] = useState([]);
@@ -80,9 +82,11 @@ export default function Categorie({ onBack }) {
     setMode(selectedMode);
     setCurrentIndex(0);
     setScore(0);
-    setShowResult(false);
+    setFoundCorrect(false);
     setShowAnswer(false);
     setSelectedAnswers([]);
+    setWrongAnswers([]);
+    setShakingOption(null);
 
     if (selectedMode === "mode1") {
       setQuizItems(shuffle(allItems));
@@ -98,9 +102,11 @@ export default function Categorie({ onBack }) {
     setMode(null);
     setCurrentIndex(0);
     setScore(0);
-    setShowResult(false);
+    setFoundCorrect(false);
     setShowAnswer(false);
     setSelectedAnswers([]);
+    setWrongAnswers([]);
+    setShakingOption(null);
     setQuizItems([]);
     setShuffledOptions([]);
   };
@@ -113,34 +119,46 @@ export default function Categorie({ onBack }) {
 
   /* ========== MODE 1: Item → Catégorie ========== */
   const handleMode1Answer = (category) => {
-    if (showResult) return;
+    if (foundCorrect || showAnswer) return;
+    if (wrongAnswers.includes(category)) return;
 
     const currentItem = quizItems[currentIndex];
     const correctCategories = itemToCategories[currentItem] || [];
     const isCorrect = correctCategories.includes(category);
 
-    setSelectedAnswers([category]);
-    setShowResult(true);
-
     if (isCorrect) {
+      setFoundCorrect(true);
       setScore((s) => s + 1);
+    } else {
+      // Secouer et désactiver
+      setShakingOption(category);
+      setTimeout(() => {
+        setShakingOption(null);
+        setWrongAnswers((prev) => [...prev, category]);
+      }, 500);
     }
   };
 
   const nextMode1 = () => {
     if (currentIndex + 1 >= quizItems.length) {
-      setCurrentIndex((i) => i + 1); // Aller aux résultats
+      setCurrentIndex((i) => i + 1);
       return;
     }
     setCurrentIndex((i) => i + 1);
     setSelectedAnswers([]);
-    setShowResult(false);
+    setWrongAnswers([]);
+    setFoundCorrect(false);
     setShowAnswer(false);
+    setShakingOption(null);
+  };
+
+  const revealMode1Answer = () => {
+    setShowAnswer(true);
   };
 
   /* ========== MODE 2: Catégorie → Items ========== */
   const toggleMode2Answer = (item) => {
-    if (showResult || showAnswer) return;
+    if (foundCorrect || showAnswer) return;
 
     setSelectedAnswers((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
@@ -163,23 +181,38 @@ export default function Categorie({ onBack }) {
 
     if (allCorrectSelected && noWrongSelected) {
       setScore((s) => s + 1);
+      setFoundCorrect(true);
+    } else {
+      // Secouer et marquer les mauvaises sélections
+      const wrongSelected = selectedAnswers.filter(
+        (item) => !correctSet.has(item),
+      );
+      setShakingOption("validate");
+      setTimeout(() => {
+        setShakingOption(null);
+        // Retirer les mauvaises de la sélection
+        setSelectedAnswers((prev) =>
+          prev.filter((item) => correctSet.has(item)),
+        );
+        setWrongAnswers((prev) => [...prev, ...wrongSelected]);
+      }, 500);
     }
-
-    setShowResult(true);
   };
 
   const nextMode2 = () => {
     if (currentIndex + 1 >= quizItems.length) {
-      setCurrentIndex((i) => i + 1); // Aller aux résultats
+      setCurrentIndex((i) => i + 1);
       return;
     }
     setCurrentIndex((i) => i + 1);
     setSelectedAnswers([]);
-    setShowResult(false);
+    setWrongAnswers([]);
+    setFoundCorrect(false);
     setShowAnswer(false);
+    setShakingOption(null);
   };
 
-  const revealAnswer = () => {
+  const revealMode2Answer = () => {
     setShowAnswer(true);
   };
 
@@ -276,7 +309,9 @@ export default function Categorie({ onBack }) {
   const totalQuestions = quizItems.length;
   const progress =
     totalQuestions > 0
-      ? ((currentIndex + (showResult ? 1 : 0)) / totalQuestions) * 100
+      ? ((currentIndex + (foundCorrect || showAnswer ? 1 : 0)) /
+          totalQuestions) *
+        100
       : 0;
 
   // Résultats finaux
@@ -363,14 +398,20 @@ export default function Categorie({ onBack }) {
         <div className="categorie-options mode1">
           {shuffledOptions.map((cat) => {
             let className = "categorie-option";
-            if (showResult) {
-              if (correctCategories.includes(cat)) {
+            const isCorrect = correctCategories.includes(cat);
+            const isWrong = wrongAnswers.includes(cat);
+            const isShaking = shakingOption === cat;
+
+            if (foundCorrect || showAnswer) {
+              if (isCorrect) {
                 className += " correct";
-              } else if (selectedAnswers.includes(cat)) {
-                className += " wrong";
               }
-            } else if (selectedAnswers.includes(cat)) {
-              className += " selected";
+            }
+            if (isShaking) {
+              className += " shake";
+            }
+            if (isWrong) {
+              className += " disabled-wrong";
             }
 
             return (
@@ -378,7 +419,7 @@ export default function Categorie({ onBack }) {
                 key={cat}
                 className={className}
                 onClick={() => handleMode1Answer(cat)}
-                disabled={showResult}
+                disabled={foundCorrect || showAnswer || isWrong}
                 dir="rtl"
               >
                 {cat}
@@ -387,16 +428,24 @@ export default function Categorie({ onBack }) {
           })}
         </div>
 
-        {showResult && (
-          <div className="categorie-actions">
+        <div className="categorie-actions">
+          {!foundCorrect && !showAnswer && (
+            <button
+              className="categorie-btn secondary"
+              onClick={revealMode1Answer}
+            >
+              👁️ Voir la réponse
+            </button>
+          )}
+          {(foundCorrect || showAnswer) && (
             <button className="categorie-btn primary" onClick={nextMode1}>
               {currentIndex + 1 >= totalQuestions
                 ? "Voir les résultats"
                 : "Suivant"}{" "}
               →
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   }
@@ -434,9 +483,11 @@ export default function Categorie({ onBack }) {
           <div className="question-item category" dir="rtl">
             {currentCategory}
           </div>
-          {!showResult && !showAnswer && (
+          {!foundCorrect && !showAnswer && (
             <p className="question-hint">
               {correctItems.length} élément(s) à trouver
+              {selectedAnswers.length > 0 &&
+                ` (${selectedAnswers.length} sélectionné${selectedAnswers.length > 1 ? "s" : ""})`}
             </p>
           )}
         </div>
@@ -446,17 +497,19 @@ export default function Categorie({ onBack }) {
             let className = "categorie-option";
             const isCorrect = correctItems.includes(item);
             const isSelected = selectedAnswers.includes(item);
+            const isWrong = wrongAnswers.includes(item);
 
-            if (showResult || showAnswer) {
-              if (isCorrect && isSelected) {
+            if (foundCorrect || showAnswer) {
+              if (isCorrect) {
                 className += " correct";
-              } else if (isCorrect && !isSelected) {
-                className += " missed";
-              } else if (!isCorrect && isSelected) {
-                className += " wrong";
               }
-            } else if (isSelected) {
-              className += " selected";
+            } else {
+              if (isSelected) {
+                className += " selected";
+              }
+              if (isWrong) {
+                className += " disabled-wrong";
+              }
             }
 
             return (
@@ -464,7 +517,7 @@ export default function Categorie({ onBack }) {
                 key={item}
                 className={className}
                 onClick={() => toggleMode2Answer(item)}
-                disabled={showResult || showAnswer}
+                disabled={foundCorrect || showAnswer || isWrong}
                 dir="rtl"
               >
                 {item}
@@ -474,10 +527,10 @@ export default function Categorie({ onBack }) {
         </div>
 
         <div className="categorie-actions">
-          {!showResult && !showAnswer && (
+          {!foundCorrect && !showAnswer && (
             <>
               <button
-                className="categorie-btn primary"
+                className={`categorie-btn primary ${shakingOption === "validate" ? "shake" : ""}`}
                 onClick={validateMode2}
                 disabled={selectedAnswers.length === 0}
               >
@@ -485,14 +538,14 @@ export default function Categorie({ onBack }) {
               </button>
               <button
                 className="categorie-btn secondary"
-                onClick={revealAnswer}
+                onClick={revealMode2Answer}
               >
                 👁️ Voir la réponse
               </button>
             </>
           )}
 
-          {(showResult || showAnswer) && (
+          {(foundCorrect || showAnswer) && (
             <button className="categorie-btn primary" onClick={nextMode2}>
               {currentIndex + 1 >= totalQuestions
                 ? "Voir les résultats"
