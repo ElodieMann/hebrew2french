@@ -1,5 +1,57 @@
 import { useState, useMemo, useEffect } from "react";
 import actifsData from "./data/actifs.json";
+import typePeauRaw from "./data/typepeau.json";
+import nettoyageRaw from "./data/premiernettoyage.json";
+
+// Transformer typepeau.json en format catégorie -> caractéristiques + objectifs
+const typePeauData = {};
+typePeauRaw.forEach((type) => {
+  typePeauData[type.skin_type] = [];
+
+  // Ajouter les caractéristiques
+  if (type.characteristics && type.characteristics.length > 0) {
+    typePeauData[type.skin_type].push(...type.characteristics);
+  }
+
+  // Ajouter les objectifs de traitement
+  if (type.treatment_goals && type.treatment_goals.length > 0) {
+    typePeauData[type.skin_type].push(...type.treatment_goals);
+  }
+});
+
+// Supprimer les types vides (comme עור מעורב sans caractéristiques)
+Object.keys(typePeauData).forEach((key) => {
+  if (typePeauData[key].length === 0) {
+    delete typePeauData[key];
+  }
+});
+
+// Transformer premiernettoyage.json en format type de peau -> produits
+const nettoyageData = {
+  "עור רגיל": [],
+  "עור יבש": [],
+  "עור שמן": [],
+  "עור רגיש": [],
+  "כל סוגי העור": [],
+};
+nettoyageRaw.forEach((product) => {
+  const skinTypes = product.skin_types.toLowerCase();
+  if (skinTypes.includes("כל סוגי העור") || skinTypes.includes("כל סוגי")) {
+    nettoyageData["כל סוגי העור"].push(product.product);
+  }
+  if (skinTypes.includes("יבש")) {
+    nettoyageData["עור יבש"].push(product.product);
+  }
+  if (skinTypes.includes("שמן")) {
+    nettoyageData["עור שמן"].push(product.product);
+  }
+  if (skinTypes.includes("רגיל")) {
+    nettoyageData["עור רגיל"].push(product.product);
+  }
+  if (skinTypes.includes("רגיש")) {
+    nettoyageData["עור רגיש"].push(product.product);
+  }
+});
 
 // Structure pour les différents jeux de données
 const DATASETS = {
@@ -10,14 +62,20 @@ const DATASETS = {
     itemLabel: "actif",
     categoryLabel: "fonction",
   },
-  // Ajouter d'autres datasets ici plus tard:
-  // peaux: {
-  //   name: "Types de peau",
-  //   icon: "🧑",
-  //   data: peauxData,
-  //   itemLabel: "caractéristique",
-  //   categoryLabel: "type de peau",
-  // },
+  typepeau: {
+    name: "Types de peau",
+    icon: "🧑",
+    data: typePeauData,
+    itemLabel: "caractéristique",
+    categoryLabel: "type de peau",
+  },
+  nettoyage: {
+    name: "Premier nettoyage",
+    icon: "🧼",
+    data: nettoyageData,
+    itemLabel: "produit",
+    categoryLabel: "type de peau",
+  },
 };
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
