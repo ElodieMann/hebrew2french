@@ -3142,6 +3142,62 @@ body {
   color: var(--text-light);
 }
 
+.dataset-games-count {
+  font-size: 12px;
+  color: var(--text-light);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+/* Game selection */
+.categorie-games {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.categorie-game-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.categorie-game-btn:active {
+  transform: scale(0.98);
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.game-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.game-desc {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.game-count {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
 /* Question area */
 .categorie-question {
   display: flex;
