@@ -49,6 +49,7 @@ export default function Test({ onBack }) {
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const [isAllMode, setIsAllMode] = useState(false); // Mode "Tout" indépendant
 
   const questionsRef = useRef([]);
   questionsRef.current = questions;
@@ -172,6 +173,7 @@ export default function Test({ onBack }) {
     setShowExplanation(false);
     setScore(0);
     setAnswers([]);
+    setIsAllMode(false); // Mode normal
     setMode("quiz");
   };
 
@@ -183,18 +185,29 @@ export default function Test({ onBack }) {
     const current = quizQuestions[currentIndex];
     const isCorrect = key === current.reponse_correcte;
 
-    // Marquer comme répondu + correct/wrong
-    const updateData = { answered: true };
+    // Données à mettre à jour
+    const updateData = {};
+
+    // Mode "Tout" indépendant - utilise answered_all
+    if (isAllMode) {
+      updateData.answered_all = true;
+    } else {
+      // Mode normal - utilise answered/wrong
+      updateData.answered = true;
+
+      if (isCorrect) {
+        // Si c'était une question "wrong" et qu'on répond bien, on la retire
+        if (current.wrong) {
+          updateData.wrong = false;
+        }
+      } else {
+        // Marquer comme à réviser
+        updateData.wrong = true;
+      }
+    }
 
     if (isCorrect) {
       setScore((s) => s + 1);
-      // Si c'était une question "wrong" et qu'on répond bien, on la retire
-      if (current.wrong) {
-        updateData.wrong = false;
-      }
-    } else {
-      // Marquer comme à réviser
-      updateData.wrong = true;
     }
 
     await updateDoc(doc(db, "questions", current.id), updateData);
@@ -397,16 +410,20 @@ export default function Test({ onBack }) {
     setSelectedMatieres([...matieres]);
   };
 
-  // Questions Prof + Misrad (non répondues)
+  // Questions Prof + Misrad (progression indépendante avec answered_all)
   const allProfMisradQuestions = useMemo(() => {
     return questions.filter((q) => q.is_prof || q.is_misrad_haavoda);
   }, [questions]);
 
-  const unansweredProfMisrad = useMemo(() => {
-    return allProfMisradQuestions.filter((q) => !q.answered && !q.wrong);
+  const answeredAllCount = useMemo(() => {
+    return allProfMisradQuestions.filter((q) => q.answered_all).length;
   }, [allProfMisradQuestions]);
 
-  // Démarrer le quiz "Tout" (Prof + Misrad avec progression)
+  const unansweredProfMisrad = useMemo(() => {
+    return allProfMisradQuestions.filter((q) => !q.answered_all);
+  }, [allProfMisradQuestions]);
+
+  // Démarrer le quiz "Tout" (Prof + Misrad avec progression indépendante)
   const startAllProfMisradQuiz = () => {
     if (unansweredProfMisrad.length === 0) {
       alert("Toutes les questions Prof + Misrad ont été répondues !");
@@ -423,7 +440,34 @@ export default function Test({ onBack }) {
     setShowExplanation(false);
     setScore(0);
     setAnswers([]);
+    setIsAllMode(true); // Activer le mode indépendant
     setMode("quiz");
+  };
+
+  // Reset progression "Tout" (answered_all uniquement)
+  const resetAllProgress = async () => {
+    const toReset = questionsRef.current.filter(
+      (q) => q.answered_all && (q.is_prof || q.is_misrad_haavoda)
+    );
+
+    if (toReset.length === 0) return;
+
+    if (!confirm(`Remettre à zéro la progression "Tout" ? (${toReset.length} questions)`)) {
+      return;
+    }
+
+    const batch = writeBatch(db);
+    toReset.forEach((q) => {
+      batch.update(doc(db, "questions", q.id), { answered_all: false });
+    });
+    await batch.commit();
+
+    const resetIds = new Set(toReset.map((q) => q.id));
+    const updated = questionsRef.current.map((q) =>
+      resetIds.has(q.id) ? { ...q, answered_all: false } : q
+    );
+    setQuestions(updated);
+    questionsRef.current = updated;
   };
 
   // Aller au review avec un filtre (depuis stats)
@@ -989,6 +1033,7 @@ export default function Test({ onBack }) {
       setShowExplanation(false);
       setScore(0);
       setAnswers([]);
+      setIsAllMode(false); // Mode normal
       setMode("quiz");
     };
 
@@ -1218,19 +1263,19 @@ export default function Test({ onBack }) {
           </div>
         </div>
 
-        {/* Mode Tout avec progression */}
+        {/* Mode Tout avec progression indépendante */}
         <div className="config-section">
           <div className="all-prof-misrad-section">
             <h3 className="config-title">📋 Tout (Prof + Misrad)</h3>
             <p className="all-progress-text">
-              {allProfMisradQuestions.length - unansweredProfMisrad.length} / {allProfMisradQuestions.length} répondues
+              {answeredAllCount} / {allProfMisradQuestions.length} répondues
             </p>
             <div className="all-progress-bar">
               <div
                 className="all-progress-fill"
                 style={{
                   width: `${allProfMisradQuestions.length > 0 
-                    ? ((allProfMisradQuestions.length - unansweredProfMisrad.length) / allProfMisradQuestions.length) * 100 
+                    ? (answeredAllCount / allProfMisradQuestions.length) * 100 
                     : 0}%`,
                 }}
               />
@@ -1244,10 +1289,10 @@ export default function Test({ onBack }) {
                 ? `▶️ Continuer (${unansweredProfMisrad.length} restantes)`
                 : "✓ Tout terminé !"}
             </button>
-            {allProfMisradQuestions.length - unansweredProfMisrad.length > 0 && (
+            {answeredAllCount > 0 && (
               <button
                 className="reset-all-progress-btn"
-                onClick={() => handleFullReset("profmisrad")}
+                onClick={resetAllProgress}
               >
                 🔄 Recommencer
               </button>
