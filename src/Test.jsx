@@ -1221,6 +1221,22 @@ export default function Test({ onBack }) {
             </div>
           </div>
 
+          {/* Note / Taux de réussite */}
+          {answeredAllCount > 0 && (
+            <div className="success-rate-box">
+              <span className="success-rate-label">Taux de réussite</span>
+              <span className={`success-rate-value ${
+                Math.round(((answeredAllCount - wrongAllCount) / answeredAllCount) * 100) >= 80 ? "excellent" :
+                Math.round(((answeredAllCount - wrongAllCount) / answeredAllCount) * 100) >= 60 ? "good" : "needs-work"
+              }`}>
+                {Math.round(((answeredAllCount - wrongAllCount) / answeredAllCount) * 100)}%
+              </span>
+              <span className="success-rate-detail">
+                {answeredAllCount - wrongAllCount} / {answeredAllCount} correct
+              </span>
+            </div>
+          )}
+
           {/* Barre de progression globale */}
           <div className="all-stats-progress">
             <div className="all-stats-progress-header">
@@ -1271,6 +1287,14 @@ export default function Test({ onBack }) {
                           <span className="stats-item-count">
                             {stat.answered}/{stat.total}
                           </span>
+                          {stat.answered > 0 && (
+                            <span className={`stats-success-rate ${
+                              Math.round((stat.correct / stat.answered) * 100) >= 80 ? "excellent" :
+                              Math.round((stat.correct / stat.answered) * 100) >= 60 ? "good" : "needs-work"
+                            }`}>
+                              {Math.round((stat.correct / stat.answered) * 100)}%
+                            </span>
+                          )}
                           {stat.wrong > 0 && (
                             <span className="stats-wrong-indicator">📌 {stat.wrong}</span>
                           )}
@@ -1314,6 +1338,14 @@ export default function Test({ onBack }) {
                                 <span className="stats-item-count small">
                                   {mat.answered}/{mat.total}
                                 </span>
+                                {mat.answered > 0 && (
+                                  <span className={`stats-success-rate small ${
+                                    Math.round((mat.correct / mat.answered) * 100) >= 80 ? "excellent" :
+                                    Math.round((mat.correct / mat.answered) * 100) >= 60 ? "good" : "needs-work"
+                                  }`}>
+                                    {Math.round((mat.correct / mat.answered) * 100)}%
+                                  </span>
+                                )}
                                 {mat.wrong > 0 && (
                                   <span className="stats-wrong-indicator small">📌 {mat.wrong}</span>
                                 )}
