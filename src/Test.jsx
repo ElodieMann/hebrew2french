@@ -437,7 +437,7 @@ export default function Test({ onBack }) {
   }, [allProfMisradQuestions]);
 
   // Stats par catégorie pour le mode "Tout"
-  const allModeStats = useMemo(() => {
+  const allModeCategoryStats = useMemo(() => {
     const allCategories = [
       ...new Set(allProfMisradQuestions.flatMap((q) => toArray(q.grande_categorie))),
     ].filter(Boolean).sort();
@@ -448,7 +448,27 @@ export default function Test({ onBack }) {
       );
       const answered = catQuestions.filter((q) => q.answered_all).length;
       const wrong = catQuestions.filter((q) => q.wrong_all).length;
-      return { name: cat, total: catQuestions.length, answered, wrong };
+      const correct = catQuestions.filter((q) => q.answered_all && !q.wrong_all).length;
+      return { name: cat, total: catQuestions.length, answered, wrong, correct };
+    });
+  }, [allProfMisradQuestions]);
+
+  // Stats par matière pour le mode "Tout"
+  const allModeMatiereStats = useMemo(() => {
+    const allMatieres = [
+      ...new Set(allProfMisradQuestions.flatMap((q) => toArray(q.matiere))),
+    ].filter(Boolean).sort();
+
+    return allMatieres.map((mat) => {
+      const matQuestions = allProfMisradQuestions.filter((q) =>
+        toArray(q.matiere).includes(mat)
+      );
+      const answered = matQuestions.filter((q) => q.answered_all).length;
+      const wrong = matQuestions.filter((q) => q.wrong_all).length;
+      const correct = matQuestions.filter((q) => q.answered_all && !q.wrong_all).length;
+      // Trouver la catégorie parente
+      const parentCat = matQuestions[0]?.grande_categorie || "";
+      return { name: mat, total: matQuestions.length, answered, wrong, correct, category: toArray(parentCat)[0] || "" };
     });
   }, [allProfMisradQuestions]);
 
@@ -539,6 +559,79 @@ export default function Test({ onBack }) {
     const resetIds = new Set(toReset.map((q) => q.id));
     const updated = questionsRef.current.map((q) =>
       resetIds.has(q.id) ? { ...q, wrong_all: false } : q
+    );
+    setQuestions(updated);
+    questionsRef.current = updated;
+  };
+
+  // Démarrer quiz sur les non-répondues d'une catégorie/matière (mode Tout)
+  const startAllUnansweredQuiz = (type, value) => {
+    let unanswered = allProfMisradQuestions.filter((q) => !q.answered_all);
+    if (type === "category") {
+      unanswered = unanswered.filter((q) =>
+        toArray(q.grande_categorie).includes(value)
+      );
+    } else if (type === "matiere") {
+      unanswered = unanswered.filter((q) =>
+        toArray(q.matiere).includes(value)
+      );
+    }
+
+    if (unanswered.length === 0) {
+      alert("Toutes les questions ont été répondues !");
+      return;
+    }
+
+    let selected = shuffleQuestions ? shuffle(unanswered) : unanswered;
+    setQuizQuestions(selected);
+    setCurrentIndex(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setAnswers([]);
+    setIsAllMode(true);
+    setMode("quiz");
+  };
+
+  // Reset answered_all + wrong_all par catégorie/matière
+  const resetAllByScope = async (type, value) => {
+    let toReset = [];
+    let message = "";
+
+    if (type === "category") {
+      toReset = questionsRef.current.filter(
+        (q) =>
+          (q.answered_all || q.wrong_all) &&
+          (q.is_prof || q.is_misrad_haavoda) &&
+          toArray(q.grande_categorie).includes(value)
+      );
+      message = `Remettre à zéro "${value}" ? (${toReset.length} questions)`;
+    } else if (type === "matiere") {
+      toReset = questionsRef.current.filter(
+        (q) =>
+          (q.answered_all || q.wrong_all) &&
+          (q.is_prof || q.is_misrad_haavoda) &&
+          toArray(q.matiere).includes(value)
+      );
+      message = `Remettre à zéro "${value}" ? (${toReset.length} questions)`;
+    }
+
+    if (toReset.length === 0) {
+      alert("Rien à remettre à zéro !");
+      return;
+    }
+
+    if (!confirm(message)) return;
+
+    const batch = writeBatch(db);
+    toReset.forEach((q) => {
+      batch.update(doc(db, "questions", q.id), { answered_all: false, wrong_all: false });
+    });
+    await batch.commit();
+
+    const resetIds = new Set(toReset.map((q) => q.id));
+    const updated = questionsRef.current.map((q) =>
+      resetIds.has(q.id) ? { ...q, answered_all: false, wrong_all: false } : q
     );
     setQuestions(updated);
     questionsRef.current = updated;
@@ -1083,9 +1176,6 @@ export default function Test({ onBack }) {
       ? Math.round((answeredAllCount / allProfMisradQuestions.length) * 100)
       : 0;
 
-    // Trier par nombre d'erreurs (descending)
-    const sortedStats = [...allModeStats].sort((a, b) => b.wrong - a.wrong);
-
     return (
       <div className="app test-app">
         <header className="test-header">
@@ -1096,7 +1186,7 @@ export default function Test({ onBack }) {
           >
             ←
           </button>
-          <h1 className="test-title">📊 Stats Tout</h1>
+          <h1 className="test-title">📋 Tout</h1>
           <button
             className="reset-small-btn home-small-btn"
             onClick={onBack}
@@ -1111,23 +1201,31 @@ export default function Test({ onBack }) {
           <div className="stats-summary">
             <div className="stats-box">
               <span className="stats-number">{answeredAllCount}</span>
-              <span className="stats-label">Répondues</span>
+              <span className="stats-label">Fait</span>
             </div>
-            <div className="stats-box">
-              <span className="stats-number">{allProfMisradQuestions.length}</span>
-              <span className="stats-label">Total</span>
+            <div className="stats-box success">
+              <span className="stats-number">{answeredAllCount - wrongAllCount}</span>
+              <span className="stats-label">Réussi</span>
             </div>
-            <div className="stats-box wrong">
+            <button
+              className="stats-box wrong clickable"
+              onClick={wrongAllCount > 0 ? startAllReviewQuiz : undefined}
+              disabled={wrongAllCount === 0}
+            >
               <span className="stats-number">{wrongAllCount}</span>
               <span className="stats-label">À réviser</span>
+            </button>
+            <div className="stats-box">
+              <span className="stats-number">{unansweredProfMisrad.length}</span>
+              <span className="stats-label">Restant</span>
             </div>
           </div>
 
           {/* Barre de progression globale */}
           <div className="all-stats-progress">
             <div className="all-stats-progress-header">
-              <span>Progression globale</span>
-              <span>{percentage}%</span>
+              <span>Progression</span>
+              <span>{percentage}% ({answeredAllCount}/{allProfMisradQuestions.length})</span>
             </div>
             <div className="all-progress-bar large">
               <div
@@ -1135,72 +1233,127 @@ export default function Test({ onBack }) {
                 style={{ width: `${percentage}%` }}
               />
             </div>
-          </div>
-
-          {/* Actions */}
-          <div className="all-stats-actions">
             <button
               className="start-all-btn"
               onClick={startAllProfMisradQuiz}
               disabled={unansweredProfMisrad.length === 0}
             >
               {unansweredProfMisrad.length > 0
-                ? `▶️ Continuer (${unansweredProfMisrad.length} restantes)`
-                : "✓ Tout terminé !"}
+                ? `▶️ Continuer (${unansweredProfMisrad.length})`
+                : "✓ Terminé !"}
             </button>
-            {wrongAllCount > 0 && (
-              <button className="review-all-btn" onClick={startAllReviewQuiz}>
-                📌 Réviser ({wrongAllCount})
-              </button>
-            )}
           </div>
 
-          {/* Par catégorie - triées par erreurs */}
+          {/* Par catégorie */}
           <div className="stats-section">
             <h3 className="stats-title">📁 Par catégorie</h3>
-            <p className="stats-subtitle">Triées par difficulté</p>
             <div className="stats-list">
-              {sortedStats.map((stat) => (
-                <div key={stat.name} className="stats-item">
-                  <div className="stats-item-header">
-                    <span className="stats-item-name">{stat.name}</span>
-                    <div className="stats-item-actions">
-                      <span className="stats-item-count">
-                        {stat.answered}/{stat.total}
-                      </span>
-                      {stat.wrong > 0 && (
-                        <span className="stats-wrong-indicator">
-                          📌 {stat.wrong}
-                        </span>
-                      )}
+              {allModeCategoryStats.map((stat) => {
+                const catMatieres = allModeMatiereStats.filter(
+                  (m) => m.category === stat.name
+                );
+                
+                return (
+                  <div key={stat.name} className="stats-category-group">
+                    <div className="stats-item category-header">
+                      <div className="stats-item-header">
+                        <span className="stats-item-name">{stat.name}</span>
+                        <div className="stats-item-actions">
+                          {stat.total - stat.answered > 0 && (
+                            <button
+                              className="stats-play-btn"
+                              onClick={() => startAllUnansweredQuiz("category", stat.name)}
+                              title="Questions non répondues"
+                            >
+                              ▶️ {stat.total - stat.answered}
+                            </button>
+                          )}
+                          <span className="stats-item-count">
+                            {stat.answered}/{stat.total}
+                          </span>
+                          {stat.wrong > 0 && (
+                            <span className="stats-wrong-indicator">📌 {stat.wrong}</span>
+                          )}
+                          {stat.answered > 0 && (
+                            <button
+                              className="stats-reset-btn"
+                              onClick={() => resetAllByScope("category", stat.name)}
+                              title="Remettre à zéro"
+                            >
+                              🔄
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="stats-progress-bar">
+                        <div
+                          className="stats-progress-fill"
+                          style={{
+                            width: `${stat.total > 0 ? (stat.answered / stat.total) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
                     </div>
+
+                    {/* Matières de cette catégorie */}
+                    {catMatieres.length > 0 && (
+                      <div className="stats-matieres">
+                        {catMatieres.map((mat) => (
+                          <div key={mat.name} className="stats-item matiere">
+                            <div className="stats-item-header">
+                              <span className="stats-item-name">{mat.name}</span>
+                              <div className="stats-item-actions">
+                                {mat.total - mat.answered > 0 && (
+                                  <button
+                                    className="stats-play-btn small"
+                                    onClick={() => startAllUnansweredQuiz("matiere", mat.name)}
+                                  >
+                                    ▶️ {mat.total - mat.answered}
+                                  </button>
+                                )}
+                                <span className="stats-item-count small">
+                                  {mat.answered}/{mat.total}
+                                </span>
+                                {mat.wrong > 0 && (
+                                  <span className="stats-wrong-indicator small">📌 {mat.wrong}</span>
+                                )}
+                                {mat.answered > 0 && (
+                                  <button
+                                    className="stats-reset-btn small"
+                                    onClick={() => resetAllByScope("matiere", mat.name)}
+                                  >
+                                    🔄
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <div className="stats-progress-bar small">
+                              <div
+                                className="stats-progress-fill"
+                                style={{
+                                  width: `${mat.total > 0 ? (mat.answered / mat.total) * 100 : 0}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="stats-progress-bar">
-                    <div
-                      className="stats-progress-fill"
-                      style={{
-                        width: `${stat.total > 0 ? (stat.answered / stat.total) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          {/* Reset */}
-          <div className="all-stats-reset">
-            {wrongAllCount > 0 && (
-              <button className="reset-all-progress-btn" onClick={resetAllWrong}>
-                🗑️ Effacer les révisions ({wrongAllCount})
-              </button>
-            )}
-            {answeredAllCount > 0 && (
-              <button className="reset-all-progress-btn danger" onClick={resetAllProgress}>
-                🔄 Tout recommencer
-              </button>
-            )}
-          </div>
+          {/* Reset global */}
+          {answeredAllCount > 0 && (
+            <button
+              className="stats-reset-all-btn"
+              onClick={resetAllProgress}
+            >
+              🔄 Tout recommencer
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1419,21 +1572,30 @@ export default function Test({ onBack }) {
           🏠
         </button>
         <h1 className="test-title">📝 Test</h1>
-        <button
-          className="reset-small-btn"
-          onClick={() => setMode("stats")}
-          title="Progression"
-        >
-          📊
-        </button>
-        {wrongQuestions.length > 0 && (
+        <div className="header-buttons">
           <button
-            className="review-badge-btn"
-            onClick={() => setMode("review")}
+            className="reset-small-btn"
+            onClick={() => setMode("stats")}
+            title="Progression"
           >
-            📌 {wrongQuestions.length}
+            📊
           </button>
-        )}
+          <button
+            className="reset-small-btn all-mode-btn"
+            onClick={() => setMode("allStats")}
+            title="Tout (Prof + Misrad)"
+          >
+            📋
+          </button>
+          {wrongQuestions.length > 0 && (
+            <button
+              className="review-badge-btn"
+              onClick={() => setMode("review")}
+            >
+              📌 {wrongQuestions.length}
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="test-config">
@@ -1466,54 +1628,6 @@ export default function Test({ onBack }) {
           </div>
         </div>
 
-        {/* Mode Tout avec progression indépendante */}
-        <div className="config-section all-mode-section">
-          <div className="all-mode-header">
-            <h3 className="config-title">📋 Tout (Prof + Misrad)</h3>
-            <button
-              className="all-stats-icon-btn"
-              onClick={() => setMode("allStats")}
-              title="Voir les statistiques"
-            >
-              📊
-            </button>
-          </div>
-          <p className="all-progress-text">
-            {answeredAllCount} / {allProfMisradQuestions.length} répondues
-            {wrongAllCount > 0 && (
-              <span className="all-wrong-badge">📌 {wrongAllCount}</span>
-            )}
-          </p>
-          <div className="all-progress-bar">
-            <div
-              className="all-progress-fill"
-              style={{
-                width: `${allProfMisradQuestions.length > 0 
-                  ? (answeredAllCount / allProfMisradQuestions.length) * 100 
-                  : 0}%`,
-              }}
-            />
-          </div>
-          <div className="all-mode-buttons">
-            <button
-              className="start-all-btn"
-              onClick={startAllProfMisradQuiz}
-              disabled={unansweredProfMisrad.length === 0}
-            >
-              {unansweredProfMisrad.length > 0
-                ? `▶️ Continuer (${unansweredProfMisrad.length})`
-                : "✓ Terminé !"}
-            </button>
-            {wrongAllCount > 0 && (
-              <button
-                className="review-all-btn"
-                onClick={startAllReviewQuiz}
-              >
-                📌 Réviser ({wrongAllCount})
-              </button>
-            )}
-          </div>
-        </div>
 
         {/* Catégories */}
         {categories.length > 0 && (

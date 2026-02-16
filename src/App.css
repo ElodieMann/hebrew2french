@@ -1318,68 +1318,15 @@ body {
   color: #dc2626;
 }
 
-/* Section mode Tout */
-.all-mode-section {
-  background: linear-gradient(135deg, #f8f7ff, #f0f0ff);
-}
-
-.all-mode-header {
+/* Header buttons */
+.header-buttons {
   display: flex;
-  justify-content: space-between;
+  gap: 6px;
   align-items: center;
-  margin-bottom: 4px;
 }
 
-.all-mode-header .config-title {
-  margin-bottom: 0;
-}
-
-.all-stats-icon-btn {
-  width: 36px;
-  height: 36px;
-  font-size: 1.2rem;
-  background: white;
-  border: 1px solid var(--gray-200);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.all-stats-icon-btn:hover {
-  background: var(--gray-100);
-  transform: scale(1.05);
-}
-
-.all-wrong-badge {
-  margin-left: 8px;
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.all-mode-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.all-mode-buttons .start-all-btn {
-  flex: 1;
-}
-
-.review-all-btn {
-  padding: 12px 16px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.review-all-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+.all-mode-btn {
+  background: linear-gradient(135deg, #f0f0ff, #e8e8ff) !important;
 }
 
 /* Page Stats Tout */
@@ -1388,6 +1335,7 @@ body {
   padding: 12px;
   border-radius: var(--radius);
   margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .all-stats-progress-header {
@@ -1401,27 +1349,54 @@ body {
 
 .all-progress-bar.large {
   height: 12px;
+  margin-bottom: 12px;
 }
 
-.all-stats-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
+.stats-box.success {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
 }
 
-.all-stats-actions .start-all-btn {
-  flex: 1;
+.stats-box.success .stats-number {
+  color: #16a34a;
 }
 
-.all-stats-actions .review-all-btn {
-  flex: 0 0 auto;
+/* Category group with matieres */
+.stats-category-group {
+  margin-bottom: 8px;
 }
 
-.stats-subtitle {
-  font-size: 0.8rem;
-  color: var(--gray-500);
-  margin: -4px 0 8px;
-  font-style: italic;
+.stats-item.category-header {
+  background: linear-gradient(135deg, #f8f7ff, #f0f0ff);
+  border: 1px solid #e0e0ff;
+}
+
+.stats-matieres {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 2px solid var(--gray-200);
+}
+
+.stats-item.matiere {
+  padding: 6px 8px;
+  background: white;
+}
+
+.stats-item.matiere .stats-item-name {
+  font-size: 0.85rem;
+}
+
+.stats-progress-bar.small {
+  height: 4px;
+}
+
+.stats-play-btn.small,
+.stats-reset-btn.small {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+}
+
+.stats-item-count.small {
+  font-size: 0.75rem;
 }
 
 .stats-wrong-indicator {
@@ -1430,11 +1405,8 @@ body {
   font-weight: 600;
 }
 
-.all-stats-reset {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+.stats-wrong-indicator.small {
+  font-size: 0.75rem;
 }
 
 .config-title {
