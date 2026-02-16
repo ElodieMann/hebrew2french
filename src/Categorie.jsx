@@ -1,9 +1,18 @@
 import { useState, useMemo, useEffect } from "react";
 import actifsData from "./data/actifs.json";
 import typePeauRaw from "./data/typepeau.json";
-import nettoyageRaw from "./data/premiernettoyage.json";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
+
+// Helper: normaliser le texte pour la recherche
+const normalizeSearch = (str) => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0591-\u05C7]/g, "");
+};
 
 // ============ TRANSFORMATION DES DONNÉES ============
 
@@ -18,156 +27,38 @@ const actifsGames = {
   },
 };
 
-// TYPES DE PEAU: Plusieurs aspects
-const typePeauGames = {};
-
-// 1. Caractéristiques
-const caracData = {};
+// TYPES DE PEAU: Un seul jeu avec tout combiné
+const typePeauData = {};
 typePeauRaw.forEach((type) => {
+  typePeauData[type.skin_type] = [];
+  
+  // Caractéristiques
   if (type.characteristics && type.characteristics.length > 0) {
-    caracData[type.skin_type] = [...type.characteristics];
+    typePeauData[type.skin_type].push(...type.characteristics);
   }
-});
-if (Object.keys(caracData).length > 0) {
-  typePeauGames.caracteristiques = {
-    name: "Caractéristiques",
-    description: "Reconnaître les signes de chaque type de peau",
-    data: caracData,
-    itemLabel: "caractéristique",
-    categoryLabel: "type de peau",
-  };
-}
-
-// 2. Objectifs de traitement
-const objectifsData = {};
-typePeauRaw.forEach((type) => {
+  
+  // Objectifs de traitement
   if (type.treatment_goals && type.treatment_goals.length > 0) {
-    objectifsData[type.skin_type] = [...type.treatment_goals];
+    typePeauData[type.skin_type].push(...type.treatment_goals);
   }
 });
-if (Object.keys(objectifsData).length > 0) {
-  typePeauGames.objectifs = {
-    name: "Objectifs de traitement",
-    description: "Quels soins pour chaque type de peau",
-    data: objectifsData,
-    itemLabel: "objectif",
-    categoryLabel: "type de peau",
-  };
-}
 
-// 3. Tendances vieillissement
-const agingData = {};
-typePeauRaw.forEach((type) => {
-  if (type.aging_tendency) {
-    agingData[type.skin_type] = [type.aging_tendency];
+// Supprimer les types vides
+Object.keys(typePeauData).forEach((key) => {
+  if (typePeauData[key].length === 0) {
+    delete typePeauData[key];
   }
 });
-if (Object.keys(agingData).length > 0) {
-  typePeauGames.vieillissement = {
-    name: "Tendance vieillissement",
-    description: "Comment chaque type de peau vieillit",
-    data: agingData,
-    itemLabel: "tendance",
+
+const typePeauGames = {
+  general: {
+    name: "Types de peau",
+    description: "Caractéristiques et objectifs de traitement",
+    data: typePeauData,
+    itemLabel: "élément",
     categoryLabel: "type de peau",
-  };
-}
-
-// 4. Sensibilité environnementale
-const envData = {};
-typePeauRaw.forEach((type) => {
-  if (type.environmental_sensitivity) {
-    envData[type.skin_type] = [type.environmental_sensitivity];
-  }
-});
-if (Object.keys(envData).length > 0) {
-  typePeauGames.environnement = {
-    name: "Sensibilité environnement",
-    description: "Réaction aux facteurs externes",
-    data: envData,
-    itemLabel: "sensibilité",
-    categoryLabel: "type de peau",
-  };
-}
-
-// PREMIER NETTOYAGE: Plusieurs aspects
-const nettoyageGames = {};
-
-// 1. Produit → Types de peau adaptés
-const produitSkinData = {};
-const skinTypeProducts = {};
-nettoyageRaw.forEach((product) => {
-  produitSkinData[product.product] = [product.skin_types];
-
-  // Inverse: skin type -> products
-  const st = product.skin_types;
-  if (!skinTypeProducts[st]) skinTypeProducts[st] = [];
-  skinTypeProducts[st].push(product.product);
-});
-nettoyageGames.produitPeau = {
-  name: "Produit → Type de peau",
-  description: "Pour quel type de peau chaque produit",
-  data: produitSkinData,
-  itemLabel: "indication",
-  categoryLabel: "produit",
+  },
 };
-
-// 2. Type de peau → Produits (inversé)
-if (Object.keys(skinTypeProducts).length > 0) {
-  nettoyageGames.peauProduit = {
-    name: "Type de peau → Produits",
-    description: "Quels produits pour chaque type",
-    data: skinTypeProducts,
-    itemLabel: "produit",
-    categoryLabel: "indication peau",
-  };
-}
-
-// 3. Produit → Définition
-const produitDefData = {};
-nettoyageRaw.forEach((product) => {
-  produitDefData[product.product] = [product.definition];
-});
-nettoyageGames.definitions = {
-  name: "Définitions",
-  description: "Quelle est la définition de chaque produit",
-  data: produitDefData,
-  itemLabel: "définition",
-  categoryLabel: "produit",
-};
-
-// 4. Produit → Ingrédients actifs
-const produitActifsData = {};
-nettoyageRaw.forEach((product) => {
-  if (product.active_ingredients && product.active_ingredients.length > 0) {
-    produitActifsData[product.product] = [...product.active_ingredients];
-  }
-});
-if (Object.keys(produitActifsData).length > 0) {
-  nettoyageGames.ingredients = {
-    name: "Ingrédients actifs",
-    description: "Quels ingrédients dans chaque produit",
-    data: produitActifsData,
-    itemLabel: "ingrédient",
-    categoryLabel: "produit",
-  };
-}
-
-// 5. Produit → Composition
-const produitCompoData = {};
-nettoyageRaw.forEach((product) => {
-  if (product.composition && product.composition.length > 0) {
-    produitCompoData[product.product] = [...product.composition];
-  }
-});
-if (Object.keys(produitCompoData).length > 0) {
-  nettoyageGames.composition = {
-    name: "Composition",
-    description: "De quoi est composé chaque produit",
-    data: produitCompoData,
-    itemLabel: "composant",
-    categoryLabel: "produit",
-  };
-}
 
 // ============ STRUCTURE DES DATASETS ============
 const DATASETS = {
@@ -180,11 +71,6 @@ const DATASETS = {
     name: "Types de peau",
     icon: "🧑",
     games: typePeauGames,
-  },
-  nettoyage: {
-    name: "Premier nettoyage",
-    icon: "🧼",
-    games: nettoyageGames,
   },
 };
 
@@ -205,6 +91,9 @@ export default function Categorie({ onBack }) {
   const [score, setScore] = useState(0);
   const [quizItems, setQuizItems] = useState([]);
   const [shuffledOptions, setShuffledOptions] = useState([]);
+  
+  // Recherche
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Données du jeu sélectionné
   const gameData = useMemo(() => {
@@ -239,12 +128,22 @@ export default function Categorie({ onBack }) {
 
   // Mélanger les options quand on change de question
   useEffect(() => {
+    setSearchQuery(""); // Reset search on question change
     if (mode === "mode1" && categories.length > 0) {
       setShuffledOptions(shuffle(categories));
     } else if (mode === "mode2" && allItems.length > 0) {
       setShuffledOptions(shuffle(allItems));
     }
   }, [mode, currentIndex, categories, allItems]);
+
+  // Options filtrées par recherche
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery.trim()) return shuffledOptions;
+    const query = normalizeSearch(searchQuery);
+    return shuffledOptions.filter((opt) =>
+      normalizeSearch(opt).includes(query)
+    );
+  }, [shuffledOptions, searchQuery]);
 
   // Démarrer le quiz
   const startQuiz = (selectedMode) => {
@@ -256,6 +155,7 @@ export default function Categorie({ onBack }) {
     setSelectedAnswers([]);
     setWrongAnswers([]);
     setShakingOption(null);
+    setSearchQuery("");
 
     if (selectedMode === "mode1") {
       setQuizItems(shuffle(allItems));
@@ -278,6 +178,7 @@ export default function Categorie({ onBack }) {
     setShakingOption(null);
     setQuizItems([]);
     setShuffledOptions([]);
+    setSearchQuery("");
   };
 
   // Retour au choix du jeu
@@ -619,8 +520,18 @@ export default function Categorie({ onBack }) {
           </div>
         </div>
 
+        <div className="categorie-search">
+          <input
+            type="text"
+            placeholder="🔍 Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="categorie-search-input"
+          />
+        </div>
+
         <div className="categorie-options mode1">
-          {shuffledOptions.map((cat) => {
+          {filteredOptions.map((cat) => {
             let className = "categorie-option";
             const isCorrect = correctCategories.includes(cat);
             const isWrong = wrongAnswers.includes(cat);
@@ -723,8 +634,18 @@ export default function Categorie({ onBack }) {
           )}
         </div>
 
+        <div className="categorie-search">
+          <input
+            type="text"
+            placeholder="🔍 Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="categorie-search-input"
+          />
+        </div>
+
         <div className="categorie-options mode2">
-          {shuffledOptions.map((item) => {
+          {filteredOptions.map((item) => {
             let className = "categorie-option";
             const isCorrect = correctItems.includes(item);
             const isSelected = selectedAnswers.includes(item);

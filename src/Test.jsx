@@ -397,6 +397,35 @@ export default function Test({ onBack }) {
     setSelectedMatieres([...matieres]);
   };
 
+  // Questions Prof + Misrad (non répondues)
+  const allProfMisradQuestions = useMemo(() => {
+    return questions.filter((q) => q.is_prof || q.is_misrad_haavoda);
+  }, [questions]);
+
+  const unansweredProfMisrad = useMemo(() => {
+    return allProfMisradQuestions.filter((q) => !q.answered && !q.wrong);
+  }, [allProfMisradQuestions]);
+
+  // Démarrer le quiz "Tout" (Prof + Misrad avec progression)
+  const startAllProfMisradQuiz = () => {
+    if (unansweredProfMisrad.length === 0) {
+      alert("Toutes les questions Prof + Misrad ont été répondues !");
+      return;
+    }
+
+    let selected = shuffleQuestions
+      ? shuffle(unansweredProfMisrad)
+      : unansweredProfMisrad;
+
+    setQuizQuestions(selected);
+    setCurrentIndex(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setAnswers([]);
+    setMode("quiz");
+  };
+
   // Aller au review avec un filtre (depuis stats)
   const goToReviewWithFilter = (type, value) => {
     if (type === "category") {
@@ -428,6 +457,11 @@ export default function Test({ onBack }) {
         (q) => (q.answered || q.wrong) && toArray(q.matiere).includes(value)
       );
       message = `Remettre à zéro TOUTES les réponses de "${value}" ? (${toReset.length} questions)`;
+    } else if (type === "profmisrad") {
+      toReset = questionsRef.current.filter(
+        (q) => (q.answered || q.wrong) && (q.is_prof || q.is_misrad_haavoda)
+      );
+      message = `Remettre à zéro la progression Prof + Misrad ? (${toReset.length} questions)`;
     } else {
       toReset = questionsRef.current.filter((q) => q.answered || q.wrong);
       message = `Remettre à zéro TOUTES les réponses ? (${toReset.length} questions)`;
@@ -1181,6 +1215,43 @@ export default function Test({ onBack }) {
             >
               📌 À réviser ({wrongQuestions.length})
             </button>
+          </div>
+        </div>
+
+        {/* Mode Tout avec progression */}
+        <div className="config-section">
+          <div className="all-prof-misrad-section">
+            <h3 className="config-title">📋 Tout (Prof + Misrad)</h3>
+            <p className="all-progress-text">
+              {allProfMisradQuestions.length - unansweredProfMisrad.length} / {allProfMisradQuestions.length} répondues
+            </p>
+            <div className="all-progress-bar">
+              <div
+                className="all-progress-fill"
+                style={{
+                  width: `${allProfMisradQuestions.length > 0 
+                    ? ((allProfMisradQuestions.length - unansweredProfMisrad.length) / allProfMisradQuestions.length) * 100 
+                    : 0}%`,
+                }}
+              />
+            </div>
+            <button
+              className="start-all-btn"
+              onClick={startAllProfMisradQuiz}
+              disabled={unansweredProfMisrad.length === 0}
+            >
+              {unansweredProfMisrad.length > 0
+                ? `▶️ Continuer (${unansweredProfMisrad.length} restantes)`
+                : "✓ Tout terminé !"}
+            </button>
+            {allProfMisradQuestions.length - unansweredProfMisrad.length > 0 && (
+              <button
+                className="reset-all-progress-btn"
+                onClick={() => handleFullReset("profmisrad")}
+              >
+                🔄 Recommencer
+              </button>
+            )}
           </div>
         </div>
 
