@@ -188,9 +188,18 @@ export default function Test({ onBack }) {
     // Données à mettre à jour
     const updateData = {};
 
-    // Mode "Tout" indépendant - utilise answered_all
+    // Mode "Tout" indépendant - utilise answered_all / wrong_all
     if (isAllMode) {
       updateData.answered_all = true;
+      if (isCorrect) {
+        // Si c'était une question "wrong_all" et qu'on répond bien, on la retire
+        if (current.wrong_all) {
+          updateData.wrong_all = false;
+        }
+      } else {
+        // Marquer comme à réviser dans le mode Tout
+        updateData.wrong_all = true;
+      }
     } else {
       // Mode normal - utilise answered/wrong
       updateData.answered = true;
@@ -419,8 +428,28 @@ export default function Test({ onBack }) {
     return allProfMisradQuestions.filter((q) => q.answered_all).length;
   }, [allProfMisradQuestions]);
 
+  const wrongAllCount = useMemo(() => {
+    return allProfMisradQuestions.filter((q) => q.wrong_all).length;
+  }, [allProfMisradQuestions]);
+
   const unansweredProfMisrad = useMemo(() => {
     return allProfMisradQuestions.filter((q) => !q.answered_all);
+  }, [allProfMisradQuestions]);
+
+  // Stats par catégorie pour le mode "Tout"
+  const allModeStats = useMemo(() => {
+    const allCategories = [
+      ...new Set(allProfMisradQuestions.flatMap((q) => toArray(q.grande_categorie))),
+    ].filter(Boolean).sort();
+
+    return allCategories.map((cat) => {
+      const catQuestions = allProfMisradQuestions.filter((q) =>
+        toArray(q.grande_categorie).includes(cat)
+      );
+      const answered = catQuestions.filter((q) => q.answered_all).length;
+      const wrong = catQuestions.filter((q) => q.wrong_all).length;
+      return { name: cat, total: catQuestions.length, answered, wrong };
+    });
   }, [allProfMisradQuestions]);
 
   // Démarrer le quiz "Tout" (Prof + Misrad avec progression indépendante)
@@ -444,10 +473,10 @@ export default function Test({ onBack }) {
     setMode("quiz");
   };
 
-  // Reset progression "Tout" (answered_all uniquement)
+  // Reset progression "Tout" (answered_all + wrong_all)
   const resetAllProgress = async () => {
     const toReset = questionsRef.current.filter(
-      (q) => q.answered_all && (q.is_prof || q.is_misrad_haavoda)
+      (q) => (q.answered_all || q.wrong_all) && (q.is_prof || q.is_misrad_haavoda)
     );
 
     if (toReset.length === 0) return;
@@ -458,13 +487,58 @@ export default function Test({ onBack }) {
 
     const batch = writeBatch(db);
     toReset.forEach((q) => {
-      batch.update(doc(db, "questions", q.id), { answered_all: false });
+      batch.update(doc(db, "questions", q.id), { answered_all: false, wrong_all: false });
     });
     await batch.commit();
 
     const resetIds = new Set(toReset.map((q) => q.id));
     const updated = questionsRef.current.map((q) =>
-      resetIds.has(q.id) ? { ...q, answered_all: false } : q
+      resetIds.has(q.id) ? { ...q, answered_all: false, wrong_all: false } : q
+    );
+    setQuestions(updated);
+    questionsRef.current = updated;
+  };
+
+  // Quiz révision mode "Tout" (questions wrong_all)
+  const startAllReviewQuiz = () => {
+    const wrongQuestions = allProfMisradQuestions.filter((q) => q.wrong_all);
+    if (wrongQuestions.length === 0) {
+      alert("Aucune question à réviser !");
+      return;
+    }
+
+    let selected = shuffleQuestions ? shuffle(wrongQuestions) : wrongQuestions;
+    setQuizQuestions(selected);
+    setCurrentIndex(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setAnswers([]);
+    setIsAllMode(true);
+    setMode("quiz");
+  };
+
+  // Reset wrong_all uniquement
+  const resetAllWrong = async () => {
+    const toReset = questionsRef.current.filter(
+      (q) => q.wrong_all && (q.is_prof || q.is_misrad_haavoda)
+    );
+
+    if (toReset.length === 0) return;
+
+    if (!confirm(`Retirer toutes les questions à réviser ? (${toReset.length})`)) {
+      return;
+    }
+
+    const batch = writeBatch(db);
+    toReset.forEach((q) => {
+      batch.update(doc(db, "questions", q.id), { wrong_all: false });
+    });
+    await batch.commit();
+
+    const resetIds = new Set(toReset.map((q) => q.id));
+    const updated = questionsRef.current.map((q) =>
+      resetIds.has(q.id) ? { ...q, wrong_all: false } : q
     );
     setQuestions(updated);
     questionsRef.current = updated;
@@ -1003,6 +1077,135 @@ export default function Test({ onBack }) {
     );
   }
 
+  /* ALL STATS - Stats du mode Tout (Prof + Misrad) */
+  if (mode === "allStats") {
+    const percentage = allProfMisradQuestions.length > 0
+      ? Math.round((answeredAllCount / allProfMisradQuestions.length) * 100)
+      : 0;
+
+    // Trier par nombre d'erreurs (descending)
+    const sortedStats = [...allModeStats].sort((a, b) => b.wrong - a.wrong);
+
+    return (
+      <div className="app test-app">
+        <header className="test-header">
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={() => setMode("config")}
+            title="Retour"
+          >
+            ←
+          </button>
+          <h1 className="test-title">📊 Stats Tout</h1>
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={onBack}
+            title="Accueil"
+          >
+            🏠
+          </button>
+        </header>
+
+        <div className="stats-container">
+          {/* Résumé global */}
+          <div className="stats-summary">
+            <div className="stats-box">
+              <span className="stats-number">{answeredAllCount}</span>
+              <span className="stats-label">Répondues</span>
+            </div>
+            <div className="stats-box">
+              <span className="stats-number">{allProfMisradQuestions.length}</span>
+              <span className="stats-label">Total</span>
+            </div>
+            <div className="stats-box wrong">
+              <span className="stats-number">{wrongAllCount}</span>
+              <span className="stats-label">À réviser</span>
+            </div>
+          </div>
+
+          {/* Barre de progression globale */}
+          <div className="all-stats-progress">
+            <div className="all-stats-progress-header">
+              <span>Progression globale</span>
+              <span>{percentage}%</span>
+            </div>
+            <div className="all-progress-bar large">
+              <div
+                className="all-progress-fill"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="all-stats-actions">
+            <button
+              className="start-all-btn"
+              onClick={startAllProfMisradQuiz}
+              disabled={unansweredProfMisrad.length === 0}
+            >
+              {unansweredProfMisrad.length > 0
+                ? `▶️ Continuer (${unansweredProfMisrad.length} restantes)`
+                : "✓ Tout terminé !"}
+            </button>
+            {wrongAllCount > 0 && (
+              <button className="review-all-btn" onClick={startAllReviewQuiz}>
+                📌 Réviser ({wrongAllCount})
+              </button>
+            )}
+          </div>
+
+          {/* Par catégorie - triées par erreurs */}
+          <div className="stats-section">
+            <h3 className="stats-title">📁 Par catégorie</h3>
+            <p className="stats-subtitle">Triées par difficulté</p>
+            <div className="stats-list">
+              {sortedStats.map((stat) => (
+                <div key={stat.name} className="stats-item">
+                  <div className="stats-item-header">
+                    <span className="stats-item-name">{stat.name}</span>
+                    <div className="stats-item-actions">
+                      <span className="stats-item-count">
+                        {stat.answered}/{stat.total}
+                      </span>
+                      {stat.wrong > 0 && (
+                        <span className="stats-wrong-indicator">
+                          📌 {stat.wrong}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="stats-progress-bar">
+                    <div
+                      className="stats-progress-fill"
+                      style={{
+                        width: `${stat.total > 0 ? (stat.answered / stat.total) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Reset */}
+          <div className="all-stats-reset">
+            {wrongAllCount > 0 && (
+              <button className="reset-all-progress-btn" onClick={resetAllWrong}>
+                🗑️ Effacer les révisions ({wrongAllCount})
+              </button>
+            )}
+            {answeredAllCount > 0 && (
+              <button className="reset-all-progress-btn danger" onClick={resetAllProgress}>
+                🔄 Tout recommencer
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* STATS */
   if (mode === "stats") {
     const totalAnswered = questions.filter((q) => q.answered || q.wrong).length;
@@ -1264,37 +1467,49 @@ export default function Test({ onBack }) {
         </div>
 
         {/* Mode Tout avec progression indépendante */}
-        <div className="config-section">
-          <div className="all-prof-misrad-section">
+        <div className="config-section all-mode-section">
+          <div className="all-mode-header">
             <h3 className="config-title">📋 Tout (Prof + Misrad)</h3>
-            <p className="all-progress-text">
-              {answeredAllCount} / {allProfMisradQuestions.length} répondues
-            </p>
-            <div className="all-progress-bar">
-              <div
-                className="all-progress-fill"
-                style={{
-                  width: `${allProfMisradQuestions.length > 0 
-                    ? (answeredAllCount / allProfMisradQuestions.length) * 100 
-                    : 0}%`,
-                }}
-              />
-            </div>
+            <button
+              className="all-stats-icon-btn"
+              onClick={() => setMode("allStats")}
+              title="Voir les statistiques"
+            >
+              📊
+            </button>
+          </div>
+          <p className="all-progress-text">
+            {answeredAllCount} / {allProfMisradQuestions.length} répondues
+            {wrongAllCount > 0 && (
+              <span className="all-wrong-badge">📌 {wrongAllCount}</span>
+            )}
+          </p>
+          <div className="all-progress-bar">
+            <div
+              className="all-progress-fill"
+              style={{
+                width: `${allProfMisradQuestions.length > 0 
+                  ? (answeredAllCount / allProfMisradQuestions.length) * 100 
+                  : 0}%`,
+              }}
+            />
+          </div>
+          <div className="all-mode-buttons">
             <button
               className="start-all-btn"
               onClick={startAllProfMisradQuiz}
               disabled={unansweredProfMisrad.length === 0}
             >
               {unansweredProfMisrad.length > 0
-                ? `▶️ Continuer (${unansweredProfMisrad.length} restantes)`
-                : "✓ Tout terminé !"}
+                ? `▶️ Continuer (${unansweredProfMisrad.length})`
+                : "✓ Terminé !"}
             </button>
-            {answeredAllCount > 0 && (
+            {wrongAllCount > 0 && (
               <button
-                className="reset-all-progress-btn"
-                onClick={resetAllProgress}
+                className="review-all-btn"
+                onClick={startAllReviewQuiz}
               >
-                🔄 Recommencer
+                📌 Réviser ({wrongAllCount})
               </button>
             )}
           </div>

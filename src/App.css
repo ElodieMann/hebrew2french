@@ -1314,6 +1314,129 @@ body {
   background: var(--gray-200);
 }
 
+.reset-all-progress-btn.danger {
+  color: #dc2626;
+}
+
+/* Section mode Tout */
+.all-mode-section {
+  background: linear-gradient(135deg, #f8f7ff, #f0f0ff);
+}
+
+.all-mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.all-mode-header .config-title {
+  margin-bottom: 0;
+}
+
+.all-stats-icon-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.all-stats-icon-btn:hover {
+  background: var(--gray-100);
+  transform: scale(1.05);
+}
+
+.all-wrong-badge {
+  margin-left: 8px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.all-mode-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.all-mode-buttons .start-all-btn {
+  flex: 1;
+}
+
+.review-all-btn {
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.review-all-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Page Stats Tout */
+.all-stats-progress {
+  background: white;
+  padding: 12px;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+}
+
+.all-stats-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.all-progress-bar.large {
+  height: 12px;
+}
+
+.all-stats-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.all-stats-actions .start-all-btn {
+  flex: 1;
+}
+
+.all-stats-actions .review-all-btn {
+  flex: 0 0 auto;
+}
+
+.stats-subtitle {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin: -4px 0 8px;
+  font-style: italic;
+}
+
+.stats-wrong-indicator {
+  color: #f59e0b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.all-stats-reset {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .config-title {
   font-size: 14px;
   font-weight: 700;
