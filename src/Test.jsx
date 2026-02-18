@@ -538,6 +538,16 @@ export default function Test({ onBack }) {
     setMode("quiz");
   };
 
+  // Retirer une question de wrong_all
+  const removeFromAllReview = async (questionId) => {
+    await updateDoc(doc(db, "questions", questionId), { wrong_all: false });
+    const updated = questionsRef.current.map((q) =>
+      q.id === questionId ? { ...q, wrong_all: false } : q
+    );
+    setQuestions(updated);
+    questionsRef.current = updated;
+  };
+
   // Reset wrong_all uniquement
   const resetAllWrong = async () => {
     const toReset = questionsRef.current.filter(
@@ -1377,14 +1387,70 @@ export default function Test({ onBack }) {
             </div>
           </div>
 
+          {/* Section À réviser */}
+          {wrongAllCount > 0 && (
+            <div className="stats-section">
+              <div className="stats-section-header">
+                <h3 className="stats-title">📌 À réviser ({wrongAllCount})</h3>
+                <div className="stats-section-actions">
+                  <button
+                    className="stats-review-btn"
+                    onClick={startAllReviewQuiz}
+                  >
+                    ▶️ Quiz
+                  </button>
+                  <button
+                    className="stats-clear-btn"
+                    onClick={resetAllWrong}
+                  >
+                    🗑️ Tout effacer
+                  </button>
+                </div>
+              </div>
+              <div className="review-questions-list compact">
+                {allProfMisradQuestions
+                  .filter((q) => q.wrong_all)
+                  .map((q) => (
+                    <div key={q.id} className="review-question-item compact">
+                      <div className="review-question-content">
+                        <div className="review-question-meta">
+                          <span className="quiz-category small">
+                            {toArray(q.grande_categorie).join(", ")}
+                          </span>
+                          <span className="quiz-matiere small">
+                            {toArray(q.matiere).join(", ")}
+                          </span>
+                        </div>
+                        <p className="review-question-text" dir="rtl">
+                          {q.question.length > 60
+                            ? q.question.substring(0, 60) + "..."
+                            : q.question}
+                        </p>
+                      </div>
+                      <button
+                        className="remove-review-btn"
+                        onClick={() => removeFromAllReview(q.id)}
+                        title="Retirer de la liste"
+                      >
+                        ✓
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Reset global */}
-          {answeredAllCount > 0 && (
-            <button
-              className="stats-reset-all-btn"
-              onClick={resetAllProgress}
-            >
-              🔄 Tout recommencer
-            </button>
+          {(answeredAllCount > 0 || wrongAllCount > 0) && (
+            <div className="all-reset-section">
+              <button
+                className="stats-reset-all-btn danger"
+                onClick={resetAllProgress}
+              >
+                🔄 Tout remettre à zéro
+              </button>
+              <p className="reset-hint">Remet toute la progression à zéro pour recommencer</p>
+            </div>
           )}
         </div>
       </div>

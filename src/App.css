@@ -1477,6 +1477,96 @@ body {
   padding: 1px 4px;
 }
 
+/* Stats section header with actions */
+.stats-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.stats-section-header .stats-title {
+  margin-bottom: 0;
+}
+
+.stats-section-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.stats-review-btn {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #7c5cff, #6366f1);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.stats-clear-btn {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  background: var(--gray-100);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.stats-clear-btn:hover {
+  background: var(--gray-200);
+}
+
+/* Compact review list */
+.review-questions-list.compact {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.review-question-item.compact {
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.review-question-item.compact .review-question-text {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* All reset section */
+.all-reset-section {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: var(--radius);
+  border: 1px solid #fecaca;
+  text-align: center;
+}
+
+.stats-reset-all-btn.danger {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.stats-reset-all-btn.danger:hover {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+.reset-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: #991b1b;
+}
+
 .config-title {
   font-size: 14px;
   font-weight: 700;
