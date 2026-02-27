@@ -7,6 +7,8 @@ import {
   updateDoc,
   writeBatch,
   deleteDoc,
+  setDoc,
+  getDoc,
 } from "firebase/firestore";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
@@ -51,16 +53,50 @@ export default function Test({ onBack }) {
   const [answers, setAnswers] = useState([]);
   const [isAllMode, setIsAllMode] = useState(false); // Mode "Tout" indépendant
 
-  // Matières exclues du mode "Tout" (persisté dans localStorage)
-  const [excludedMatieres, setExcludedMatieres] = useState(() => {
-    const saved = localStorage.getItem("excludedMatieres");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Matières exclues du mode "Tout" (persisté dans Firebase)
+  const [excludedMatieres, setExcludedMatieres] = useState([]);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
-  // Sauvegarder les matières exclues dans localStorage
+  // Section filtre ouverte/fermée
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState([]);
+
+  // Charger les paramètres depuis Firebase au démarrage
   useEffect(() => {
-    localStorage.setItem("excludedMatieres", JSON.stringify(excludedMatieres));
-  }, [excludedMatieres]);
+    const loadSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, "settings", "userPrefs"));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          if (data.excludedMatieres) {
+            setExcludedMatieres(data.excludedMatieres);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur chargement paramètres:", error);
+      } finally {
+        setSettingsLoaded(true);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // Sauvegarder les matières exclues dans Firebase
+  useEffect(() => {
+    if (!settingsLoaded) return; // Ne pas sauvegarder avant le chargement initial
+    
+    const saveSettings = async () => {
+      try {
+        await setDoc(doc(db, "settings", "userPrefs"), {
+          excludedMatieres: excludedMatieres,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      } catch (error) {
+        console.error("Erreur sauvegarde paramètres:", error);
+      }
+    };
+    saveSettings();
+  }, [excludedMatieres, settingsLoaded]);
 
   const questionsRef = useRef([]);
   questionsRef.current = questions;
@@ -450,6 +486,25 @@ export default function Test({ onBack }) {
     return [...new Set(allProfMisradQuestionsRaw.flatMap((q) => toArray(q.matiere)))]
       .filter(Boolean)
       .sort();
+  }, [allProfMisradQuestionsRaw]);
+
+  // Matières groupées par catégorie
+  const matieresByCategory = useMemo(() => {
+    const result = {};
+    allProfMisradQuestionsRaw.forEach((q) => {
+      const cats = toArray(q.grande_categorie);
+      const mats = toArray(q.matiere);
+      cats.forEach((cat) => {
+        if (!cat) return;
+        if (!result[cat]) result[cat] = new Set();
+        mats.forEach((mat) => mat && result[cat].add(mat));
+      });
+    });
+    // Convertir Sets en arrays triés
+    Object.keys(result).forEach((cat) => {
+      result[cat] = [...result[cat]].sort();
+    });
+    return result;
   }, [allProfMisradQuestionsRaw]);
 
   const answeredAllCount = useMemo(() => {
@@ -1275,46 +1330,116 @@ export default function Test({ onBack }) {
             </div>
           )}
 
-          {/* Filtrer les matières */}
+          {/* Filtrer les matières - Version compacte dépliable */}
           <div className="matiere-filter-section">
-            <div className="matiere-filter-header">
-              <span className="matiere-filter-title">📚 Matières incluses</span>
-              <span className="matiere-filter-count">
-                {allModeMatieresList.length - excludedMatieres.length}/{allModeMatieresList.length}
+            <button
+              className="matiere-filter-toggle"
+              onClick={() => setFilterOpen(!filterOpen)}
+            >
+              <span className="filter-toggle-left">
+                <span className="filter-toggle-icon">{filterOpen ? "▼" : "▶"}</span>
+                <span className="matiere-filter-title">📚 Matières</span>
               </span>
-            </div>
-            <div className="matiere-filter-list">
-              {allModeMatieresList.map((mat) => {
-                const isExcluded = excludedMatieres.includes(mat);
-                const matCount = allProfMisradQuestionsRaw.filter((q) =>
-                  toArray(q.matiere).includes(mat)
-                ).length;
-                return (
+              <span className="matiere-filter-count">
+                {excludedMatieres.length > 0 
+                  ? `${allModeMatieresList.length - excludedMatieres.length}/${allModeMatieresList.length} actives`
+                  : "Toutes"
+                }
+              </span>
+            </button>
+
+            {filterOpen && (
+              <div className="matiere-filter-content">
+                {/* Actions globales */}
+                <div className="filter-global-actions">
                   <button
-                    key={mat}
-                    className={`matiere-filter-chip ${isExcluded ? "excluded" : "included"}`}
-                    onClick={() => {
-                      if (isExcluded) {
-                        setExcludedMatieres((prev) => prev.filter((m) => m !== mat));
-                      } else {
-                        setExcludedMatieres((prev) => [...prev, mat]);
-                      }
-                    }}
+                    className="filter-action-btn"
+                    onClick={() => setExcludedMatieres([])}
+                    disabled={excludedMatieres.length === 0}
                   >
-                    <span className="chip-status">{isExcluded ? "○" : "●"}</span>
-                    <span className="chip-name">{mat}</span>
-                    <span className="chip-count">({matCount})</span>
+                    ✓ Tout activer
                   </button>
-                );
-              })}
-            </div>
-            {excludedMatieres.length > 0 && (
-              <button
-                className="reset-filter-btn"
-                onClick={() => setExcludedMatieres([])}
-              >
-                Tout réactiver
-              </button>
+                  <button
+                    className="filter-action-btn"
+                    onClick={() => setExcludedMatieres([...allModeMatieresList])}
+                    disabled={excludedMatieres.length === allModeMatieresList.length}
+                  >
+                    ○ Tout désactiver
+                  </button>
+                </div>
+
+                {/* Catégories dépliables */}
+                <div className="filter-categories">
+                  {Object.keys(matieresByCategory).sort().map((cat) => {
+                    const catMatieres = matieresByCategory[cat];
+                    const isExpanded = expandedCategories.includes(cat);
+                    const activeCount = catMatieres.filter((m) => !excludedMatieres.includes(m)).length;
+                    const allActive = activeCount === catMatieres.length;
+                    const noneActive = activeCount === 0;
+
+                    return (
+                      <div key={cat} className="filter-category">
+                        <div className="filter-category-header">
+                          <button
+                            className="filter-category-toggle"
+                            onClick={() => {
+                              if (isExpanded) {
+                                setExpandedCategories((prev) => prev.filter((c) => c !== cat));
+                              } else {
+                                setExpandedCategories((prev) => [...prev, cat]);
+                              }
+                            }}
+                          >
+                            <span className="filter-toggle-icon">{isExpanded ? "▼" : "▶"}</span>
+                            <span className="filter-category-name">{cat}</span>
+                            <span className={`filter-category-count ${noneActive ? "none" : allActive ? "all" : "partial"}`}>
+                              {activeCount}/{catMatieres.length}
+                            </span>
+                          </button>
+                          <button
+                            className={`filter-category-select ${allActive ? "active" : ""}`}
+                            onClick={() => {
+                              if (allActive) {
+                                // Désactiver toutes les matières de cette catégorie
+                                setExcludedMatieres((prev) => [...new Set([...prev, ...catMatieres])]);
+                              } else {
+                                // Activer toutes les matières de cette catégorie
+                                setExcludedMatieres((prev) => prev.filter((m) => !catMatieres.includes(m)));
+                              }
+                            }}
+                          >
+                            {allActive ? "✓" : "○"}
+                          </button>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="filter-matieres">
+                            {catMatieres.map((mat) => {
+                              const isExcluded = excludedMatieres.includes(mat);
+                              return (
+                                <button
+                                  key={mat}
+                                  className={`filter-matiere ${isExcluded ? "excluded" : "included"}`}
+                                  onClick={() => {
+                                    if (isExcluded) {
+                                      setExcludedMatieres((prev) => prev.filter((m) => m !== mat));
+                                    } else {
+                                      setExcludedMatieres((prev) => [...prev, mat]);
+                                    }
+                                  }}
+                                >
+                                  <span className="matiere-status">{isExcluded ? "○" : "●"}</span>
+                                  <span className="matiere-name">{mat}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
 

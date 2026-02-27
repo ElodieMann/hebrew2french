@@ -1535,20 +1535,35 @@ body {
   margin: 0;
 }
 
-/* Matiere filter section */
+/* Matiere filter section - Collapsible */
 .matiere-filter-section {
   background: white;
   border-radius: var(--radius);
-  padding: 12px;
   margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
-.matiere-filter-header {
+.matiere-filter-toggle {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  padding: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.filter-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-toggle-icon {
+  font-size: 0.7rem;
+  color: var(--gray-500);
 }
 
 .matiere-filter-title {
@@ -1565,54 +1580,20 @@ body {
   border-radius: 10px;
 }
 
-.matiere-filter-list {
+.matiere-filter-content {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--gray-100);
+}
+
+/* Actions globales */
+.filter-global-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 8px;
+  padding: 10px 0;
 }
 
-.matiere-filter-chip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.matiere-filter-chip.included {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-  color: #166534;
-}
-
-.matiere-filter-chip.excluded {
-  background: var(--gray-100);
-  color: var(--gray-400);
-}
-
-.matiere-filter-chip:hover {
-  transform: scale(1.02);
-}
-
-.chip-status {
-  font-size: 0.7rem;
-}
-
-.chip-name {
-  font-weight: 500;
-}
-
-.chip-count {
-  font-size: 0.7rem;
-  opacity: 0.7;
-}
-
-.reset-filter-btn {
-  width: 100%;
+.filter-action-btn {
+  flex: 1;
   padding: 8px;
   font-size: 0.8rem;
   color: var(--gray-600);
@@ -1620,11 +1601,133 @@ body {
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
-  margin-top: 4px;
 }
 
-.reset-filter-btn:hover {
+.filter-action-btn:hover:not(:disabled) {
   background: var(--gray-200);
+}
+
+.filter-action-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Catégories */
+.filter-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-category {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.filter-category-header {
+  display: flex;
+  align-items: center;
+  background: var(--gray-50);
+}
+
+.filter-category-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.filter-category-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.filter-category-count {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.filter-category-count.all {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.filter-category-count.partial {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.filter-category-count.none {
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+.filter-category-select {
+  width: 36px;
+  height: 36px;
+  margin-right: 6px;
+  font-size: 0.9rem;
+  background: var(--gray-100);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.filter-category-select.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Matières dans une catégorie */
+.filter-matieres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  background: white;
+}
+
+.filter-matiere {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border-radius: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-matiere.included {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.filter-matiere.excluded {
+  background: var(--gray-100);
+  color: var(--gray-400);
+}
+
+.filter-matiere:hover {
+  transform: scale(1.02);
+}
+
+.matiere-status {
+  font-size: 0.65rem;
+}
+
+.matiere-name {
+  font-weight: 500;
 }
 
 /* All reset section */
