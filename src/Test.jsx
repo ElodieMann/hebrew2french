@@ -51,6 +51,17 @@ export default function Test({ onBack }) {
   const [answers, setAnswers] = useState([]);
   const [isAllMode, setIsAllMode] = useState(false); // Mode "Tout" indépendant
 
+  // Matières exclues du mode "Tout" (persisté dans localStorage)
+  const [excludedMatieres, setExcludedMatieres] = useState(() => {
+    const saved = localStorage.getItem("excludedMatieres");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Sauvegarder les matières exclues dans localStorage
+  useEffect(() => {
+    localStorage.setItem("excludedMatieres", JSON.stringify(excludedMatieres));
+  }, [excludedMatieres]);
+
   const questionsRef = useRef([]);
   questionsRef.current = questions;
 
@@ -419,10 +430,27 @@ export default function Test({ onBack }) {
     setSelectedMatieres([...matieres]);
   };
 
-  // Questions Prof + Misrad (progression indépendante avec answered_all)
-  const allProfMisradQuestions = useMemo(() => {
+  // Toutes les questions Prof + Misrad (sans filtre)
+  const allProfMisradQuestionsRaw = useMemo(() => {
     return questions.filter((q) => q.is_prof || q.is_misrad_haavoda);
   }, [questions]);
+
+  // Questions Prof + Misrad filtrées (excluant les matières désélectionnées)
+  const allProfMisradQuestions = useMemo(() => {
+    if (excludedMatieres.length === 0) return allProfMisradQuestionsRaw;
+    return allProfMisradQuestionsRaw.filter((q) => {
+      const qMatieres = toArray(q.matiere);
+      // Garder si au moins une matière n'est pas exclue
+      return qMatieres.some((m) => !excludedMatieres.includes(m));
+    });
+  }, [allProfMisradQuestionsRaw, excludedMatieres]);
+
+  // Liste des matières disponibles dans le mode Tout
+  const allModeMatieresList = useMemo(() => {
+    return [...new Set(allProfMisradQuestionsRaw.flatMap((q) => toArray(q.matiere)))]
+      .filter(Boolean)
+      .sort();
+  }, [allProfMisradQuestionsRaw]);
 
   const answeredAllCount = useMemo(() => {
     return allProfMisradQuestions.filter((q) => q.answered_all).length;
@@ -1246,6 +1274,49 @@ export default function Test({ onBack }) {
               </span>
             </div>
           )}
+
+          {/* Filtrer les matières */}
+          <div className="matiere-filter-section">
+            <div className="matiere-filter-header">
+              <span className="matiere-filter-title">📚 Matières incluses</span>
+              <span className="matiere-filter-count">
+                {allModeMatieresList.length - excludedMatieres.length}/{allModeMatieresList.length}
+              </span>
+            </div>
+            <div className="matiere-filter-list">
+              {allModeMatieresList.map((mat) => {
+                const isExcluded = excludedMatieres.includes(mat);
+                const matCount = allProfMisradQuestionsRaw.filter((q) =>
+                  toArray(q.matiere).includes(mat)
+                ).length;
+                return (
+                  <button
+                    key={mat}
+                    className={`matiere-filter-chip ${isExcluded ? "excluded" : "included"}`}
+                    onClick={() => {
+                      if (isExcluded) {
+                        setExcludedMatieres((prev) => prev.filter((m) => m !== mat));
+                      } else {
+                        setExcludedMatieres((prev) => [...prev, mat]);
+                      }
+                    }}
+                  >
+                    <span className="chip-status">{isExcluded ? "○" : "●"}</span>
+                    <span className="chip-name">{mat}</span>
+                    <span className="chip-count">({matCount})</span>
+                  </button>
+                );
+              })}
+            </div>
+            {excludedMatieres.length > 0 && (
+              <button
+                className="reset-filter-btn"
+                onClick={() => setExcludedMatieres([])}
+              >
+                Tout réactiver
+              </button>
+            )}
+          </div>
 
           {/* Barre de progression globale */}
           <div className="all-stats-progress">

@@ -1535,6 +1535,98 @@ body {
   margin: 0;
 }
 
+/* Matiere filter section */
+.matiere-filter-section {
+  background: white;
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.matiere-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.matiere-filter-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.matiere-filter-count {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.matiere-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.matiere-filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.matiere-filter-chip.included {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+}
+
+.matiere-filter-chip.excluded {
+  background: var(--gray-100);
+  color: var(--gray-400);
+}
+
+.matiere-filter-chip:hover {
+  transform: scale(1.02);
+}
+
+.chip-status {
+  font-size: 0.7rem;
+}
+
+.chip-name {
+  font-weight: 500;
+}
+
+.chip-count {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.reset-filter-btn {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  background: var(--gray-100);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.reset-filter-btn:hover {
+  background: var(--gray-200);
+}
+
 /* All reset section */
 .all-reset-section {
   margin-top: 16px;
