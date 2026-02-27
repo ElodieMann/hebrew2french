@@ -115,11 +115,18 @@ const importQuestions = async () => {
     console.log(`\n   Fichier JSON : ${jsonQuestions.length} questions`);
     console.log(`   Firebase : ${firebaseQuestions.length} questions`);
 
-    // 3. Séparer nouvelles questions et doublons
+    // 3. Filtrer les questions invalides, séparer nouvelles et doublons
     const newQuestions = [];
     const duplicates = [];
+    const invalid = [];
 
     jsonQuestions.forEach((q) => {
+      // Vérifier que la question a les champs requis
+      if (!q.question || !q.options || !q.reponse_correcte) {
+        invalid.push(q);
+        return;
+      }
+      
       if (existingQuestions.has(createQuestionKey(q))) {
         duplicates.push(q);
       } else {
@@ -127,13 +134,24 @@ const importQuestions = async () => {
       }
     });
 
+    // Afficher les questions invalides
+    if (invalid.length > 0) {
+      console.log(
+        `\n❌ ${invalid.length} question(s) invalide(s) (ignorées) :`,
+      );
+      invalid.forEach((q, index) => {
+        console.log(`   ${index + 1}. Champs manquants: question=${!!q.question}, options=${!!q.options}, reponse=${!!q.reponse_correcte}`);
+      });
+    }
+
     // Afficher les doublons s'il y en a
     if (duplicates.length > 0) {
       console.log(
         `\n⚠️ ${duplicates.length} doublon(s) trouvé(s) (non importés) :`,
       );
       duplicates.forEach((q, index) => {
-        console.log(`   ${index + 1}. ${q.question.substring(0, 60)}...`);
+        const questionText = q.question || "(vide)";
+        console.log(`   ${index + 1}. ${questionText.substring(0, 60)}...`);
       });
     }
 
@@ -147,7 +165,8 @@ const importQuestions = async () => {
 
     console.log(`\n🆕 ${newQuestions.length} nouvelles questions à ajouter :`);
     newQuestions.forEach((q, index) => {
-      console.log(`   ${index + 1}. ${q.question.substring(0, 50)}...`);
+      const questionText = q.question || "(question vide)";
+      console.log(`   ${index + 1}. ${questionText.substring(0, 50)}...`);
     });
 
     // 4. Ajouter les nouvelles questions à Firebase
