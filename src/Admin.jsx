@@ -322,6 +322,47 @@ export default function Admin({ onBack }) {
     }
   };
 
+  /* EXPORT JSON */
+  const exportQuestionsJSON = () => {
+    // Juste question, options et réponse correcte
+    const exportData = filteredQuestions.map((q) => ({
+      question: q.question,
+      options: q.options,
+      reponse_correcte: q.reponse_correcte,
+    }));
+
+    const json = JSON.stringify(exportData, null, 2);
+    
+    // Créer un fichier téléchargeable
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `questions_export_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const copyQuestionsJSON = () => {
+    // Juste question, options et réponse correcte
+    const exportData = filteredQuestions.map((q) => ({
+      question: q.question,
+      options: q.options,
+      reponse_correcte: q.reponse_correcte,
+    }));
+
+    const json = JSON.stringify(exportData, null, 2);
+    
+    navigator.clipboard.writeText(json).then(() => {
+      alert(`${filteredQuestions.length} question(s) copiées dans le presse-papiers !`);
+    }).catch((err) => {
+      console.error("Erreur copie:", err);
+      alert("Erreur lors de la copie");
+    });
+  };
+
   /* UNFLAG */
   const handleUnflag = async (item, type) => {
     try {
@@ -526,7 +567,7 @@ export default function Admin({ onBack }) {
         )}
       </div>
 
-      {/* Results count + Bulk delete */}
+      {/* Results count + Actions */}
       <div className="admin-results-row">
         <div className="admin-results-count">
           {tab === "questions"
@@ -534,30 +575,52 @@ export default function Admin({ onBack }) {
             : `${filteredWords.length} mot(s)`}
         </div>
 
-        {/* Bouton supprimer tout - visible si filtres actifs et résultats > 0 */}
-        {((tab === "questions" &&
-          filteredQuestions.length > 0 &&
-          (searchQuery ||
-            filterCategory ||
-            filterMatiere ||
-            filterProf !== null ||
-            filterMisrad !== null ||
-            filterAnswered !== null ||
-            showFlaggedOnly)) ||
-          (tab === "words" &&
-            filteredWords.length > 0 &&
-            (searchQuery || showFlaggedOnly))) && (
-          <button
-            className="admin-bulk-delete-btn"
-            onClick={() => setBulkDeleteConfirm(true)}
-          >
-            🗑️ Supprimer tout (
-            {tab === "questions"
-              ? filteredQuestions.length
-              : filteredWords.length}
-            )
-          </button>
-        )}
+        <div className="admin-results-actions">
+          {/* Boutons export - visible pour questions */}
+          {tab === "questions" && filteredQuestions.length > 0 && (
+            <>
+              <button
+                className="admin-export-btn"
+                onClick={copyQuestionsJSON}
+                title="Copier en JSON"
+              >
+                📋 Copier
+              </button>
+              <button
+                className="admin-export-btn"
+                onClick={exportQuestionsJSON}
+                title="Télécharger en JSON"
+              >
+                💾 Export
+              </button>
+            </>
+          )}
+
+          {/* Bouton supprimer tout - visible si filtres actifs et résultats > 0 */}
+          {((tab === "questions" &&
+            filteredQuestions.length > 0 &&
+            (searchQuery ||
+              filterCategory ||
+              filterMatiere ||
+              filterProf !== null ||
+              filterMisrad !== null ||
+              filterAnswered !== null ||
+              showFlaggedOnly)) ||
+            (tab === "words" &&
+              filteredWords.length > 0 &&
+              (searchQuery || showFlaggedOnly))) && (
+            <button
+              className="admin-bulk-delete-btn"
+              onClick={() => setBulkDeleteConfirm(true)}
+            >
+              🗑️ Suppr. (
+              {tab === "questions"
+                ? filteredQuestions.length
+                : filteredWords.length}
+              )
+            </button>
+          )}
+        </div>
       </div>
 
       {/* List */}

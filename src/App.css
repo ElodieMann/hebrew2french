@@ -2955,6 +2955,29 @@ body {
   color: var(--gray-500);
 }
 
+.admin-results-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-export-btn {
+  font-size: 13px;
+  padding: 8px 12px;
+  background: #7c5cff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-export-btn:hover {
+  background: #6346e0;
+  transform: scale(1.02);
+}
+
 .admin-bulk-delete-btn {
   font-size: 13px;
   padding: 8px 12px;
