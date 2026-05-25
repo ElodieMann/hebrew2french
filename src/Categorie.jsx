@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import actifsData from "./data/actifs.json";
 import typePeauRaw from "./data/typepeau.json";
+import protocolRaw from "./data/protocol.json";
 
 const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
 
@@ -60,6 +61,78 @@ const typePeauGames = {
   },
 };
 
+// PROTOCOLE: transformation des étapes de traitement
+const protocolSteps = protocolRaw.protocol || [];
+
+const buildActionMap = (field, skipEmpty = true) => {
+  const data = {};
+  protocolSteps.forEach((row) => {
+    const action = row["פעולה"];
+    const value = row[field];
+    if (!action) return;
+    if (skipEmpty && (value == null || value === "")) return;
+    if (!data[action]) data[action] = [];
+    const val = String(value).trim();
+    if (val && !data[action].includes(val)) data[action].push(val);
+  });
+  return data;
+};
+
+// Phases → étapes (פעולה)
+const protocolEtapesData = {};
+protocolSteps.forEach((row) => {
+  const cat = row["קטגוריה"];
+  const action = row["פעולה"];
+  if (!cat || !action) return;
+  if (!protocolEtapesData[cat]) protocolEtapesData[cat] = [];
+  if (!protocolEtapesData[cat].includes(action)) protocolEtapesData[cat].push(action);
+});
+
+// Ordre des phases (première apparition dans le protocole)
+const protocolPhaseOrder = [];
+protocolSteps.forEach((row) => {
+  const cat = row["קטגוריה"];
+  if (cat && !protocolPhaseOrder.includes(cat)) protocolPhaseOrder.push(cat);
+});
+
+const protocolGames = {
+  fiche: {
+    name: "Fiche complète",
+    description: "Réviser tout le protocole dans l'ordre",
+    type: "fiche",
+    phases: protocolPhaseOrder,
+    steps: protocolSteps,
+  },
+  etapes: {
+    name: "Phase du protocole",
+    description: "Étape → à quelle phase elle appartient",
+    data: protocolEtapesData,
+    itemLabel: "étape",
+    categoryLabel: "phase",
+  },
+  produit: {
+    name: "Produit / outil",
+    description: "Étape → quel produit ou outil utiliser",
+    data: buildActionMap("תכשיר_אביזרים"),
+    itemLabel: "étape",
+    categoryLabel: "produit",
+  },
+  ingredients: {
+    name: "Ingrédients actifs",
+    description: "Étape → quels ingrédients actifs",
+    data: buildActionMap("חומרים_פעילים"),
+    itemLabel: "étape",
+    categoryLabel: "ingrédient",
+  },
+  role: {
+    name: "Rôle / action",
+    description: "Étape → quel est le rôle des actifs",
+    data: buildActionMap("תפקיד_חומר_פעיל"),
+    itemLabel: "étape",
+    categoryLabel: "rôle",
+  },
+};
+
 // ============ STRUCTURE DES DATASETS ============
 const DATASETS = {
   actifs: {
@@ -72,12 +145,17 @@ const DATASETS = {
     icon: "🧑",
     games: typePeauGames,
   },
+  protocol: {
+    name: "Protocole facial",
+    icon: "💆",
+    games: protocolGames,
+  },
 };
 
 // ============ COMPOSANT ============
-export default function Categorie({ onBack }) {
+export default function Categorie({ onBack, initialDataset = null }) {
   // Navigation
-  const [selectedDataset, setSelectedDataset] = useState(null);
+  const [selectedDataset, setSelectedDataset] = useState(initialDataset);
   const [selectedGame, setSelectedGame] = useState(null);
   const [mode, setMode] = useState(null); // "mode1" ou "mode2"
 
@@ -100,6 +178,8 @@ export default function Categorie({ onBack }) {
     if (!selectedDataset || !selectedGame) return null;
     return DATASETS[selectedDataset]?.games?.[selectedGame] || null;
   }, [selectedDataset, selectedGame]);
+
+  const isFicheGame = gameData?.type === "fiche";
 
   // Extraire catégories et items
   const { categories, allItems, itemToCategories } = useMemo(() => {
@@ -354,12 +434,17 @@ export default function Categorie({ onBack }) {
             <button
               key={key}
               className="categorie-game-btn"
-              onClick={() => setSelectedGame(key)}
+              onClick={() => {
+                setSelectedGame(key);
+                if (game.type === "fiche") setMode("fiche");
+              }}
             >
               <span className="game-name">{game.name}</span>
               <span className="game-desc">{game.description}</span>
               <span className="game-count">
-                {Object.keys(game.data).length} catégories
+                {game.type === "fiche"
+                  ? `${game.steps?.length || 0} étapes`
+                  : `${Object.keys(game.data || {}).length} catégories`}
               </span>
             </button>
           ))}
@@ -368,7 +453,91 @@ export default function Categorie({ onBack }) {
     );
   }
 
-  // 3. Choix du mode
+  // 3. Fiche protocole (révision ordonnée)
+  if (mode === "fiche" && isFicheGame) {
+    return (
+      <div className="app categorie-app">
+        <header className="categorie-header">
+          <button
+            className="reset-small-btn home-small-btn"
+            onClick={backToGames}
+            title="Retour"
+          >
+            ←
+          </button>
+          <h1 className="categorie-title">📋 {gameData.name}</h1>
+          <div style={{ width: 32 }} />
+        </header>
+
+        <div className="protocol-fiche">
+          <p className="protocol-fiche-title" dir="rtl">
+            {protocolRaw.document_title}
+          </p>
+          <p className="protocol-fiche-subtitle">
+            {gameData.steps.length} étapes · {gameData.phases.length} phases
+          </p>
+
+          <div className="protocol-fiche-list">
+            {gameData.phases.map((phase, phaseIndex) => {
+              const phaseSteps = gameData.steps.filter(
+                (s) => s["קטגוריה"] === phase
+              );
+              return (
+                <div key={phase} className="protocol-phase">
+                  <div className="protocol-phase-header">
+                    <span className="protocol-phase-num">{phaseIndex + 1}</span>
+                    <span className="protocol-phase-name" dir="rtl">
+                      {phase}
+                    </span>
+                    <span className="protocol-phase-count">
+                      {phaseSteps.length}
+                    </span>
+                  </div>
+                  {phaseSteps.map((step, i) => (
+                    <div key={`${phase}-${i}`} className="protocol-step-card">
+                      <div className="protocol-step-action" dir="rtl">
+                        {step["פעולה"]}
+                      </div>
+                      {step["תכשיר_אביזרים"] && (
+                        <div className="protocol-step-row" dir="rtl">
+                          <span className="protocol-step-label">תכשיר:</span>
+                          <span>{step["תכשיר_אביזרים"]}</span>
+                        </div>
+                      )}
+                      {step["חומרים_פעילים"] && (
+                        <div className="protocol-step-row" dir="rtl">
+                          <span className="protocol-step-label">חומרים:</span>
+                          <span>{step["חומרים_פעילים"]}</span>
+                        </div>
+                      )}
+                      {step["תפקיד_חומר_פעיל"] && (
+                        <div className="protocol-step-row" dir="rtl">
+                          <span className="protocol-step-label">תפקיד:</span>
+                          <span>{step["תפקיד_חומר_פעיל"]}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            className="categorie-btn primary"
+            onClick={() => {
+              setSelectedGame("etapes");
+              setMode(null);
+            }}
+          >
+            🎯 Tester mes connaissances
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Choix du mode
   if (!mode) {
     return (
       <div className="app categorie-app">
@@ -548,6 +717,9 @@ export default function Categorie({ onBack }) {
             if (isWrong) {
               className += " disabled-wrong";
             }
+            if (cat.length > 35) {
+              className += " long-text";
+            }
 
             return (
               <button
@@ -662,6 +834,9 @@ export default function Categorie({ onBack }) {
               if (isWrong) {
                 className += " disabled-wrong";
               }
+            }
+            if (item.length > 35) {
+              className += " long-text";
             }
 
             return (

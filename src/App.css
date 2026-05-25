@@ -3627,6 +3627,7 @@ body {
   gap: 16px;
   padding: 24px 16px;
   flex: 1;
+  overflow-y: auto;
 }
 
 .categorie-subtitle {
@@ -4015,4 +4016,135 @@ body {
 .home-choice-btn.categorie-btn .home-choice-title,
 .home-choice-btn.categorie-btn .home-choice-desc {
   color: #333;
+}
+
+.home-choice-btn.protocol-btn {
+  background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.12);
+  border: 2px solid #fce7f3;
+}
+
+.home-choice-btn.protocol-btn .home-choice-title,
+.home-choice-btn.protocol-btn .home-choice-desc {
+  color: #333;
+}
+
+/* Protocole facial - Fiche révision */
+.protocol-fiche {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.protocol-fiche-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  text-align: center;
+  margin: 0;
+}
+
+.protocol-fiche-subtitle {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  text-align: center;
+  margin: 0;
+}
+
+.protocol-fiche-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.protocol-phase {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.protocol-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #f0f0ff, #e8e8ff);
+  border-bottom: 1px solid #e0e0ff;
+}
+
+.protocol-phase-num {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #7c5cff;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.protocol-phase-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.protocol-phase-count {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  background: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.protocol-step-card {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.protocol-step-card:last-child {
+  border-bottom: none;
+}
+
+.protocol-step-action {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+
+.protocol-step-row {
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.protocol-step-label {
+  font-weight: 600;
+  color: #7c5cff;
+  margin-left: 6px;
+}
+
+.protocol-fiche .categorie-btn.primary {
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+/* Options longues (ingrédients protocole) */
+.categorie-options .categorie-option.long-text {
+  flex: 1 1 100%;
+  max-width: 100%;
+  text-align: right;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 10px 12px;
 }

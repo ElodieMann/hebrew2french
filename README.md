@@ -120,8 +120,30 @@ npm install
 npm run dev
 ```
 
-## 📦 Build
+## 📦 Build & déploiement (Vercel + PWA)
 
+L'app est hébergée sur **Vercel**. Firebase sert uniquement à la base de données (questions, mots).
+
+### Déployer les changements
+
+1. Commit et push sur GitHub :
 ```bash
-npm run build
+git add .
+git commit -m "Protocole facial + corrections"
+git push
 ```
+2. Vercel redéploie automatiquement (1–2 min). Vérifie sur [vercel.com/dashboard](https://vercel.com/dashboard).
+
+### Mettre à jour la PWA sur ton téléphone
+
+1. Attends que le déploiement Vercel soit **Ready** (vert).
+2. Sur le téléphone :
+   - **Ferme complètement** l'app PWA (pas seulement minimiser).
+   - Ouvre le **site dans Safari/Chrome** (l'URL Vercel, pas l'icône).
+   - Rafraîchis une fois, attends 5 secondes.
+   - Rouvre depuis l'icône sur l'écran d'accueil.
+3. Si tu ne vois toujours pas **Protocole facial** :
+   - Supprime l'icône PWA.
+   - Rouvre le site → **Ajouter à l'écran d'accueil**.
+
+Tu dois voir **4 boutons** sur l'accueil : Oulpan, Test, Catégories, **Protocole facial**.

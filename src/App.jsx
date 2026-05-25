@@ -7,6 +7,7 @@ import "./App.css";
 
 export default function App() {
   const [currentApp, setCurrentApp] = useState(null); // null = home, "oulpan", "test", "categorie", "admin"
+  const [categorieStart, setCategorieStart] = useState(null); // "protocol" | null
 
   // Page d'accueil
   if (!currentApp) {
@@ -39,12 +40,29 @@ export default function App() {
 
             <button
               className="home-choice-btn categorie-btn"
-              onClick={() => setCurrentApp("categorie")}
+              onClick={() => {
+                setCategorieStart(null);
+                setCurrentApp("categorie");
+              }}
             >
               <span className="home-choice-icon">🗂️</span>
               <span className="home-choice-title">Catégories</span>
               <span className="home-choice-desc">
                 Mémoriser les associations
+              </span>
+            </button>
+
+            <button
+              className="home-choice-btn protocol-btn"
+              onClick={() => {
+                setCategorieStart("protocol");
+                setCurrentApp("categorie");
+              }}
+            >
+              <span className="home-choice-icon">💆</span>
+              <span className="home-choice-title">Protocole facial</span>
+              <span className="home-choice-desc">
+                Étapes de traitement Hava Zingboim
               </span>
             </button>
           </div>
@@ -72,7 +90,15 @@ export default function App() {
 
   // Categorie
   if (currentApp === "categorie") {
-    return <Categorie onBack={() => setCurrentApp(null)} />;
+    return (
+      <Categorie
+        onBack={() => {
+          setCategorieStart(null);
+          setCurrentApp(null);
+        }}
+        initialDataset={categorieStart}
+      />
+    );
   }
 
   // Admin
