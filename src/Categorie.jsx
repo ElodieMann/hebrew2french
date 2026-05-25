@@ -181,9 +181,19 @@ export default function Categorie({ onBack, initialDataset = null }) {
 
   const isFicheGame = gameData?.type === "fiche";
 
+  // Données fiche (recalculées à l'affichage)
+  const fichePhases = useMemo(() => {
+    const order = [];
+    protocolSteps.forEach((row) => {
+      const cat = row["קטגוריה"];
+      if (cat && !order.includes(cat)) order.push(cat);
+    });
+    return order;
+  }, []);
+
   // Extraire catégories et items
   const { categories, allItems, itemToCategories } = useMemo(() => {
-    if (!gameData)
+    if (!gameData || gameData.type === "fiche" || !gameData.data)
       return { categories: [], allItems: [], itemToCategories: {} };
 
     const data = gameData.data;
@@ -474,12 +484,12 @@ export default function Categorie({ onBack, initialDataset = null }) {
             {protocolRaw.document_title}
           </p>
           <p className="protocol-fiche-subtitle">
-            {gameData.steps.length} étapes · {gameData.phases.length} phases
+            {protocolSteps.length} étapes · {fichePhases.length} phases
           </p>
 
           <div className="protocol-fiche-list">
-            {gameData.phases.map((phase, phaseIndex) => {
-              const phaseSteps = gameData.steps.filter(
+            {fichePhases.map((phase, phaseIndex) => {
+              const phaseSteps = protocolSteps.filter(
                 (s) => s["קטגוריה"] === phase
               );
               return (
